@@ -1,0 +1,63 @@
+@import "tailwindcss";
+
+@font-face {
+  font-family: "Sacramento";
+  src: url("/fonts/Sacramento-Regular.ttf") format("truetype");
+  font-weight: 400;
+  font-display: swap;
+}
+
+@theme {
+  --font-heading: "Instrument Serif", "Georgia", serif;
+  --font-body: "DM Sans", system-ui, sans-serif;
+  --font-signature: "Sacramento", cursive;
+}
+
+/* ── Signature stroke animation (single continuous path) ── */
+@keyframes write-signature {
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+@keyframes reveal-fill {
+  to {
+    fill-opacity: 1;
+  }
+}
+
+@keyframes fade-stroke {
+  to {
+    stroke-opacity: 0;
+  }
+}
+
+/* ── Checkmark draw ── */
+@keyframes draw-check {
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+/* ── Subtle fade-in ── */
+@keyframes fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* ── Signing pulse on button ── */
+@keyframes pulse-dot {
+  0%,
+  100% {
+    opacity: 0.4;
+  }
+  50% {
+    opacity: 1;
+  }
+}
