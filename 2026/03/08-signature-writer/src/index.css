@@ -20,17 +20,6 @@
   }
 }
 
-@keyframes reveal-fill {
-  to {
-    fill-opacity: 1;
-  }
-}
-
-@keyframes fade-stroke {
-  to {
-    stroke-opacity: 0;
-  }
-}
 
 /* ── Checkmark draw ── */
 @keyframes draw-check {
