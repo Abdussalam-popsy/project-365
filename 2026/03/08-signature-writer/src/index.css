@@ -13,13 +13,12 @@
   --font-signature: "Sacramento", cursive;
 }
 
-/* ── Signature stroke animation (single continuous path) ── */
-@keyframes write-signature {
+/* ── Contour trim-path reveal ── */
+@keyframes trim-path {
   to {
     stroke-dashoffset: 0;
   }
 }
-
 
 /* ── Checkmark draw ── */
 @keyframes draw-check {

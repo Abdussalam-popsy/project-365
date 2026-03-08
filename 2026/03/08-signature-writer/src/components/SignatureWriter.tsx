@@ -16,6 +16,21 @@ type Phase = "idle" | "signing" | "accepted";
 
 const FONT_SIZE = 80;
 const DRAW_MS = 2200;
+const PAD = 16;
+
+// ─────────────────────────────────────────────────────────────────
+// Helpers
+// ─────────────────────────────────────────────────────────────────
+
+/** Split an SVG path `d` attribute into individual contours (subpaths).
+ *  Each contour starts with an M command and is a single continuous
+ *  stroke with no internal moveTo jumps — so getTotalLength() is accurate. */
+function splitContours(d: string): string[] {
+  return d
+    .split(/(?=M)/)
+    .map((s) => s.trim())
+    .filter((s) => s.length > 3);
+}
 
 // ─────────────────────────────────────────────────────────────────
 // Icons
@@ -76,12 +91,13 @@ export default function SignatureWriter() {
   const [font, setFont] = useState<opentype.Font | null>(null);
   const [fontLoaded, setFontLoaded] = useState(false);
 
-  // Per-glyph SVG paths + measured lengths
-  const [glyphPaths, setGlyphPaths] = useState<string[]>([]);
-  const [glyphLengths, setGlyphLengths] = useState<number[]>([]);
+  // Individual contours (each is a single continuous subpath)
+  const [contours, setContours] = useState<string[]>([]);
+  const [lengths, setLengths] = useState<number[]>([]);
   const [viewBox, setViewBox] = useState("0 0 100 50");
 
-  const pathRefs = useRef<(SVGPathElement | null)[]>([]);
+  const contourRefs = useRef<(SVGPathElement | null)[]>([]);
+  const maskId = useId();
 
   // ── Load font ────────────────────────────────────────────────
   useEffect(() => {
@@ -91,8 +107,10 @@ export default function SignatureWriter() {
     });
   }, []);
 
-  // ── Generate per-glyph paths (accurate lengths, no gaps) ─────
-  const generatePaths = useCallback(() => {
+  // ── Generate contours from glyphs ────────────────────────────
+  // Each glyph path is split into individual contours so that
+  // getTotalLength() is accurate (no phantom gaps).
+  const generateContours = useCallback(() => {
     if (!font || !name.trim()) return;
 
     const scale = FONT_SIZE / font.unitsPerEm;
@@ -101,7 +119,7 @@ export default function SignatureWriter() {
     const height = ascender + descender;
 
     const glyphs = font.stringToGlyphs(name.trim());
-    const paths: string[] = [];
+    const allContours: string[] = [];
     let x = 0;
 
     for (let i = 0; i < glyphs.length; i++) {
@@ -109,9 +127,8 @@ export default function SignatureWriter() {
       const path = glyph.getPath(x, ascender, FONT_SIZE);
       const d = path.toPathData(2);
 
-      // skip empty paths (spaces produce tiny/empty paths)
       if (d && d.length > 5) {
-        paths.push(d);
+        splitContours(d).forEach((c) => allContours.push(c));
       }
 
       const advance = (glyph.advanceWidth || 0) * scale;
@@ -122,64 +139,56 @@ export default function SignatureWriter() {
       x += advance + kern;
     }
 
-    const pad = 16;
-    setViewBox(`${-pad} ${-pad} ${x + pad * 2} ${height + pad * 2}`);
-    setGlyphPaths(paths);
-    setGlyphLengths([]); // reset for re-measurement
+    setViewBox(`${-PAD} ${-PAD} ${x + PAD * 2} ${height + PAD * 2}`);
+    setContours(allContours);
+    setLengths([]);
   }, [font, name]);
 
   // ── Sign handler ─────────────────────────────────────────────
   const handleSign = () => {
     if (!font || !name.trim()) return;
-    generatePaths();
+    generateContours();
     setPhase("signing");
   };
 
-  // ── Measure each glyph's path length individually ────────────
+  // ── Measure each contour's length (accurate, no gaps) ────────
   useLayoutEffect(() => {
-    if (glyphPaths.length === 0 || glyphLengths.length > 0) return;
-
-    const lengths = glyphPaths.map(
-      (_, i) => pathRefs.current[i]?.getTotalLength() ?? 100,
+    if (contours.length === 0 || lengths.length > 0) return;
+    const measured = contours.map(
+      (_, i) => contourRefs.current[i]?.getTotalLength() ?? 50,
     );
-    setGlyphLengths(lengths);
-  }, [glyphPaths, glyphLengths.length]);
+    setLengths(measured);
+  }, [contours, lengths.length]);
 
   // ── Auto-transition to accepted ──────────────────────────────
   useEffect(() => {
-    if (phase !== "signing" || glyphLengths.length === 0) return;
+    if (phase !== "signing" || lengths.length === 0) return;
     const timer = setTimeout(() => setPhase("accepted"), DRAW_MS + 400);
     return () => clearTimeout(timer);
-  }, [phase, glyphLengths]);
+  }, [phase, lengths]);
 
   // ── Reset ────────────────────────────────────────────────────
   const handleReset = () => {
     setPhase("idle");
     setName("");
-    setGlyphPaths([]);
-    setGlyphLengths([]);
+    setContours([]);
+    setLengths([]);
   };
 
   const canSign = name.trim().length > 0 && fontLoaded;
-  const ready = glyphLengths.length > 0;
-  const maskId = useId();
+  const ready = lengths.length > 0;
 
-  // ── Pre-compute per-glyph timing ─────────────────────────────
-  // Each glyph's duration is proportional to its path length,
-  // and each starts the instant the previous ends — continuous flow.
-  const totalVisibleLength = glyphLengths.reduce((a, b) => a + b, 0);
+  // ── Pre-compute per-contour timing ───────────────────────────
+  const totalLength = lengths.reduce((a, b) => a + b, 0);
   const timings: { duration: number; delay: number }[] = [];
-  let accDelay = 0;
-  for (const len of glyphLengths) {
-    const dur =
-      totalVisibleLength > 0 ? (len / totalVisibleLength) * DRAW_MS : 0;
-    timings.push({ duration: dur, delay: accDelay });
-    accDelay += dur;
+  let acc = 0;
+  for (const len of lengths) {
+    const dur = totalLength > 0 ? (len / totalLength) * DRAW_MS : 0;
+    timings.push({ duration: dur, delay: acc });
+    acc += dur;
   }
 
   // ── Signature SVG ────────────────────────────────────────────
-  // Per-glyph <mask> with accurate stroke-dashoffset animation.
-  // Each glyph's mask reveals the filled shape underneath.
   const SignatureSVG = ({ animated }: { animated: boolean }) => (
     <svg
       viewBox={viewBox}
@@ -188,26 +197,26 @@ export default function SignatureWriter() {
     >
       {animated && (
         <defs>
-          {glyphPaths.map((d, i) => (
+          {contours.map((d, i) => (
             <mask id={`${maskId}-${i}`} key={i}>
               <path
                 d={d}
                 fill="none"
                 stroke="white"
-                strokeWidth={FONT_SIZE * 0.7}
+                strokeWidth={FONT_SIZE * 0.6}
                 strokeLinecap="round"
                 strokeLinejoin="round"
                 style={{
-                  strokeDasharray: glyphLengths[i],
-                  strokeDashoffset: glyphLengths[i],
-                  animation: `write-signature ${timings[i].duration}ms linear ${timings[i].delay}ms forwards`,
+                  strokeDasharray: lengths[i],
+                  strokeDashoffset: lengths[i],
+                  animation: `trim-path ${timings[i].duration}ms linear ${timings[i].delay}ms forwards`,
                 }}
               />
             </mask>
           ))}
         </defs>
       )}
-      {glyphPaths.map((d, i) => (
+      {contours.map((d, i) => (
         <path
           key={i}
           d={d}
@@ -240,21 +249,27 @@ export default function SignatureWriter() {
               }
             `}
           >
-            {phase === "accepted" ? <CheckIcon animated /> : <PencilIcon />}
+            {phase === "accepted" ? (
+              <CheckIcon animated />
+            ) : (
+              <PencilIcon />
+            )}
           </div>
 
           {/* ── Title & Description ─────────────────────────── */}
           <div className="space-y-3">
             <h2 className="text-[22px] font-heading text-white/90 tracking-[-0.01em] leading-tight">
-              {phase === "accepted" ? "Contract Signed" : "Sign the Contract"}
+              {phase === "accepted"
+                ? "Contract Signed"
+                : "Sign the Contract"}
             </h2>
             <p className="text-[13px] text-white/35 leading-[1.65] font-body">
               {phase === "accepted" ? (
                 "Your signature has been recorded. The contract is now in effect."
               ) : (
                 <>
-                  Since you've read the fine lines, type your name to confirm
-                  you agree with{" "}
+                  Since you've read the fine lines, type your name to
+                  confirm you agree with{" "}
                   <span className="text-white/55">the terms</span>.
                 </>
               )}
@@ -263,7 +278,6 @@ export default function SignatureWriter() {
 
           {/* ── Signature Pad ───────────────────────────────── */}
           <div className="relative bg-[#111] border border-white/[0.04] rounded-xl overflow-hidden">
-            {/* Writing area */}
             <div className="px-5 pt-5 pb-3 min-h-[96px] flex items-center justify-center">
               {/* Input (idle) */}
               {phase === "idle" && (
@@ -281,17 +295,17 @@ export default function SignatureWriter() {
                 />
               )}
 
-              {/* Hidden SVG for measuring per-glyph path lengths */}
-              {phase === "signing" && !ready && glyphPaths.length > 0 && (
+              {/* Hidden SVG for measuring contour lengths */}
+              {phase === "signing" && !ready && contours.length > 0 && (
                 <svg
                   className="absolute opacity-0 pointer-events-none"
                   viewBox={viewBox}
                 >
-                  {glyphPaths.map((d, i) => (
+                  {contours.map((d, i) => (
                     <path
                       key={i}
                       ref={(el) => {
-                        pathRefs.current[i] = el;
+                        contourRefs.current[i] = el;
                       }}
                       d={d}
                     />
@@ -310,7 +324,7 @@ export default function SignatureWriter() {
               )}
 
               {/* Static signature (accepted) */}
-              {phase === "accepted" && glyphPaths.length > 0 && (
+              {phase === "accepted" && contours.length > 0 && (
                 <div className="w-full h-[60px]">
                   <SignatureSVG animated={false} />
                 </div>
