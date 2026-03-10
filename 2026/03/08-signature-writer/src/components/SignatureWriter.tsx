@@ -14,11 +14,15 @@ interface SampledPoint {
   y: number;
 }
 
+interface ContourStroke {
+  points: SampledPoint[];
+  lengths: number[];
+  totalLength: number;
+}
+
 interface SignatureData {
-  fullPath: opentype.Path;        // for ctx.fill() — solid filled letters
-  wiperPoints: SampledPoint[];    // concatenated contour samples for the wiper
-  wiperLengths: number[];
-  wiperTotalLength: number;
+  fullPath: opentype.Path;        // for final filled render
+  contours: ContourStroke[];      // individual contour strokes for animation
   width: number;
   height: number;
   ascender: number;
@@ -26,9 +30,11 @@ interface SignatureData {
 
 const FONT_SIZE = 80;
 const FILL_COLOR = "#ede8e0";
-const WIPER_WIDTH = FONT_SIZE * 0.7;
-const BASE_DUR = 1200;
-const PER_CHAR = 180;
+const STROKE_W = 2;              // stroke width in font units
+
+// Per-contour timeline constants
+const TOTAL_CAP = 1200;          // hard cap: entire animation ≤ 1.2s
+const PAUSE = 80;
 
 // ─────────────────────────────────────────────────────────────────
 // Math
@@ -145,7 +151,7 @@ function findPointAtDistance(
 }
 
 // ─────────────────────────────────────────────────────────────────
-// Glyph processing — build signature data for fill + wiper reveal
+// Glyph processing — build signature data with per-contour strokes
 // ─────────────────────────────────────────────────────────────────
 
 function buildSignatureData(
@@ -158,7 +164,7 @@ function buildSignatureData(
   const descender = Math.abs(font.descender * scale);
   const height = ascender + descender;
 
-  // Single combined filled path for the whole name
+  // Single combined filled path for the whole name (used at end)
   const fullPath = font.getPath(trimmed, 0, ascender, FONT_SIZE);
   const d = fullPath.toPathData(2);
 
@@ -174,39 +180,122 @@ function buildSignatureData(
     totalWidth += advance + kern;
   }
 
-  // Sample contours and sort by leftmost X for left-to-right wiper
+  // Sample contours into individual strokes, sorted left-to-right
   const contourStrings = splitContours(d);
-  const contourData: { minX: number; points: SampledPoint[] }[] = [];
+  const contourData: { minX: number; stroke: ContourStroke }[] = [];
 
   for (const contour of contourStrings) {
     const points = samplePath(contour, 1.5);
     if (points.length >= 2) {
       const minX = Math.min(...points.map((p) => p.x));
-      contourData.push({ minX, points });
+      const { lengths, totalLength } = computeLengths(points);
+      contourData.push({ minX, stroke: { points, lengths, totalLength } });
     }
   }
 
-  // Sort contours left-to-right
   contourData.sort((a, b) => a.minX - b.minX);
-
-  // Concatenate all sorted contour points into one wiper path
-  const allPoints: SampledPoint[] = [];
-  for (const c of contourData) {
-    allPoints.push(...c.points);
-  }
-
-  const { lengths: wiperLengths, totalLength: wiperTotalLength } =
-    computeLengths(allPoints);
 
   return {
     fullPath,
-    wiperPoints: allPoints,
-    wiperLengths,
-    wiperTotalLength,
+    contours: contourData.map((c) => c.stroke),
     width: totalWidth,
     height,
     ascender,
   };
+}
+
+// ─────────────────────────────────────────────────────────────────
+// Stroke drawing — ported from 10-follow-draw/src/drawing.ts
+// ─────────────────────────────────────────────────────────────────
+
+/** Draw a complete contour stroke */
+function drawContourFull(ctx: CanvasRenderingContext2D, contour: ContourStroke) {
+  if (contour.points.length < 2) return;
+  ctx.beginPath();
+  ctx.moveTo(contour.points[0].x, contour.points[0].y);
+  for (let i = 1; i < contour.points.length; i++) {
+    ctx.lineTo(contour.points[i].x, contour.points[i].y);
+  }
+  ctx.stroke();
+}
+
+/** Draw a partial contour stroke with trailing taper */
+function drawContourWithTaper(
+  ctx: CanvasRenderingContext2D,
+  contour: ContourStroke,
+  endIndex: number,
+  endFrac: number,
+  currentDistance: number,
+  baseWidth: number
+) {
+  const { points, lengths } = contour;
+  if (points.length < 2 || endIndex < 0) return;
+
+  const actualEnd = Math.min(endIndex, points.length - 1);
+  const taperZone = currentDistance * 0.06;
+  const taperStart = currentDistance - taperZone;
+
+  ctx.save();
+  ctx.lineWidth = baseWidth;
+  ctx.beginPath();
+  ctx.moveTo(points[0].x, points[0].y);
+
+  let taperBeginIdx = actualEnd + 1;
+  for (let i = 1; i <= actualEnd; i++) {
+    if (lengths[i] >= taperStart && taperBeginIdx > actualEnd) {
+      taperBeginIdx = i;
+    }
+    ctx.lineTo(points[i].x, points[i].y);
+  }
+
+  // Interpolated fractional endpoint
+  if (endFrac > 0 && actualEnd + 1 < points.length) {
+    const nx = points[actualEnd].x + (points[actualEnd + 1].x - points[actualEnd].x) * endFrac;
+    const ny = points[actualEnd].y + (points[actualEnd + 1].y - points[actualEnd].y) * endFrac;
+    ctx.lineTo(nx, ny);
+  }
+
+  ctx.stroke();
+
+  // Overdraw taper zone with decreasing width + opacity
+  if (taperZone > 2 && taperBeginIdx <= actualEnd) {
+    const startPt = Math.max(0, taperBeginIdx - 1);
+    const endPt = endFrac > 0 && actualEnd + 1 < points.length ? actualEnd + 1 : actualEnd;
+    const taperPoints: { x: number; y: number; dist: number }[] = [];
+
+    for (let i = startPt; i <= Math.min(endPt, actualEnd); i++) {
+      taperPoints.push({ x: points[i].x, y: points[i].y, dist: lengths[i] });
+    }
+
+    if (endFrac > 0 && actualEnd + 1 < points.length) {
+      const nx = points[actualEnd].x + (points[actualEnd + 1].x - points[actualEnd].x) * endFrac;
+      const ny = points[actualEnd].y + (points[actualEnd + 1].y - points[actualEnd].y) * endFrac;
+      const nd = lengths[actualEnd] + (lengths[Math.min(actualEnd + 1, lengths.length - 1)] - lengths[actualEnd]) * endFrac;
+      taperPoints.push({ x: nx, y: ny, dist: nd });
+    }
+
+    if (taperPoints.length >= 2) {
+      for (let i = 0; i < taperPoints.length - 1; i++) {
+        const d0 = taperPoints[i].dist;
+        const d1 = taperPoints[i + 1].dist;
+        const midDist = (d0 + d1) / 2;
+
+        if (midDist < taperStart) continue;
+
+        const progress = Math.min(1, (midDist - taperStart) / taperZone);
+        ctx.lineWidth = baseWidth * (1 - progress * 0.6);
+        ctx.globalAlpha = 1 - progress * 0.3;
+        ctx.beginPath();
+        ctx.moveTo(taperPoints[i].x, taperPoints[i].y);
+        ctx.lineTo(taperPoints[i + 1].x, taperPoints[i + 1].y);
+        ctx.stroke();
+      }
+    }
+  }
+
+  ctx.globalAlpha = 1;
+  ctx.lineWidth = baseWidth;
+  ctx.restore();
 }
 
 /** Trace an opentype.Path onto a canvas context without filling/stroking */
@@ -266,7 +355,6 @@ export default function SignatureWriter() {
   const [fontLoaded, setFontLoaded] = useState(false);
 
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const maskCanvasRef = useRef<HTMLCanvasElement | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const rafRef = useRef<number>(0);
   const sigDataRef = useRef<SignatureData | null>(null);
@@ -308,20 +396,12 @@ export default function SignatureWriter() {
       const ctx = canvas.getContext("2d")!;
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
 
-      // Create offscreen mask canvas at same size
-      const maskCanvas = document.createElement("canvas");
-      maskCanvas.width = containerWidth * dpr;
-      maskCanvas.height = containerHeight * dpr;
-      const maskCtx = maskCanvas.getContext("2d")!;
-      maskCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
-      maskCanvasRef.current = maskCanvas;
-
       canvasDimsRef.current = { w: containerWidth, h: containerHeight, offsetX, offsetY, scale };
     },
     []
   );
 
-  // ── Draw filled text (no mask) ───────────────────────────────
+  // ── Draw filled text ────────────────────────────────────────
   const drawFilledText = useCallback(
     (ctx: CanvasRenderingContext2D, sigData: SignatureData) => {
       const { w, h, offsetX, offsetY, scale } = canvasDimsRef.current;
@@ -349,96 +429,82 @@ export default function SignatureWriter() {
     }, 250);
   }, []);
 
-  // ── Animation ────────────────────────────────────────────────
+  // ── Animation — per-contour timeline with taper ─────────────
   const playAnimation = useCallback(() => {
     const sigData = sigDataRef.current;
-    if (!sigData || sigData.wiperPoints.length < 2) return;
+    if (!sigData || sigData.contours.length === 0) return;
 
     const canvas = canvasRef.current;
-    const maskCanvas = maskCanvasRef.current;
-    if (!canvas || !maskCanvas) return;
+    if (!canvas) return;
 
     const ctx = canvas.getContext("2d");
-    const maskCtx = maskCanvas.getContext("2d");
-    if (!ctx || !maskCtx) return;
+    if (!ctx) return;
 
     const { offsetX, offsetY, scale } = canvasDimsRef.current;
     const dpr = window.devicePixelRatio || 1;
+    const { contours } = sigData;
 
-    const nameLen = (sigData.width / (FONT_SIZE * 0.5)); // rough char count proxy
-    const totalDuration = clamp(BASE_DUR + nameLen * PER_CHAR, 1000, 3500);
+    // Build per-contour timeline
+    const durations = contours.map((c) => {
+      const dur = (c.totalLength / 200) * 800;
+      return clamp(dur, MIN_DUR, MAX_DUR);
+    });
+
+    const timeline: { contourIndex: number; startTime: number; duration: number }[] = [];
+    let t = 0;
+    for (let i = 0; i < contours.length; i++) {
+      timeline.push({ contourIndex: i, startTime: t, duration: durations[i] });
+      t += durations[i] + PAUSE;
+    }
+    const totalDuration = t - PAUSE;
+
     const startTime = performance.now();
 
     const frame = () => {
       const elapsed = performance.now() - startTime;
-      const rawT = Math.min(1, elapsed / totalDuration);
-      const easedT = cubicBezierEase(rawT);
 
-      // 1. Clear both canvases
+      // Clear canvas
       ctx.save();
       ctx.setTransform(1, 0, 0, 1, 0, 0);
       ctx.clearRect(0, 0, canvas.width, canvas.height);
       ctx.restore();
 
-      maskCtx.save();
-      maskCtx.setTransform(1, 0, 0, 1, 0, 0);
-      maskCtx.clearRect(0, 0, maskCanvas.width, maskCanvas.height);
-      maskCtx.restore();
-
-      // 2. Mask canvas: draw thick wiper stroke up to current distance
-      const wiperDist = easedT * sigData.wiperTotalLength;
-      const { index, frac } = findPointAtDistance(sigData.wiperLengths, wiperDist);
-
-      maskCtx.save();
-      maskCtx.translate(offsetX, offsetY);
-      maskCtx.scale(scale, scale);
-      maskCtx.strokeStyle = "#fff";
-      maskCtx.lineWidth = WIPER_WIDTH;
-      maskCtx.lineCap = "round";
-      maskCtx.lineJoin = "round";
-      maskCtx.beginPath();
-      maskCtx.moveTo(sigData.wiperPoints[0].x, sigData.wiperPoints[0].y);
-
-      const endIdx = Math.min(index, sigData.wiperPoints.length - 1);
-      for (let i = 1; i <= endIdx; i++) {
-        maskCtx.lineTo(sigData.wiperPoints[i].x, sigData.wiperPoints[i].y);
-      }
-      // Interpolated final point
-      if (frac > 0 && endIdx + 1 < sigData.wiperPoints.length) {
-        const nx =
-          sigData.wiperPoints[endIdx].x +
-          (sigData.wiperPoints[endIdx + 1].x - sigData.wiperPoints[endIdx].x) * frac;
-        const ny =
-          sigData.wiperPoints[endIdx].y +
-          (sigData.wiperPoints[endIdx + 1].y - sigData.wiperPoints[endIdx].y) * frac;
-        maskCtx.lineTo(nx, ny);
-      }
-      maskCtx.stroke();
-      maskCtx.restore();
-
-      // 3. Main canvas: draw full filled text
+      // Set stroke style in transformed space
       ctx.save();
       ctx.translate(offsetX, offsetY);
       ctx.scale(scale, scale);
-      ctx.fillStyle = FILL_COLOR;
-      tracePath(ctx, sigData.fullPath);
-      ctx.fill();
-      ctx.restore();
+      ctx.strokeStyle = FILL_COLOR;
+      ctx.lineWidth = STROKE_W;
+      ctx.lineCap = "round";
+      ctx.lineJoin = "round";
 
-      // 4. Composite: clip filled text to wiper mask region
-      ctx.save();
-      ctx.globalCompositeOperation = "destination-in";
-      // Draw mask canvas onto main canvas at pixel level
-      ctx.setTransform(1, 0, 0, 1, 0, 0);
-      ctx.drawImage(maskCanvas, 0, 0);
+      for (const entry of timeline) {
+        const contour = contours[entry.contourIndex];
+        const localElapsed = elapsed - entry.startTime;
+
+        if (localElapsed <= 0) continue;
+
+        if (localElapsed >= entry.duration) {
+          // Completed — draw full stroke
+          drawContourFull(ctx, contour);
+          continue;
+        }
+
+        // In progress — draw partial with taper
+        const rawT = localElapsed / entry.duration;
+        const easedT = cubicBezierEase(rawT);
+        const dist = easedT * contour.totalLength;
+        const { index, frac } = findPointAtDistance(contour.lengths, dist);
+        drawContourWithTaper(ctx, contour, index, frac, dist, STROKE_W);
+      }
+
       ctx.restore();
-      // Reset transform for next frame
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
 
-      if (rawT < 1) {
+      if (elapsed < totalDuration) {
         rafRef.current = requestAnimationFrame(frame);
       } else {
-        // Final clean frame — full filled text, no mask needed
+        // Final frame — transition to filled text
         drawFilledText(ctx, sigData);
         setPhase("accepted");
         fireConfetti();
@@ -476,7 +542,6 @@ export default function SignatureWriter() {
     setTimeout(() => {
       cancelAnimationFrame(rafRef.current);
       sigDataRef.current = null;
-      maskCanvasRef.current = null;
       setPhase("idle");
       setName("");
       setClosing(false);
