@@ -1,5 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from "react";
+import { createPortal } from "react-dom";
 import opentype from "opentype.js";
+import confetti from "canvas-confetti";
 
 // ─────────────────────────────────────────────────────────────────
 // Types & Constants
@@ -252,34 +254,6 @@ function PencilIcon() {
   );
 }
 
-function CheckIcon({ animated = false }: { animated?: boolean }) {
-  return (
-    <svg
-      width="18"
-      height="18"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2.5"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    >
-      <polyline
-        points="20 6 9 17 4 12"
-        {...(animated
-          ? {
-              style: {
-                strokeDasharray: 25,
-                strokeDashoffset: 25,
-                animation: "draw-check 500ms ease-out 300ms forwards",
-              },
-            }
-          : {})}
-      />
-    </svg>
-  );
-}
-
 // ─────────────────────────────────────────────────────────────────
 // Component
 // ─────────────────────────────────────────────────────────────────
@@ -287,6 +261,7 @@ function CheckIcon({ animated = false }: { animated?: boolean }) {
 export default function SignatureWriter() {
   const [name, setName] = useState("");
   const [phase, setPhase] = useState<Phase>("idle");
+  const [closing, setClosing] = useState(false);
   const [font, setFont] = useState<opentype.Font | null>(null);
   const [fontLoaded, setFontLoaded] = useState(false);
 
@@ -305,12 +280,9 @@ export default function SignatureWriter() {
     });
   }, []);
 
-  // ── Setup canvas for retina ──────────────────────────────────
+  // ── Setup canvas for modal ──────────────────────────────────
   const setupCanvas = useCallback(
-    (
-      width: number,
-      height: number
-    ) => {
+    (width: number, height: number) => {
       const canvas = canvasRef.current;
       const container = containerRef.current;
       if (!canvas || !container) return;
@@ -319,9 +291,9 @@ export default function SignatureWriter() {
       const containerWidth = container.clientWidth;
       const containerHeight = container.clientHeight;
 
-      // Scale to match the ~34px input text size
-      const targetHeight = 34;
-      const scale = targetHeight / height;
+      // Scale to fill ~85% of modal container width
+      const maxDrawWidth = containerWidth * 0.85;
+      const scale = Math.min(maxDrawWidth / width, containerHeight * 0.6 / height);
 
       const drawW = width * scale;
       const drawH = height * scale;
@@ -364,6 +336,18 @@ export default function SignatureWriter() {
     },
     []
   );
+
+  // ── Fire confetti ───────────────────────────────────────────
+  const fireConfetti = useCallback(() => {
+    const defaults = {
+      colors: ["#34d399", "#6ee7b7", "#a7f3d0", "#ffffff", "#d1fae5"],
+      disableForReducedMotion: true,
+    };
+    confetti({ ...defaults, particleCount: 60, spread: 55, origin: { x: 0.4, y: 0.5 } });
+    setTimeout(() => {
+      confetti({ ...defaults, particleCount: 40, spread: 65, origin: { x: 0.6, y: 0.5 } });
+    }, 250);
+  }, []);
 
   // ── Animation ────────────────────────────────────────────────
   const playAnimation = useCallback(() => {
@@ -456,37 +440,58 @@ export default function SignatureWriter() {
       } else {
         // Final clean frame — full filled text, no mask needed
         drawFilledText(ctx, sigData);
-        setTimeout(() => setPhase("accepted"), 400);
+        setPhase("accepted");
+        fireConfetti();
       }
     };
 
     rafRef.current = requestAnimationFrame(frame);
-  }, [drawFilledText]);
+  }, [drawFilledText, fireConfetti]);
+
+  // ── Trigger animation when modal mounts in signing phase ────
+  useEffect(() => {
+    if (phase !== "signing") return;
+    const sigData = sigDataRef.current;
+    if (!sigData) return;
+
+    // Wait one rAF for the modal portal to mount
+    const id = requestAnimationFrame(() => {
+      setupCanvas(sigData.width, sigData.height);
+      playAnimation();
+    });
+    return () => cancelAnimationFrame(id);
+  }, [phase, setupCanvas, playAnimation]);
 
   // ── Sign handler ─────────────────────────────────────────────
   const handleSign = useCallback(() => {
     if (!font || !name.trim()) return;
-
-    const sigData = buildSignatureData(font, name);
-    sigDataRef.current = sigData;
-
+    sigDataRef.current = buildSignatureData(font, name);
     setPhase("signing");
+  }, [font, name]);
 
-    // Wait one frame for the canvas to mount, then setup + animate
-    requestAnimationFrame(() => {
-      setupCanvas(sigData.width, sigData.height);
-      playAnimation();
-    });
-  }, [font, name, setupCanvas, playAnimation]);
+  // ── Close modal with exit animation ─────────────────────────
+  const handleClose = useCallback(() => {
+    if (closing) return;
+    setClosing(true);
+    setTimeout(() => {
+      cancelAnimationFrame(rafRef.current);
+      sigDataRef.current = null;
+      maskCanvasRef.current = null;
+      setPhase("idle");
+      setName("");
+      setClosing(false);
+    }, 300);
+  }, [closing]);
 
-  // ── Reset ────────────────────────────────────────────────────
-  const handleReset = () => {
-    cancelAnimationFrame(rafRef.current);
-    sigDataRef.current = null;
-    maskCanvasRef.current = null;
-    setPhase("idle");
-    setName("");
-  };
+  // ── Escape key handler ──────────────────────────────────────
+  useEffect(() => {
+    if (phase === "idle") return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") handleClose();
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [phase, handleClose]);
 
   // Clean up on unmount
   useEffect(() => {
@@ -494,80 +499,44 @@ export default function SignatureWriter() {
   }, []);
 
   const canSign = name.trim().length > 0 && fontLoaded;
+  const modalOpen = phase !== "idle";
 
   return (
     <div className="min-h-screen grid place-items-center bg-[#141414] p-6 font-body antialiased selection:bg-white/10">
       <div className="w-full max-w-[420px]">
-        <div
-          className={`
-            bg-[#1c1c1c] border rounded-2xl p-7 flex flex-col gap-6
-            shadow-2xl shadow-black/50 transition-colors duration-700
-            ${phase === "accepted" ? "border-emerald-500/10" : "border-white/[0.06]"}
-          `}
-        >
+        <div className="bg-[#1c1c1c] border border-white/[0.06] rounded-2xl p-7 flex flex-col gap-6 shadow-2xl shadow-black/50">
           {/* ── Icon Badge ──────────────────────────────────── */}
-          <div
-            className={`
-              size-10 rounded-full grid place-items-center border
-              transition-all duration-700
-              ${
-                phase === "accepted"
-                  ? "bg-emerald-500/10 border-emerald-500/20 text-emerald-400"
-                  : "bg-white/[0.03] border-white/[0.06] text-white/40"
-              }
-            `}
-          >
-            {phase === "accepted" ? <CheckIcon animated /> : <PencilIcon />}
+          <div className="size-10 rounded-full grid place-items-center border bg-white/[0.03] border-white/[0.06] text-white/40">
+            <PencilIcon />
           </div>
 
           {/* ── Title & Description ─────────────────────────── */}
           <div className="space-y-3">
             <h2 className="text-[22px] font-heading text-white/90 tracking-[-0.01em] leading-tight">
-              {phase === "accepted" ? "Contract Signed" : "Sign the Contract"}
+              Sign the Contract
             </h2>
             <p className="text-[13px] text-white/35 leading-[1.65] font-body">
-              {phase === "accepted" ? (
-                "Your signature has been recorded. The contract is now in effect."
-              ) : (
-                <>
-                  Since you've read the fine lines, type your name to confirm
-                  you agree with{" "}
-                  <span className="text-white/55">the terms</span>.
-                </>
-              )}
+              Since you've read the fine lines, type your name to confirm
+              you agree with{" "}
+              <span className="text-white/55">the terms</span>.
             </p>
           </div>
 
           {/* ── Signature Pad ───────────────────────────────── */}
           <div className="relative bg-[#111] border border-white/[0.04] rounded-xl overflow-hidden">
-            <div
-              ref={containerRef}
-              className="px-5 pt-5 pb-3 min-h-[96px] flex items-center justify-center"
-            >
-              {/* Input (idle) */}
-              {phase === "idle" && (
-                <input
-                  type="text"
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  onKeyDown={(e) =>
-                    e.key === "Enter" && canSign && handleSign()
-                  }
-                  placeholder="Your full name"
-                  disabled={!fontLoaded}
-                  autoFocus
-                  className="w-full bg-transparent text-[#ede8e0] text-[34px] font-signature text-center outline-none placeholder:text-white/[0.12] disabled:opacity-30 leading-none"
-                />
-              )}
-
-              {/* Canvas-based animated signature */}
-              {(phase === "signing" || phase === "accepted") && (
-                <canvas
-                  ref={canvasRef}
-                  className="w-full h-full"
-                  style={{ animation: "fade-in 200ms ease both" }}
-                />
-              )}
+            <div className="px-5 pt-5 pb-3 min-h-[96px] flex items-center justify-center">
+              <input
+                type="text"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                onKeyDown={(e) =>
+                  e.key === "Enter" && canSign && handleSign()
+                }
+                placeholder="Your full name"
+                disabled={!fontLoaded || phase !== "idle"}
+                autoFocus
+                className="w-full bg-transparent text-[#ede8e0] text-[34px] font-signature text-center outline-none placeholder:text-white/[0.12] disabled:opacity-30 leading-none"
+              />
             </div>
 
             {/* Signature line */}
@@ -580,45 +549,87 @@ export default function SignatureWriter() {
           </div>
 
           {/* ── Button ──────────────────────────────────────── */}
-          {phase === "accepted" ? (
-            <button
-              onClick={handleReset}
-              className="
-                w-full h-11 rounded-xl text-[13px] font-medium font-body
-                bg-emerald-500/[0.08] text-emerald-400 border border-emerald-500/15
-                cursor-pointer hover:bg-emerald-500/[0.12]
-                active:scale-[0.98] transition-all duration-200
-              "
-            >
-              Accepted
-            </button>
-          ) : (
-            <button
-              onClick={handleSign}
-              disabled={!canSign || phase === "signing"}
-              className="
-                w-full h-11 rounded-xl text-[13px] font-medium font-body
-                bg-white text-[#111] cursor-pointer
-                hover:bg-white/90 active:scale-[0.98]
-                disabled:opacity-20 disabled:cursor-not-allowed disabled:active:scale-100
-                transition-all duration-200
-              "
-            >
-              {phase === "signing" ? (
-                <span className="flex items-center justify-center gap-2">
-                  <span
-                    className="size-1.5 rounded-full bg-current"
-                    style={{ animation: "pulse-dot 1.2s ease infinite" }}
-                  />
-                  Signing
-                </span>
-              ) : (
-                "Sign & Accept"
-              )}
-            </button>
-          )}
+          <button
+            onClick={handleSign}
+            disabled={!canSign || phase !== "idle"}
+            className="
+              w-full h-11 rounded-xl text-[13px] font-medium font-body
+              bg-white text-[#111] cursor-pointer
+              hover:bg-white/90 active:scale-[0.98]
+              disabled:opacity-20 disabled:cursor-not-allowed disabled:active:scale-100
+              transition-all duration-200
+            "
+          >
+            Sign & Accept
+          </button>
         </div>
       </div>
+
+      {/* ── Modal Portal ────────────────────────────────────── */}
+      {modalOpen &&
+        createPortal(
+          <div
+            className="fixed inset-0 z-50 grid place-items-center p-6"
+            style={{
+              animation: `${closing ? "modal-backdrop-out" : "modal-backdrop-in"} 300ms ease both`,
+            }}
+          >
+            {/* Backdrop */}
+            <div
+              className="absolute inset-0 bg-black/70 backdrop-blur-xl"
+              onClick={handleClose}
+            />
+
+            {/* Modal card */}
+            <div
+              className="relative w-full max-w-[560px] bg-[#1a1a1a]/95 border border-white/[0.08] rounded-2xl shadow-2xl shadow-black/60 overflow-hidden"
+              style={{
+                animation: `${closing ? "modal-content-out" : "modal-content-in"} 300ms ease both`,
+              }}
+            >
+              {/* Close button */}
+              <button
+                onClick={handleClose}
+                className="absolute top-4 right-4 size-8 rounded-full grid place-items-center bg-white/[0.05] border border-white/[0.08] text-white/40 hover:text-white/70 hover:bg-white/[0.1] transition-colors cursor-pointer z-10"
+              >
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <line x1="18" y1="6" x2="6" y2="18" />
+                  <line x1="6" y1="6" x2="18" y2="18" />
+                </svg>
+              </button>
+
+              {/* Canvas container */}
+              <div
+                ref={containerRef}
+                className="h-[280px] flex items-center justify-center px-6"
+              >
+                <canvas
+                  ref={canvasRef}
+                  className="w-full h-full"
+                />
+              </div>
+
+              {/* Signature line */}
+              <div className="mx-8 h-px bg-white/[0.06]" />
+
+              {/* Label + status */}
+              <div className="flex items-center justify-between px-8 py-4">
+                <p className="text-[9px] text-white/[0.15] uppercase tracking-[0.25em] font-body select-none">
+                  Signature
+                </p>
+                {phase === "accepted" && (
+                  <p
+                    className="text-[11px] text-emerald-400/80 font-medium font-body"
+                    style={{ animation: "fade-in 400ms ease both" }}
+                  >
+                    Signed successfully
+                  </p>
+                )}
+              </div>
+            </div>
+          </div>,
+          document.body
+        )}
     </div>
   );
 }
