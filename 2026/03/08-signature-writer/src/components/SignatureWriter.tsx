@@ -1,11 +1,4 @@
-import {
-  useState,
-  useEffect,
-  useCallback,
-  useId,
-  useMemo,
-  useRef,
-} from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import opentype from "opentype.js";
 
 // ─────────────────────────────────────────────────────────────────
@@ -14,30 +7,80 @@ import opentype from "opentype.js";
 
 type Phase = "idle" | "signing" | "accepted";
 
-interface ContourData {
-  d: string;
-  length: number;
+interface SampledPoint {
+  x: number;
+  y: number;
+}
+
+interface GlyphStroke {
+  points: SampledPoint[];
+  lengths: number[]; // cumulative distance at each point
+  totalLength: number;
 }
 
 const FONT_SIZE = 80;
-const DRAW_MS = 2200;
 const PAD = 16;
-const DEV_SLIDER = true;
+const STROKE_COLOR = "#ede8e0";
+const STROKE_WIDTH = 2.2;
+const MIN_STROKE_DUR = 400;
+const MAX_STROKE_DUR = 1400;
+const LETTER_PAUSE = 100; // ms between letters
+const CONTOUR_PAUSE = 40; // ms between contours within a letter
 
-/** Easing: fast attack, smooth decel — mimics pen pressure */
-function easeInOutCubic(t: number): number {
-  return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
+// ─────────────────────────────────────────────────────────────────
+// Math
+// ─────────────────────────────────────────────────────────────────
+
+/** cubic-bezier(0, 0, 0, 1) — slow build, accelerates to finish */
+function cubicBezierEase(t: number): number {
+  const x1 = 0, y1 = 0, x2 = 0, y2 = 1;
+  let u = t;
+  for (let i = 0; i < 8; i++) {
+    const xu =
+      3 * x1 * (1 - u) * (1 - u) * u +
+      3 * x2 * (1 - u) * u * u +
+      u * u * u;
+    const dxu =
+      3 * x1 * (1 - u) * (1 - u) -
+      6 * x1 * (1 - u) * u +
+      6 * x2 * (1 - u) * u -
+      3 * x2 * u * u +
+      3 * u * u;
+    if (Math.abs(dxu) < 1e-6) break;
+    u -= (xu - t) / dxu;
+    u = Math.max(0, Math.min(1, u));
+  }
+  return (
+    3 * y1 * (1 - u) * (1 - u) * u +
+    3 * y2 * (1 - u) * u * u +
+    u * u * u
+  );
 }
 
-function clamp(v: number, min: number, max: number): number {
+function clamp(v: number, min: number, max: number) {
   return Math.min(Math.max(v, min), max);
 }
 
 // ─────────────────────────────────────────────────────────────────
-// Helpers
+// Path sampling — convert SVG path to point arrays
 // ─────────────────────────────────────────────────────────────────
 
-/** Split an SVG path `d` attribute into individual contours (subpaths). */
+const _svgNs = "http://www.w3.org/2000/svg";
+let _measureSvg: SVGSVGElement | null = null;
+let _measurePath: SVGPathElement | null = null;
+
+function ensureMeasureElements() {
+  if (!_measureSvg) {
+    _measureSvg = document.createElementNS(_svgNs, "svg");
+    _measurePath = document.createElementNS(_svgNs, "path");
+    _measureSvg.appendChild(_measurePath);
+    _measureSvg.style.cssText =
+      "position:absolute;width:0;height:0;overflow:hidden;opacity:0;pointer-events:none";
+    document.body.appendChild(_measureSvg);
+  }
+}
+
+/** Split an SVG path `d` into individual subpaths (M...M) */
 function splitContours(d: string): string[] {
   return d
     .split(/(?=M)/)
@@ -45,30 +88,211 @@ function splitContours(d: string): string[] {
     .filter((s) => s.length > 3);
 }
 
-/** Measure a path's length without ever rendering it to the DOM.
- *  Uses an offscreen SVG namespace element — no layout thrash. */
-const measurePath = (() => {
-  let svg: SVGSVGElement | null = null;
-  let pathEl: SVGPathElement | null = null;
+/** Sample evenly-spaced points along an SVG path */
+function samplePath(d: string, spacing = 1.5): SampledPoint[] {
+  ensureMeasureElements();
+  _measurePath!.setAttribute("d", d);
+  const totalLen = _measurePath!.getTotalLength();
+  if (totalLen < 1) return [];
 
-  return (d: string): number => {
-    if (!svg) {
-      svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
-      pathEl = document.createElementNS("http://www.w3.org/2000/svg", "path");
-      svg.appendChild(pathEl);
-      // Append to body but keep invisible — required for getTotalLength()
-      svg.style.position = "absolute";
-      svg.style.width = "0";
-      svg.style.height = "0";
-      svg.style.overflow = "hidden";
-      svg.style.opacity = "0";
-      svg.style.pointerEvents = "none";
-      document.body.appendChild(svg);
+  const count = Math.max(2, Math.ceil(totalLen / spacing));
+  const points: SampledPoint[] = [];
+  for (let i = 0; i <= count; i++) {
+    const pt = _measurePath!.getPointAtLength((i / count) * totalLen);
+    points.push({ x: pt.x, y: pt.y });
+  }
+  return points;
+}
+
+/** Compute cumulative lengths for a point array */
+function computeLengths(points: SampledPoint[]): {
+  lengths: number[];
+  totalLength: number;
+} {
+  const lengths: number[] = [0];
+  let total = 0;
+  for (let i = 1; i < points.length; i++) {
+    const dx = points[i].x - points[i - 1].x;
+    const dy = points[i].y - points[i - 1].y;
+    total += Math.sqrt(dx * dx + dy * dy);
+    lengths.push(total);
+  }
+  return { lengths, totalLength: total };
+}
+
+/** Binary search for point index at a given distance */
+function findPointAtDistance(
+  lengths: number[],
+  distance: number
+): { index: number; frac: number } {
+  if (distance <= 0) return { index: 0, frac: 0 };
+  if (distance >= lengths[lengths.length - 1])
+    return { index: lengths.length - 1, frac: 0 };
+
+  let lo = 0,
+    hi = lengths.length - 1;
+  while (lo < hi - 1) {
+    const mid = (lo + hi) >> 1;
+    if (lengths[mid] <= distance) lo = mid;
+    else hi = mid;
+  }
+  const segLen = lengths[hi] - lengths[lo];
+  const frac = segLen > 0 ? (distance - lengths[lo]) / segLen : 0;
+  return { index: lo, frac };
+}
+
+// ─────────────────────────────────────────────────────────────────
+// Canvas drawing
+// ─────────────────────────────────────────────────────────────────
+
+function drawStrokeFull(
+  ctx: CanvasRenderingContext2D,
+  points: SampledPoint[]
+) {
+  if (points.length < 2) return;
+  ctx.beginPath();
+  ctx.moveTo(points[0].x, points[0].y);
+  for (let i = 1; i < points.length; i++) {
+    ctx.lineTo(points[i].x, points[i].y);
+  }
+  ctx.stroke();
+}
+
+function drawStrokePartialWithTaper(
+  ctx: CanvasRenderingContext2D,
+  points: SampledPoint[],
+  endIndex: number,
+  endFrac: number,
+  lengths: number[],
+  currentDistance: number,
+  baseWidth: number
+) {
+  if (points.length < 2 || endIndex < 0) return;
+  const actualEnd = Math.min(endIndex, points.length - 1);
+  const taperZone = currentDistance * 0.08;
+  const taperStart = currentDistance - taperZone;
+
+  // Main body
+  ctx.save();
+  ctx.lineWidth = baseWidth;
+  ctx.beginPath();
+  ctx.moveTo(points[0].x, points[0].y);
+
+  let taperBeginIdx = actualEnd + 1;
+  for (let i = 1; i <= actualEnd; i++) {
+    if (lengths[i] >= taperStart && taperBeginIdx > actualEnd) {
+      taperBeginIdx = i;
     }
-    pathEl!.setAttribute("d", d);
-    return pathEl!.getTotalLength();
-  };
-})();
+    ctx.lineTo(points[i].x, points[i].y);
+  }
+
+  if (endFrac > 0 && actualEnd + 1 < points.length) {
+    const nx =
+      points[actualEnd].x +
+      (points[actualEnd + 1].x - points[actualEnd].x) * endFrac;
+    const ny =
+      points[actualEnd].y +
+      (points[actualEnd + 1].y - points[actualEnd].y) * endFrac;
+    ctx.lineTo(nx, ny);
+  }
+  ctx.stroke();
+
+  // Taper overdraw
+  if (taperZone > 1 && taperBeginIdx <= actualEnd) {
+    const startPt = Math.max(0, taperBeginIdx - 1);
+    const taperPts: { x: number; y: number; dist: number }[] = [];
+
+    for (let i = startPt; i <= Math.min(actualEnd, points.length - 1); i++) {
+      taperPts.push({ x: points[i].x, y: points[i].y, dist: lengths[i] });
+    }
+    if (endFrac > 0 && actualEnd + 1 < points.length) {
+      const nx =
+        points[actualEnd].x +
+        (points[actualEnd + 1].x - points[actualEnd].x) * endFrac;
+      const ny =
+        points[actualEnd].y +
+        (points[actualEnd + 1].y - points[actualEnd].y) * endFrac;
+      const nd =
+        lengths[actualEnd] +
+        (lengths[Math.min(actualEnd + 1, lengths.length - 1)] -
+          lengths[actualEnd]) *
+          endFrac;
+      taperPts.push({ x: nx, y: ny, dist: nd });
+    }
+
+    if (taperPts.length >= 2) {
+      for (let i = 0; i < taperPts.length - 1; i++) {
+        const midDist = (taperPts[i].dist + taperPts[i + 1].dist) / 2;
+        if (midDist < taperStart) continue;
+        const progress = Math.min(1, (midDist - taperStart) / taperZone);
+        ctx.lineWidth = baseWidth * (1 - progress * 0.5);
+        ctx.globalAlpha = 1 - progress * 0.35;
+        ctx.beginPath();
+        ctx.moveTo(taperPts[i].x, taperPts[i].y);
+        ctx.lineTo(taperPts[i + 1].x, taperPts[i + 1].y);
+        ctx.stroke();
+      }
+    }
+  }
+
+  ctx.globalAlpha = 1;
+  ctx.lineWidth = baseWidth;
+  ctx.restore();
+}
+
+// ─────────────────────────────────────────────────────────────────
+// Glyph processing — build strokes from font glyphs
+// ─────────────────────────────────────────────────────────────────
+
+interface LetterGroup {
+  strokes: GlyphStroke[];
+}
+
+function buildLetterGroups(
+  font: opentype.Font,
+  text: string
+): { groups: LetterGroup[]; width: number; height: number; ascender: number } {
+  const scale = FONT_SIZE / font.unitsPerEm;
+  const ascender = font.ascender * scale;
+  const descender = Math.abs(font.descender * scale);
+  const height = ascender + descender;
+
+  const glyphs = font.stringToGlyphs(text.trim());
+  const groups: LetterGroup[] = [];
+  let x = 0;
+
+  for (let i = 0; i < glyphs.length; i++) {
+    const glyph = glyphs[i];
+    const path = glyph.getPath(x, ascender, FONT_SIZE);
+    const d = path.toPathData(2);
+    const strokes: GlyphStroke[] = [];
+
+    if (d && d.length > 5) {
+      for (const contour of splitContours(d)) {
+        const points = samplePath(contour, 1.5);
+        if (points.length >= 2) {
+          const { lengths, totalLength } = computeLengths(points);
+          if (totalLength > 1) {
+            strokes.push({ points, lengths, totalLength });
+          }
+        }
+      }
+    }
+
+    if (strokes.length > 0) {
+      groups.push({ strokes });
+    }
+
+    const advance = (glyph.advanceWidth || 0) * scale;
+    const kern =
+      i < glyphs.length - 1
+        ? font.getKerningValue(glyph, glyphs[i + 1]) * scale
+        : 0;
+    x += advance + kern;
+  }
+
+  return { groups, width: x, height, ascender };
+}
 
 // ─────────────────────────────────────────────────────────────────
 // Icons
@@ -129,20 +353,11 @@ export default function SignatureWriter() {
   const [font, setFont] = useState<opentype.Font | null>(null);
   const [fontLoaded, setFontLoaded] = useState(false);
 
-  // Full combined path for proper filled rendering (holes stay hollow)
-  const [fullPath, setFullPath] = useState("");
-  // Split contours used only for the mask animation
-  const [contours, setContours] = useState<ContourData[]>([]);
-  const [viewBox, setViewBox] = useState("0 0 100 50");
-
-  const maskId = useId();
-
-  // ── Progress-driven animation refs ────────────────────────────
-  const progressRef = useRef(0);
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
   const rafRef = useRef<number>(0);
-  const maskPathsRef = useRef<(SVGPathElement | null)[]>([]);
-  const scrubbing = useRef(false);
-  const [sliderValue, setSliderValue] = useState(0);
+  const letterGroupsRef = useRef<LetterGroup[]>([]);
+  const canvasDimsRef = useRef({ w: 0, h: 0, offsetX: 0, offsetY: 0, scale: 1 });
 
   // ── Load font ────────────────────────────────────────────────
   useEffect(() => {
@@ -152,151 +367,199 @@ export default function SignatureWriter() {
     });
   }, []);
 
-  // ── Generate contours + measure lengths in one pass ──────────
-  const generateContours = useCallback((): {
-    full: string;
-    contours: ContourData[];
-  } => {
-    if (!font || !name.trim()) return { full: "", contours: [] };
+  // ── Setup canvas for retina ──────────────────────────────────
+  const setupCanvas = useCallback(
+    (
+      width: number,
+      height: number
+    ) => {
+      const canvas = canvasRef.current;
+      const container = containerRef.current;
+      if (!canvas || !container) return;
 
-    const scale = FONT_SIZE / font.unitsPerEm;
-    const ascender = font.ascender * scale;
-    const descender = Math.abs(font.descender * scale);
-    const height = ascender + descender;
+      const dpr = window.devicePixelRatio || 1;
+      const containerWidth = container.clientWidth;
+      const containerHeight = container.clientHeight;
 
-    const glyphs = font.stringToGlyphs(name.trim());
-    const result: ContourData[] = [];
-    const fullParts: string[] = [];
-    let x = 0;
+      // Scale glyph coordinate system to fit the container
+      const scaleX = (containerWidth - PAD * 2) / width;
+      const scaleY = (containerHeight - PAD * 2) / height;
+      const scale = Math.min(scaleX, scaleY);
 
-    for (let i = 0; i < glyphs.length; i++) {
-      const glyph = glyphs[i];
-      const path = glyph.getPath(x, ascender, FONT_SIZE);
-      const d = path.toPathData(2);
+      const drawW = width * scale;
+      const drawH = height * scale;
+      const offsetX = (containerWidth - drawW) / 2;
+      const offsetY = (containerHeight - drawH) / 2;
 
-      if (d && d.length > 5) {
-        fullParts.push(d);
-        for (const contour of splitContours(d)) {
-          result.push({
-            d: contour,
-            length: measurePath(contour),
-          });
-        }
-      }
+      canvas.width = containerWidth * dpr;
+      canvas.height = containerHeight * dpr;
+      canvas.style.width = `${containerWidth}px`;
+      canvas.style.height = `${containerHeight}px`;
 
-      const advance = (glyph.advanceWidth || 0) * scale;
-      const kern =
-        i < glyphs.length - 1
-          ? font.getKerningValue(glyph, glyphs[i + 1]) * scale
-          : 0;
-      x += advance + kern;
-    }
+      const ctx = canvas.getContext("2d")!;
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
 
-    setViewBox(`${-PAD} ${-PAD} ${x + PAD * 2} ${height + PAD * 2}`);
-    return { full: fullParts.join(" "), contours: result };
-  }, [font, name]);
-
-  // ── Pre-compute per-contour progress windows ─────────────────
-  const contourWindows = useMemo(() => {
-    const totalLength = contours.reduce((a, c) => a + c.length, 0);
-    if (totalLength === 0) return [];
-    const result: { start: number; end: number }[] = [];
-    let acc = 0;
-    for (const { length } of contours) {
-      const start = acc / totalLength;
-      const end = (acc + length) / totalLength;
-      result.push({ start, end });
-      acc += length;
-    }
-    return result;
-  }, [contours]);
-
-  // ── Apply progress to mask paths (no React re-render) ────────
-  const applyProgress = useCallback(
-    (progress: number) => {
-      for (let i = 0; i < contours.length; i++) {
-        const el = maskPathsRef.current[i];
-        if (!el) continue;
-        const w = contourWindows[i];
-        if (!w) continue;
-        const local = clamp((progress - w.start) / (w.end - w.start), 0, 1);
-        const offset = contours[i].length * (1 - local);
-        el.style.strokeDashoffset = `${offset}`;
-      }
+      canvasDimsRef.current = { w: containerWidth, h: containerHeight, offsetX, offsetY, scale };
     },
-    [contours, contourWindows],
+    []
   );
 
-  // ── Sign handler ─────────────────────────────────────────────
-  const handleSign = () => {
-    if (!font || !name.trim()) return;
+  // ── Get configured context ───────────────────────────────────
+  const getCtx = useCallback(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return null;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return null;
+    ctx.strokeStyle = STROKE_COLOR;
+    ctx.lineWidth = STROKE_WIDTH;
+    ctx.lineCap = "round";
+    ctx.lineJoin = "round";
+    ctx.globalAlpha = 1;
+    return ctx;
+  }, []);
 
-    const { full, contours: newContours } = generateContours();
-    setFullPath(full);
-    setContours(newContours);
-    setPhase("signing");
+  // ── Animation ────────────────────────────────────────────────
+  const playAnimation = useCallback(() => {
+    const groups = letterGroupsRef.current;
+    if (groups.length === 0) return;
 
-    // Pre-compute windows for the rAF closure (avoids stale React state)
-    const totalLength = newContours.reduce((a, c) => a + c.length, 0);
-    const windows: { start: number; end: number }[] = [];
-    let acc = 0;
-    for (const { length } of newContours) {
-      windows.push({
-        start: acc / totalLength,
-        end: (acc + length) / totalLength,
-      });
-      acc += length;
+    const ctx = getCtx();
+    if (!ctx) return;
+    const { w, h, offsetX, offsetY, scale } = canvasDimsRef.current;
+    const scaledWidth = STROKE_WIDTH / scale;
+
+    // Build timeline: each stroke gets its own entry
+    interface TimelineEntry {
+      groupIdx: number;
+      strokeIdx: number;
+      stroke: GlyphStroke;
+      startTime: number;
+      duration: number;
     }
 
-    progressRef.current = 0;
-    scrubbing.current = false;
-    setSliderValue(0);
+    const timeline: TimelineEntry[] = [];
+    let t = 0;
 
-    cancelAnimationFrame(rafRef.current);
-    // Wait for React to paint the SVG before starting
+    for (let g = 0; g < groups.length; g++) {
+      const group = groups[g];
+      for (let s = 0; s < group.strokes.length; s++) {
+        const stroke = group.strokes[s];
+        const dur = clamp(
+          (stroke.totalLength / 150) * 600,
+          MIN_STROKE_DUR,
+          MAX_STROKE_DUR
+        );
+        timeline.push({
+          groupIdx: g,
+          strokeIdx: s,
+          stroke,
+          startTime: t,
+          duration: dur,
+        });
+        // Pause: bigger between letters, smaller between contours of same letter
+        const isLastStrokeInGroup = s === group.strokes.length - 1;
+        t += dur + (isLastStrokeInGroup ? LETTER_PAUSE : CONTOUR_PAUSE);
+      }
+    }
+
+    const totalDuration = t - LETTER_PAUSE; // trim trailing pause
+    const startTime = performance.now();
+
+    const frame = () => {
+      const elapsed = performance.now() - startTime;
+
+      ctx.clearRect(0, 0, w, h);
+      ctx.save();
+      ctx.translate(offsetX, offsetY);
+      ctx.scale(scale, scale);
+      ctx.strokeStyle = STROKE_COLOR;
+      ctx.lineCap = "round";
+      ctx.lineJoin = "round";
+      ctx.lineWidth = scaledWidth;
+      ctx.globalAlpha = 1;
+
+      for (const entry of timeline) {
+        const localElapsed = elapsed - entry.startTime;
+
+        if (localElapsed <= 0) continue;
+
+        if (localElapsed >= entry.duration) {
+          drawStrokeFull(ctx, entry.stroke.points);
+          continue;
+        }
+
+        // In progress
+        const rawT = localElapsed / entry.duration;
+        const easedT = cubicBezierEase(rawT);
+        const dist = easedT * entry.stroke.totalLength;
+        const { index, frac } = findPointAtDistance(entry.stroke.lengths, dist);
+
+        drawStrokePartialWithTaper(
+          ctx,
+          entry.stroke.points,
+          index,
+          frac,
+          entry.stroke.lengths,
+          dist,
+          scaledWidth
+        );
+      }
+
+      ctx.restore();
+
+      if (elapsed < totalDuration) {
+        rafRef.current = requestAnimationFrame(frame);
+      } else {
+        // Final clean frame
+        ctx.clearRect(0, 0, w, h);
+        ctx.save();
+        ctx.translate(offsetX, offsetY);
+        ctx.scale(scale, scale);
+        ctx.strokeStyle = STROKE_COLOR;
+        ctx.lineCap = "round";
+        ctx.lineJoin = "round";
+        ctx.lineWidth = scaledWidth;
+        for (const group of groups) {
+          for (const stroke of group.strokes) {
+            drawStrokeFull(ctx, stroke.points);
+          }
+        }
+        ctx.restore();
+        setTimeout(() => setPhase("accepted"), 400);
+      }
+    };
+
+    rafRef.current = requestAnimationFrame(frame);
+  }, [getCtx]);
+
+  // ── Sign handler ─────────────────────────────────────────────
+  const handleSign = useCallback(() => {
+    if (!font || !name.trim()) return;
+
+    const { groups, width, height } = buildLetterGroups(font, name);
+    letterGroupsRef.current = groups;
+
+    setPhase("signing");
+
+    // Wait one frame for the canvas to mount, then setup + animate
     requestAnimationFrame(() => {
-      const startTime = performance.now();
-      const tick = (now: number) => {
-        if (scrubbing.current) return;
-        const elapsed = now - startTime;
-        const raw = clamp(elapsed / DRAW_MS, 0, 1);
-        const eased = easeInOutCubic(raw);
-        progressRef.current = eased;
-        setSliderValue(eased);
-        // Apply directly — no stale closure dependency
-        for (let i = 0; i < newContours.length; i++) {
-          const el = maskPathsRef.current[i];
-          if (!el) continue;
-          const w = windows[i];
-          const local = clamp((eased - w.start) / (w.end - w.start), 0, 1);
-          el.style.strokeDashoffset = `${newContours[i].length * (1 - local)}`;
-        }
-        if (raw < 1) {
-          rafRef.current = requestAnimationFrame(tick);
-        } else {
-          setTimeout(() => setPhase("accepted"), 400);
-        }
-      };
-      rafRef.current = requestAnimationFrame(tick);
+      setupCanvas(width, height);
+      playAnimation();
     });
-  };
-
-  // Clean up rAF on unmount
-  useEffect(() => {
-    return () => cancelAnimationFrame(rafRef.current);
-  }, []);
+  }, [font, name, setupCanvas, playAnimation]);
 
   // ── Reset ────────────────────────────────────────────────────
   const handleReset = () => {
     cancelAnimationFrame(rafRef.current);
-    scrubbing.current = false;
-    progressRef.current = 0;
-    setSliderValue(0);
+    letterGroupsRef.current = [];
     setPhase("idle");
     setName("");
-    setFullPath("");
-    setContours([]);
   };
+
+  // Clean up on unmount
+  useEffect(() => {
+    return () => cancelAnimationFrame(rafRef.current);
+  }, []);
 
   const canSign = name.trim().length > 0 && fontLoaded;
 
@@ -345,7 +608,10 @@ export default function SignatureWriter() {
 
           {/* ── Signature Pad ───────────────────────────────── */}
           <div className="relative bg-[#111] border border-white/[0.04] rounded-xl overflow-hidden">
-            <div className="px-5 pt-5 pb-3 min-h-[96px] flex items-center justify-center">
+            <div
+              ref={containerRef}
+              className="px-5 pt-5 pb-3 min-h-[96px] flex items-center justify-center"
+            >
               {/* Input (idle) */}
               {phase === "idle" && (
                 <input
@@ -362,59 +628,13 @@ export default function SignatureWriter() {
                 />
               )}
 
-              {/* Animated signature (signing) */}
-              {phase === "signing" && fullPath && (
-                <div
-                  className="w-full h-[60px]"
+              {/* Canvas-based animated signature */}
+              {(phase === "signing" || phase === "accepted") && (
+                <canvas
+                  ref={canvasRef}
+                  className="w-full h-full"
                   style={{ animation: "fade-in 200ms ease both" }}
-                >
-                  <svg
-                    viewBox={viewBox}
-                    className="w-full h-full"
-                    preserveAspectRatio="xMidYMid meet"
-                  >
-                    <defs>
-                      <mask id={`${maskId}-full`}>
-                        {contours.map(({ d, length }, i) => (
-                          <path
-                            key={i}
-                            ref={(el) => {
-                              maskPathsRef.current[i] = el;
-                            }}
-                            d={d}
-                            fill="none"
-                            stroke="white"
-                            strokeWidth={FONT_SIZE * 0.6}
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            style={{
-                              strokeDasharray: length,
-                              strokeDashoffset: length,
-                            }}
-                          />
-                        ))}
-                      </mask>
-                    </defs>
-                    <path
-                      d={fullPath}
-                      fill="#ede8e0"
-                      mask={`url(#${maskId}-full)`}
-                    />
-                  </svg>
-                </div>
-              )}
-
-              {/* Static signature (accepted) */}
-              {phase === "accepted" && fullPath && (
-                <div className="w-full h-[60px]">
-                  <svg
-                    viewBox={viewBox}
-                    className="w-full h-full"
-                    preserveAspectRatio="xMidYMid meet"
-                  >
-                    <path d={fullPath} fill="#ede8e0" />
-                  </svg>
-                </div>
+                />
               )}
             </div>
 
@@ -466,32 +686,6 @@ export default function SignatureWriter() {
             </button>
           )}
         </div>
-
-        {/* ── Dev scrub slider ─────────────────────────────── */}
-        {DEV_SLIDER && phase === "signing" && (
-          <div className="mt-4 flex items-center gap-3 px-1">
-            <input
-              type="range"
-              min={0}
-              max={1}
-              step={0.001}
-              value={sliderValue}
-              onChange={(e) => {
-                const v = parseFloat(e.target.value);
-                // Pause rAF playback — slider takes over
-                scrubbing.current = true;
-                cancelAnimationFrame(rafRef.current);
-                progressRef.current = v;
-                setSliderValue(v);
-                applyProgress(v);
-              }}
-              className="flex-1 h-1 accent-white/60 cursor-pointer"
-            />
-            <span className="text-[11px] text-white/30 tabular-nums w-10 text-right font-body">
-              {(sliderValue * 100).toFixed(0)}%
-            </span>
-          </div>
-        )}
       </div>
     </div>
   );
