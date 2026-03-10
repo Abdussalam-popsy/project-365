@@ -12,20 +12,21 @@ interface SampledPoint {
   y: number;
 }
 
-interface GlyphStroke {
-  points: SampledPoint[];
-  lengths: number[]; // cumulative distance at each point
-  totalLength: number;
+interface SignatureData {
+  fullPath: opentype.Path;        // for ctx.fill() — solid filled letters
+  wiperPoints: SampledPoint[];    // concatenated contour samples for the wiper
+  wiperLengths: number[];
+  wiperTotalLength: number;
+  width: number;
+  height: number;
+  ascender: number;
 }
 
 const FONT_SIZE = 80;
-const PAD = 16;
-const STROKE_COLOR = "#ede8e0";
-const STROKE_WIDTH = 2.2;
-const MIN_STROKE_DUR = 400;
-const MAX_STROKE_DUR = 1400;
-const LETTER_PAUSE = 100; // ms between letters
-const CONTOUR_PAUSE = 40; // ms between contours within a letter
+const FILL_COLOR = "#ede8e0";
+const WIPER_WIDTH = FONT_SIZE * 0.7;
+const BASE_DUR = 1200;
+const PER_CHAR = 180;
 
 // ─────────────────────────────────────────────────────────────────
 // Math
@@ -142,156 +143,92 @@ function findPointAtDistance(
 }
 
 // ─────────────────────────────────────────────────────────────────
-// Canvas drawing
+// Glyph processing — build signature data for fill + wiper reveal
 // ─────────────────────────────────────────────────────────────────
 
-function drawStrokeFull(
-  ctx: CanvasRenderingContext2D,
-  points: SampledPoint[]
-) {
-  if (points.length < 2) return;
-  ctx.beginPath();
-  ctx.moveTo(points[0].x, points[0].y);
-  for (let i = 1; i < points.length; i++) {
-    ctx.lineTo(points[i].x, points[i].y);
-  }
-  ctx.stroke();
-}
-
-function drawStrokePartialWithTaper(
-  ctx: CanvasRenderingContext2D,
-  points: SampledPoint[],
-  endIndex: number,
-  endFrac: number,
-  lengths: number[],
-  currentDistance: number,
-  baseWidth: number
-) {
-  if (points.length < 2 || endIndex < 0) return;
-  const actualEnd = Math.min(endIndex, points.length - 1);
-  const taperZone = currentDistance * 0.08;
-  const taperStart = currentDistance - taperZone;
-
-  // Main body
-  ctx.save();
-  ctx.lineWidth = baseWidth;
-  ctx.beginPath();
-  ctx.moveTo(points[0].x, points[0].y);
-
-  let taperBeginIdx = actualEnd + 1;
-  for (let i = 1; i <= actualEnd; i++) {
-    if (lengths[i] >= taperStart && taperBeginIdx > actualEnd) {
-      taperBeginIdx = i;
-    }
-    ctx.lineTo(points[i].x, points[i].y);
-  }
-
-  if (endFrac > 0 && actualEnd + 1 < points.length) {
-    const nx =
-      points[actualEnd].x +
-      (points[actualEnd + 1].x - points[actualEnd].x) * endFrac;
-    const ny =
-      points[actualEnd].y +
-      (points[actualEnd + 1].y - points[actualEnd].y) * endFrac;
-    ctx.lineTo(nx, ny);
-  }
-  ctx.stroke();
-
-  // Taper overdraw
-  if (taperZone > 1 && taperBeginIdx <= actualEnd) {
-    const startPt = Math.max(0, taperBeginIdx - 1);
-    const taperPts: { x: number; y: number; dist: number }[] = [];
-
-    for (let i = startPt; i <= Math.min(actualEnd, points.length - 1); i++) {
-      taperPts.push({ x: points[i].x, y: points[i].y, dist: lengths[i] });
-    }
-    if (endFrac > 0 && actualEnd + 1 < points.length) {
-      const nx =
-        points[actualEnd].x +
-        (points[actualEnd + 1].x - points[actualEnd].x) * endFrac;
-      const ny =
-        points[actualEnd].y +
-        (points[actualEnd + 1].y - points[actualEnd].y) * endFrac;
-      const nd =
-        lengths[actualEnd] +
-        (lengths[Math.min(actualEnd + 1, lengths.length - 1)] -
-          lengths[actualEnd]) *
-          endFrac;
-      taperPts.push({ x: nx, y: ny, dist: nd });
-    }
-
-    if (taperPts.length >= 2) {
-      for (let i = 0; i < taperPts.length - 1; i++) {
-        const midDist = (taperPts[i].dist + taperPts[i + 1].dist) / 2;
-        if (midDist < taperStart) continue;
-        const progress = Math.min(1, (midDist - taperStart) / taperZone);
-        ctx.lineWidth = baseWidth * (1 - progress * 0.5);
-        ctx.globalAlpha = 1 - progress * 0.35;
-        ctx.beginPath();
-        ctx.moveTo(taperPts[i].x, taperPts[i].y);
-        ctx.lineTo(taperPts[i + 1].x, taperPts[i + 1].y);
-        ctx.stroke();
-      }
-    }
-  }
-
-  ctx.globalAlpha = 1;
-  ctx.lineWidth = baseWidth;
-  ctx.restore();
-}
-
-// ─────────────────────────────────────────────────────────────────
-// Glyph processing — build strokes from font glyphs
-// ─────────────────────────────────────────────────────────────────
-
-interface LetterGroup {
-  strokes: GlyphStroke[];
-}
-
-function buildLetterGroups(
+function buildSignatureData(
   font: opentype.Font,
   text: string
-): { groups: LetterGroup[]; width: number; height: number; ascender: number } {
+): SignatureData {
+  const trimmed = text.trim();
   const scale = FONT_SIZE / font.unitsPerEm;
   const ascender = font.ascender * scale;
   const descender = Math.abs(font.descender * scale);
   const height = ascender + descender;
 
-  const glyphs = font.stringToGlyphs(text.trim());
-  const groups: LetterGroup[] = [];
-  let x = 0;
+  // Single combined filled path for the whole name
+  const fullPath = font.getPath(trimmed, 0, ascender, FONT_SIZE);
+  const d = fullPath.toPathData(2);
 
+  // Compute total width via glyph advances
+  const glyphs = font.stringToGlyphs(trimmed);
+  let totalWidth = 0;
   for (let i = 0; i < glyphs.length; i++) {
-    const glyph = glyphs[i];
-    const path = glyph.getPath(x, ascender, FONT_SIZE);
-    const d = path.toPathData(2);
-    const strokes: GlyphStroke[] = [];
-
-    if (d && d.length > 5) {
-      for (const contour of splitContours(d)) {
-        const points = samplePath(contour, 1.5);
-        if (points.length >= 2) {
-          const { lengths, totalLength } = computeLengths(points);
-          if (totalLength > 1) {
-            strokes.push({ points, lengths, totalLength });
-          }
-        }
-      }
-    }
-
-    if (strokes.length > 0) {
-      groups.push({ strokes });
-    }
-
-    const advance = (glyph.advanceWidth || 0) * scale;
+    const advance = (glyphs[i].advanceWidth || 0) * scale;
     const kern =
       i < glyphs.length - 1
-        ? font.getKerningValue(glyph, glyphs[i + 1]) * scale
+        ? font.getKerningValue(glyphs[i], glyphs[i + 1]) * scale
         : 0;
-    x += advance + kern;
+    totalWidth += advance + kern;
   }
 
-  return { groups, width: x, height, ascender };
+  // Sample contours and sort by leftmost X for left-to-right wiper
+  const contourStrings = splitContours(d);
+  const contourData: { minX: number; points: SampledPoint[] }[] = [];
+
+  for (const contour of contourStrings) {
+    const points = samplePath(contour, 1.5);
+    if (points.length >= 2) {
+      const minX = Math.min(...points.map((p) => p.x));
+      contourData.push({ minX, points });
+    }
+  }
+
+  // Sort contours left-to-right
+  contourData.sort((a, b) => a.minX - b.minX);
+
+  // Concatenate all sorted contour points into one wiper path
+  const allPoints: SampledPoint[] = [];
+  for (const c of contourData) {
+    allPoints.push(...c.points);
+  }
+
+  const { lengths: wiperLengths, totalLength: wiperTotalLength } =
+    computeLengths(allPoints);
+
+  return {
+    fullPath,
+    wiperPoints: allPoints,
+    wiperLengths,
+    wiperTotalLength,
+    width: totalWidth,
+    height,
+    ascender,
+  };
+}
+
+/** Trace an opentype.Path onto a canvas context without filling/stroking */
+function tracePath(ctx: CanvasRenderingContext2D, path: opentype.Path) {
+  ctx.beginPath();
+  for (const cmd of path.commands) {
+    switch (cmd.type) {
+      case "M":
+        ctx.moveTo(cmd.x, cmd.y);
+        break;
+      case "L":
+        ctx.lineTo(cmd.x, cmd.y);
+        break;
+      case "Q":
+        ctx.quadraticCurveTo(cmd.x1, cmd.y1, cmd.x, cmd.y);
+        break;
+      case "C":
+        ctx.bezierCurveTo(cmd.x1, cmd.y1, cmd.x2!, cmd.y2!, cmd.x, cmd.y);
+        break;
+      case "Z":
+        ctx.closePath();
+        break;
+    }
+  }
 }
 
 // ─────────────────────────────────────────────────────────────────
@@ -354,9 +291,10 @@ export default function SignatureWriter() {
   const [fontLoaded, setFontLoaded] = useState(false);
 
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const maskCanvasRef = useRef<HTMLCanvasElement | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const rafRef = useRef<number>(0);
-  const letterGroupsRef = useRef<LetterGroup[]>([]);
+  const sigDataRef = useRef<SignatureData | null>(null);
   const canvasDimsRef = useRef({ w: 0, h: 0, offsetX: 0, offsetY: 0, scale: 1 });
 
   // ── Load font ────────────────────────────────────────────────
@@ -381,10 +319,9 @@ export default function SignatureWriter() {
       const containerWidth = container.clientWidth;
       const containerHeight = container.clientHeight;
 
-      // Scale glyph coordinate system to fit the container
-      const scaleX = (containerWidth - PAD * 2) / width;
-      const scaleY = (containerHeight - PAD * 2) / height;
-      const scale = Math.min(scaleX, scaleY);
+      // Scale to match the ~34px input text size
+      const targetHeight = 34;
+      const scale = targetHeight / height;
 
       const drawW = width * scale;
       const drawH = height * scale;
@@ -399,151 +336,145 @@ export default function SignatureWriter() {
       const ctx = canvas.getContext("2d")!;
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
 
+      // Create offscreen mask canvas at same size
+      const maskCanvas = document.createElement("canvas");
+      maskCanvas.width = containerWidth * dpr;
+      maskCanvas.height = containerHeight * dpr;
+      const maskCtx = maskCanvas.getContext("2d")!;
+      maskCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      maskCanvasRef.current = maskCanvas;
+
       canvasDimsRef.current = { w: containerWidth, h: containerHeight, offsetX, offsetY, scale };
     },
     []
   );
 
-  // ── Get configured context ───────────────────────────────────
-  const getCtx = useCallback(() => {
-    const canvas = canvasRef.current;
-    if (!canvas) return null;
-    const ctx = canvas.getContext("2d");
-    if (!ctx) return null;
-    ctx.strokeStyle = STROKE_COLOR;
-    ctx.lineWidth = STROKE_WIDTH;
-    ctx.lineCap = "round";
-    ctx.lineJoin = "round";
-    ctx.globalAlpha = 1;
-    return ctx;
-  }, []);
-
-  // ── Animation ────────────────────────────────────────────────
-  const playAnimation = useCallback(() => {
-    const groups = letterGroupsRef.current;
-    if (groups.length === 0) return;
-
-    const ctx = getCtx();
-    if (!ctx) return;
-    const { w, h, offsetX, offsetY, scale } = canvasDimsRef.current;
-    const scaledWidth = STROKE_WIDTH / scale;
-
-    // Build timeline: each stroke gets its own entry
-    interface TimelineEntry {
-      groupIdx: number;
-      strokeIdx: number;
-      stroke: GlyphStroke;
-      startTime: number;
-      duration: number;
-    }
-
-    const timeline: TimelineEntry[] = [];
-    let t = 0;
-
-    for (let g = 0; g < groups.length; g++) {
-      const group = groups[g];
-      for (let s = 0; s < group.strokes.length; s++) {
-        const stroke = group.strokes[s];
-        const dur = clamp(
-          (stroke.totalLength / 150) * 600,
-          MIN_STROKE_DUR,
-          MAX_STROKE_DUR
-        );
-        timeline.push({
-          groupIdx: g,
-          strokeIdx: s,
-          stroke,
-          startTime: t,
-          duration: dur,
-        });
-        // Pause: bigger between letters, smaller between contours of same letter
-        const isLastStrokeInGroup = s === group.strokes.length - 1;
-        t += dur + (isLastStrokeInGroup ? LETTER_PAUSE : CONTOUR_PAUSE);
-      }
-    }
-
-    const totalDuration = t - LETTER_PAUSE; // trim trailing pause
-    const startTime = performance.now();
-
-    const frame = () => {
-      const elapsed = performance.now() - startTime;
-
+  // ── Draw filled text (no mask) ───────────────────────────────
+  const drawFilledText = useCallback(
+    (ctx: CanvasRenderingContext2D, sigData: SignatureData) => {
+      const { w, h, offsetX, offsetY, scale } = canvasDimsRef.current;
       ctx.clearRect(0, 0, w, h);
       ctx.save();
       ctx.translate(offsetX, offsetY);
       ctx.scale(scale, scale);
-      ctx.strokeStyle = STROKE_COLOR;
-      ctx.lineCap = "round";
-      ctx.lineJoin = "round";
-      ctx.lineWidth = scaledWidth;
-      ctx.globalAlpha = 1;
+      ctx.fillStyle = FILL_COLOR;
+      tracePath(ctx, sigData.fullPath);
+      ctx.fill();
+      ctx.restore();
+    },
+    []
+  );
 
-      for (const entry of timeline) {
-        const localElapsed = elapsed - entry.startTime;
+  // ── Animation ────────────────────────────────────────────────
+  const playAnimation = useCallback(() => {
+    const sigData = sigDataRef.current;
+    if (!sigData || sigData.wiperPoints.length < 2) return;
 
-        if (localElapsed <= 0) continue;
+    const canvas = canvasRef.current;
+    const maskCanvas = maskCanvasRef.current;
+    if (!canvas || !maskCanvas) return;
 
-        if (localElapsed >= entry.duration) {
-          drawStrokeFull(ctx, entry.stroke.points);
-          continue;
-        }
+    const ctx = canvas.getContext("2d");
+    const maskCtx = maskCanvas.getContext("2d");
+    if (!ctx || !maskCtx) return;
 
-        // In progress
-        const rawT = localElapsed / entry.duration;
-        const easedT = cubicBezierEase(rawT);
-        const dist = easedT * entry.stroke.totalLength;
-        const { index, frac } = findPointAtDistance(entry.stroke.lengths, dist);
+    const { offsetX, offsetY, scale } = canvasDimsRef.current;
+    const dpr = window.devicePixelRatio || 1;
 
-        drawStrokePartialWithTaper(
-          ctx,
-          entry.stroke.points,
-          index,
-          frac,
-          entry.stroke.lengths,
-          dist,
-          scaledWidth
-        );
-      }
+    const nameLen = (sigData.width / (FONT_SIZE * 0.5)); // rough char count proxy
+    const totalDuration = clamp(BASE_DUR + nameLen * PER_CHAR, 1000, 3500);
+    const startTime = performance.now();
 
+    const frame = () => {
+      const elapsed = performance.now() - startTime;
+      const rawT = Math.min(1, elapsed / totalDuration);
+      const easedT = cubicBezierEase(rawT);
+
+      // 1. Clear both canvases
+      ctx.save();
+      ctx.setTransform(1, 0, 0, 1, 0, 0);
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
       ctx.restore();
 
-      if (elapsed < totalDuration) {
+      maskCtx.save();
+      maskCtx.setTransform(1, 0, 0, 1, 0, 0);
+      maskCtx.clearRect(0, 0, maskCanvas.width, maskCanvas.height);
+      maskCtx.restore();
+
+      // 2. Mask canvas: draw thick wiper stroke up to current distance
+      const wiperDist = easedT * sigData.wiperTotalLength;
+      const { index, frac } = findPointAtDistance(sigData.wiperLengths, wiperDist);
+
+      maskCtx.save();
+      maskCtx.translate(offsetX, offsetY);
+      maskCtx.scale(scale, scale);
+      maskCtx.strokeStyle = "#fff";
+      maskCtx.lineWidth = WIPER_WIDTH;
+      maskCtx.lineCap = "round";
+      maskCtx.lineJoin = "round";
+      maskCtx.beginPath();
+      maskCtx.moveTo(sigData.wiperPoints[0].x, sigData.wiperPoints[0].y);
+
+      const endIdx = Math.min(index, sigData.wiperPoints.length - 1);
+      for (let i = 1; i <= endIdx; i++) {
+        maskCtx.lineTo(sigData.wiperPoints[i].x, sigData.wiperPoints[i].y);
+      }
+      // Interpolated final point
+      if (frac > 0 && endIdx + 1 < sigData.wiperPoints.length) {
+        const nx =
+          sigData.wiperPoints[endIdx].x +
+          (sigData.wiperPoints[endIdx + 1].x - sigData.wiperPoints[endIdx].x) * frac;
+        const ny =
+          sigData.wiperPoints[endIdx].y +
+          (sigData.wiperPoints[endIdx + 1].y - sigData.wiperPoints[endIdx].y) * frac;
+        maskCtx.lineTo(nx, ny);
+      }
+      maskCtx.stroke();
+      maskCtx.restore();
+
+      // 3. Main canvas: draw full filled text
+      ctx.save();
+      ctx.translate(offsetX, offsetY);
+      ctx.scale(scale, scale);
+      ctx.fillStyle = FILL_COLOR;
+      tracePath(ctx, sigData.fullPath);
+      ctx.fill();
+      ctx.restore();
+
+      // 4. Composite: clip filled text to wiper mask region
+      ctx.save();
+      ctx.globalCompositeOperation = "destination-in";
+      // Draw mask canvas onto main canvas at pixel level
+      ctx.setTransform(1, 0, 0, 1, 0, 0);
+      ctx.drawImage(maskCanvas, 0, 0);
+      ctx.restore();
+      // Reset transform for next frame
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+      if (rawT < 1) {
         rafRef.current = requestAnimationFrame(frame);
       } else {
-        // Final clean frame
-        ctx.clearRect(0, 0, w, h);
-        ctx.save();
-        ctx.translate(offsetX, offsetY);
-        ctx.scale(scale, scale);
-        ctx.strokeStyle = STROKE_COLOR;
-        ctx.lineCap = "round";
-        ctx.lineJoin = "round";
-        ctx.lineWidth = scaledWidth;
-        for (const group of groups) {
-          for (const stroke of group.strokes) {
-            drawStrokeFull(ctx, stroke.points);
-          }
-        }
-        ctx.restore();
+        // Final clean frame — full filled text, no mask needed
+        drawFilledText(ctx, sigData);
         setTimeout(() => setPhase("accepted"), 400);
       }
     };
 
     rafRef.current = requestAnimationFrame(frame);
-  }, [getCtx]);
+  }, [drawFilledText]);
 
   // ── Sign handler ─────────────────────────────────────────────
   const handleSign = useCallback(() => {
     if (!font || !name.trim()) return;
 
-    const { groups, width, height } = buildLetterGroups(font, name);
-    letterGroupsRef.current = groups;
+    const sigData = buildSignatureData(font, name);
+    sigDataRef.current = sigData;
 
     setPhase("signing");
 
     // Wait one frame for the canvas to mount, then setup + animate
     requestAnimationFrame(() => {
-      setupCanvas(width, height);
+      setupCanvas(sigData.width, sigData.height);
       playAnimation();
     });
   }, [font, name, setupCanvas, playAnimation]);
@@ -551,7 +482,8 @@ export default function SignatureWriter() {
   // ── Reset ────────────────────────────────────────────────────
   const handleReset = () => {
     cancelAnimationFrame(rafRef.current);
-    letterGroupsRef.current = [];
+    sigDataRef.current = null;
+    maskCanvasRef.current = null;
     setPhase("idle");
     setName("");
   };
