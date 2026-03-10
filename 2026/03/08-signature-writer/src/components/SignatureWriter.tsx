@@ -21,8 +21,8 @@ interface ContourStroke {
 }
 
 interface SignatureData {
-  fullPath: opentype.Path;        // for final filled render
-  contours: ContourStroke[];      // individual contour strokes for animation
+  fullPath: opentype.Path; // for final filled render
+  contours: ContourStroke[]; // individual contour strokes for animation
   width: number;
   height: number;
   ascender: number;
@@ -30,11 +30,11 @@ interface SignatureData {
 
 const FONT_SIZE = 80;
 const FILL_COLOR = "#ede8e0";
-const STROKE_W = 2;              // stroke width in font units
+const STROKE_W = 1; // stroke width in font units
 
 // Per-contour timeline constants
-const TOTAL_CAP = 1200;          // hard cap: entire animation ≤ 1.2s
-const PAUSE = 80;
+const TOTAL_CAP = 1200; // hard cap: entire animation ≤ 1.2s
+const PAUSE = 0;
 
 // ─────────────────────────────────────────────────────────────────
 // Math
@@ -42,13 +42,14 @@ const PAUSE = 80;
 
 /** cubic-bezier(0, 0, 0, 1) — slow build, accelerates to finish */
 function cubicBezierEase(t: number): number {
-  const x1 = 0, y1 = 0, x2 = 0, y2 = 1;
+  const x1 = 0,
+    y1 = 0,
+    x2 = 0,
+    y2 = 1;
   let u = t;
   for (let i = 0; i < 8; i++) {
     const xu =
-      3 * x1 * (1 - u) * (1 - u) * u +
-      3 * x2 * (1 - u) * u * u +
-      u * u * u;
+      3 * x1 * (1 - u) * (1 - u) * u + 3 * x2 * (1 - u) * u * u + u * u * u;
     const dxu =
       3 * x1 * (1 - u) * (1 - u) -
       6 * x1 * (1 - u) * u +
@@ -59,15 +60,7 @@ function cubicBezierEase(t: number): number {
     u -= (xu - t) / dxu;
     u = Math.max(0, Math.min(1, u));
   }
-  return (
-    3 * y1 * (1 - u) * (1 - u) * u +
-    3 * y2 * (1 - u) * u * u +
-    u * u * u
-  );
-}
-
-function clamp(v: number, min: number, max: number) {
-  return Math.min(Math.max(v, min), max);
+  return 3 * y1 * (1 - u) * (1 - u) * u + 3 * y2 * (1 - u) * u * u + u * u * u;
 }
 
 // ─────────────────────────────────────────────────────────────────
@@ -132,7 +125,7 @@ function computeLengths(points: SampledPoint[]): {
 /** Binary search for point index at a given distance */
 function findPointAtDistance(
   lengths: number[],
-  distance: number
+  distance: number,
 ): { index: number; frac: number } {
   if (distance <= 0) return { index: 0, frac: 0 };
   if (distance >= lengths[lengths.length - 1])
@@ -154,10 +147,7 @@ function findPointAtDistance(
 // Glyph processing — build signature data with per-contour strokes
 // ─────────────────────────────────────────────────────────────────
 
-function buildSignatureData(
-  font: opentype.Font,
-  text: string
-): SignatureData {
+function buildSignatureData(font: opentype.Font, text: string): SignatureData {
   const trimmed = text.trim();
   const scale = FONT_SIZE / font.unitsPerEm;
   const ascender = font.ascender * scale;
@@ -209,7 +199,10 @@ function buildSignatureData(
 // ─────────────────────────────────────────────────────────────────
 
 /** Draw a complete contour stroke */
-function drawContourFull(ctx: CanvasRenderingContext2D, contour: ContourStroke) {
+function drawContourFull(
+  ctx: CanvasRenderingContext2D,
+  contour: ContourStroke,
+) {
   if (contour.points.length < 2) return;
   ctx.beginPath();
   ctx.moveTo(contour.points[0].x, contour.points[0].y);
@@ -226,7 +219,7 @@ function drawContourWithTaper(
   endIndex: number,
   endFrac: number,
   currentDistance: number,
-  baseWidth: number
+  baseWidth: number,
 ) {
   const { points, lengths } = contour;
   if (points.length < 2 || endIndex < 0) return;
@@ -250,8 +243,12 @@ function drawContourWithTaper(
 
   // Interpolated fractional endpoint
   if (endFrac > 0 && actualEnd + 1 < points.length) {
-    const nx = points[actualEnd].x + (points[actualEnd + 1].x - points[actualEnd].x) * endFrac;
-    const ny = points[actualEnd].y + (points[actualEnd + 1].y - points[actualEnd].y) * endFrac;
+    const nx =
+      points[actualEnd].x +
+      (points[actualEnd + 1].x - points[actualEnd].x) * endFrac;
+    const ny =
+      points[actualEnd].y +
+      (points[actualEnd + 1].y - points[actualEnd].y) * endFrac;
     ctx.lineTo(nx, ny);
   }
 
@@ -260,7 +257,8 @@ function drawContourWithTaper(
   // Overdraw taper zone with decreasing width + opacity
   if (taperZone > 2 && taperBeginIdx <= actualEnd) {
     const startPt = Math.max(0, taperBeginIdx - 1);
-    const endPt = endFrac > 0 && actualEnd + 1 < points.length ? actualEnd + 1 : actualEnd;
+    const endPt =
+      endFrac > 0 && actualEnd + 1 < points.length ? actualEnd + 1 : actualEnd;
     const taperPoints: { x: number; y: number; dist: number }[] = [];
 
     for (let i = startPt; i <= Math.min(endPt, actualEnd); i++) {
@@ -268,9 +266,17 @@ function drawContourWithTaper(
     }
 
     if (endFrac > 0 && actualEnd + 1 < points.length) {
-      const nx = points[actualEnd].x + (points[actualEnd + 1].x - points[actualEnd].x) * endFrac;
-      const ny = points[actualEnd].y + (points[actualEnd + 1].y - points[actualEnd].y) * endFrac;
-      const nd = lengths[actualEnd] + (lengths[Math.min(actualEnd + 1, lengths.length - 1)] - lengths[actualEnd]) * endFrac;
+      const nx =
+        points[actualEnd].x +
+        (points[actualEnd + 1].x - points[actualEnd].x) * endFrac;
+      const ny =
+        points[actualEnd].y +
+        (points[actualEnd + 1].y - points[actualEnd].y) * endFrac;
+      const nd =
+        lengths[actualEnd] +
+        (lengths[Math.min(actualEnd + 1, lengths.length - 1)] -
+          lengths[actualEnd]) *
+          endFrac;
       taperPoints.push({ x: nx, y: ny, dist: nd });
     }
 
@@ -358,7 +364,13 @@ export default function SignatureWriter() {
   const containerRef = useRef<HTMLDivElement>(null);
   const rafRef = useRef<number>(0);
   const sigDataRef = useRef<SignatureData | null>(null);
-  const canvasDimsRef = useRef({ w: 0, h: 0, offsetX: 0, offsetY: 0, scale: 1 });
+  const canvasDimsRef = useRef({
+    w: 0,
+    h: 0,
+    offsetX: 0,
+    offsetY: 0,
+    scale: 1,
+  });
 
   // ── Load font ────────────────────────────────────────────────
   useEffect(() => {
@@ -369,37 +381,43 @@ export default function SignatureWriter() {
   }, []);
 
   // ── Setup canvas for modal ──────────────────────────────────
-  const setupCanvas = useCallback(
-    (width: number, height: number) => {
-      const canvas = canvasRef.current;
-      const container = containerRef.current;
-      if (!canvas || !container) return;
+  const setupCanvas = useCallback((width: number, height: number) => {
+    const canvas = canvasRef.current;
+    const container = containerRef.current;
+    if (!canvas || !container) return;
 
-      const dpr = window.devicePixelRatio || 1;
-      const containerWidth = container.clientWidth;
-      const containerHeight = container.clientHeight;
+    const dpr = window.devicePixelRatio || 1;
+    const containerWidth = container.clientWidth;
+    const containerHeight = container.clientHeight;
 
-      // Scale to fill ~85% of modal container width
-      const maxDrawWidth = containerWidth * 0.85;
-      const scale = Math.min(maxDrawWidth / width, containerHeight * 0.6 / height);
+    // Scale to fill ~85% of modal container width
+    const maxDrawWidth = containerWidth * 0.85;
+    const scale = Math.min(
+      maxDrawWidth / width,
+      (containerHeight * 0.6) / height,
+    );
 
-      const drawW = width * scale;
-      const drawH = height * scale;
-      const offsetX = (containerWidth - drawW) / 2;
-      const offsetY = (containerHeight - drawH) / 2;
+    const drawW = width * scale;
+    const drawH = height * scale;
+    const offsetX = (containerWidth - drawW) / 2;
+    const offsetY = (containerHeight - drawH) / 2;
 
-      canvas.width = containerWidth * dpr;
-      canvas.height = containerHeight * dpr;
-      canvas.style.width = `${containerWidth}px`;
-      canvas.style.height = `${containerHeight}px`;
+    canvas.width = containerWidth * dpr;
+    canvas.height = containerHeight * dpr;
+    canvas.style.width = `${containerWidth}px`;
+    canvas.style.height = `${containerHeight}px`;
 
-      const ctx = canvas.getContext("2d")!;
-      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    const ctx = canvas.getContext("2d")!;
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
 
-      canvasDimsRef.current = { w: containerWidth, h: containerHeight, offsetX, offsetY, scale };
-    },
-    []
-  );
+    canvasDimsRef.current = {
+      w: containerWidth,
+      h: containerHeight,
+      offsetX,
+      offsetY,
+      scale,
+    };
+  }, []);
 
   // ── Draw filled text ────────────────────────────────────────
   const drawFilledText = useCallback(
@@ -414,7 +432,7 @@ export default function SignatureWriter() {
       ctx.fill();
       ctx.restore();
     },
-    []
+    [],
   );
 
   // ── Fire confetti ───────────────────────────────────────────
@@ -423,9 +441,19 @@ export default function SignatureWriter() {
       colors: ["#34d399", "#6ee7b7", "#a7f3d0", "#ffffff", "#d1fae5"],
       disableForReducedMotion: true,
     };
-    confetti({ ...defaults, particleCount: 60, spread: 55, origin: { x: 0.4, y: 0.5 } });
+    confetti({
+      ...defaults,
+      particleCount: 60,
+      spread: 55,
+      origin: { x: 0.4, y: 0.5 },
+    });
     setTimeout(() => {
-      confetti({ ...defaults, particleCount: 40, spread: 65, origin: { x: 0.6, y: 0.5 } });
+      confetti({
+        ...defaults,
+        particleCount: 40,
+        spread: 65,
+        origin: { x: 0.6, y: 0.5 },
+      });
     }, 250);
   }, []);
 
@@ -444,19 +472,29 @@ export default function SignatureWriter() {
     const dpr = window.devicePixelRatio || 1;
     const { contours } = sigData;
 
-    // Build per-contour timeline
-    const durations = contours.map((c) => {
-      const dur = (c.totalLength / 200) * 800;
-      return clamp(dur, MIN_DUR, MAX_DUR);
-    });
+    // Build per-contour timeline, then scale to fit within TOTAL_CAP
+    const totalPause = Math.max(0, (contours.length - 1) * PAUSE);
+    const availableAnimTime = TOTAL_CAP - totalPause;
 
-    const timeline: { contourIndex: number; startTime: number; duration: number }[] = [];
+    // Distribute time proportionally by contour length
+    const totalArcLen = contours.reduce((s, c) => s + c.totalLength, 0);
+    const durations = contours.map((c) =>
+      totalArcLen > 0
+        ? (c.totalLength / totalArcLen) * availableAnimTime
+        : availableAnimTime / contours.length,
+    );
+
+    const timeline: {
+      contourIndex: number;
+      startTime: number;
+      duration: number;
+    }[] = [];
     let t = 0;
     for (let i = 0; i < contours.length; i++) {
       timeline.push({ contourIndex: i, startTime: t, duration: durations[i] });
       t += durations[i] + PAUSE;
     }
-    const totalDuration = t - PAUSE;
+    const totalDuration = TOTAL_CAP;
 
     const startTime = performance.now();
 
@@ -581,9 +619,8 @@ export default function SignatureWriter() {
               Sign the Contract
             </h2>
             <p className="text-[13px] text-white/35 leading-[1.65] font-body">
-              Since you've read the fine lines, type your name to confirm
-              you agree with{" "}
-              <span className="text-white/55">the terms</span>.
+              Since you've read the fine lines, type your name to confirm you
+              agree with <span className="text-white/55">the terms</span>.
             </p>
           </div>
 
@@ -594,9 +631,7 @@ export default function SignatureWriter() {
                 type="text"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
-                onKeyDown={(e) =>
-                  e.key === "Enter" && canSign && handleSign()
-                }
+                onKeyDown={(e) => e.key === "Enter" && canSign && handleSign()}
                 placeholder="Your full name"
                 disabled={!fontLoaded || phase !== "idle"}
                 autoFocus
@@ -657,7 +692,16 @@ export default function SignatureWriter() {
                 onClick={handleClose}
                 className="absolute top-4 right-4 size-8 rounded-full grid place-items-center bg-white/[0.05] border border-white/[0.08] text-white/40 hover:text-white/70 hover:bg-white/[0.1] transition-colors cursor-pointer z-10"
               >
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <svg
+                  width="14"
+                  height="14"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
                   <line x1="18" y1="6" x2="6" y2="18" />
                   <line x1="6" y1="6" x2="18" y2="18" />
                 </svg>
@@ -668,10 +712,7 @@ export default function SignatureWriter() {
                 ref={containerRef}
                 className="h-[280px] flex items-center justify-center px-6"
               >
-                <canvas
-                  ref={canvasRef}
-                  className="w-full h-full"
-                />
+                <canvas ref={canvasRef} className="w-full h-full" />
               </div>
 
               {/* Signature line */}
@@ -693,7 +734,7 @@ export default function SignatureWriter() {
               </div>
             </div>
           </div>,
-          document.body
+          document.body,
         )}
     </div>
   );
