@@ -13,13 +13,6 @@
   --font-signature: "Sacramento", cursive;
 }
 
-/* ── Contour trim-path reveal ── */
-@keyframes trim-path {
-  to {
-    stroke-dashoffset: 0;
-  }
-}
-
 /* ── Checkmark draw ── */
 @keyframes draw-check {
   to {

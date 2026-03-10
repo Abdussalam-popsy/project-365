@@ -6,18 +6,19 @@ Each interaction is a self-contained micro-project exploring a single concept �
 
 ## Templates
 
-| Template | Stack | Use for |
-|----------|-------|---------|
-| `vanilla` | HTML + CSS + JS | Pure CSS animations, simple DOM interactions |
+| Template     | Stack                        | Use for                                               |
+| ------------ | ---------------------------- | ----------------------------------------------------- |
+| `vanilla`    | HTML + CSS + JS              | Pure CSS animations, simple DOM interactions          |
 | `react-vite` | Vite + React + TS + Tailwind | Component-based interactions, state-driven animations |
-| `canvas` | HTML Canvas + JS | Particle systems, generative art, physics simulations |
-| `next` | Next.js + React + TS + Tailwind | Page transitions, SSR interactions, routing animations |
+| `canvas`     | HTML Canvas + JS             | Particle systems, generative art, physics simulations |
 
 ## Usage
 
 ### Create a new interaction
 
 ```bash
+01 - ./scripts/new.sh react-vite signature-writer
+02 - ./scripts/new.sh react-vite follow-draw
 ./scripts/new.sh vanilla hover-glow
 ./scripts/new.sh react-vite magnetic-button
 ./scripts/new.sh canvas particle-field
@@ -56,18 +57,6 @@ cd 2026/03/08-my-thing && npm install
 ```
 
 That's all the script does — just keep the `DD-name` inside `YYYY/MM/` convention.
-
-## Adding new templates
-
-Drop a folder into `templates/` and it's instantly available. The `new.sh` script picks up any folder name automatically — no config changes needed.
-
-```bash
-# Example: add a Three.js template
-mkdir templates/threejs
-# Add your starter files...
-# Then use it like any other
-./scripts/new.sh threejs rotating-cube
-```
 
 ## Interactions
 

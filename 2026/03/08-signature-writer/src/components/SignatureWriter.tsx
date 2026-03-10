@@ -1,10 +1,10 @@
 import {
   useState,
   useEffect,
-  useLayoutEffect,
-  useRef,
   useCallback,
   useId,
+  useMemo,
+  useRef,
 } from "react";
 import opentype from "opentype.js";
 
@@ -14,23 +14,61 @@ import opentype from "opentype.js";
 
 type Phase = "idle" | "signing" | "accepted";
 
+interface ContourData {
+  d: string;
+  length: number;
+}
+
 const FONT_SIZE = 80;
 const DRAW_MS = 2200;
 const PAD = 16;
+const DEV_SLIDER = true;
+
+/** Easing: fast attack, smooth decel — mimics pen pressure */
+function easeInOutCubic(t: number): number {
+  return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
+}
+
+function clamp(v: number, min: number, max: number): number {
+  return Math.min(Math.max(v, min), max);
+}
 
 // ─────────────────────────────────────────────────────────────────
 // Helpers
 // ─────────────────────────────────────────────────────────────────
 
-/** Split an SVG path `d` attribute into individual contours (subpaths).
- *  Each contour starts with an M command and is a single continuous
- *  stroke with no internal moveTo jumps — so getTotalLength() is accurate. */
+/** Split an SVG path `d` attribute into individual contours (subpaths). */
 function splitContours(d: string): string[] {
   return d
     .split(/(?=M)/)
     .map((s) => s.trim())
     .filter((s) => s.length > 3);
 }
+
+/** Measure a path's length without ever rendering it to the DOM.
+ *  Uses an offscreen SVG namespace element — no layout thrash. */
+const measurePath = (() => {
+  let svg: SVGSVGElement | null = null;
+  let pathEl: SVGPathElement | null = null;
+
+  return (d: string): number => {
+    if (!svg) {
+      svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+      pathEl = document.createElementNS("http://www.w3.org/2000/svg", "path");
+      svg.appendChild(pathEl);
+      // Append to body but keep invisible — required for getTotalLength()
+      svg.style.position = "absolute";
+      svg.style.width = "0";
+      svg.style.height = "0";
+      svg.style.overflow = "hidden";
+      svg.style.opacity = "0";
+      svg.style.pointerEvents = "none";
+      document.body.appendChild(svg);
+    }
+    pathEl!.setAttribute("d", d);
+    return pathEl!.getTotalLength();
+  };
+})();
 
 // ─────────────────────────────────────────────────────────────────
 // Icons
@@ -91,13 +129,20 @@ export default function SignatureWriter() {
   const [font, setFont] = useState<opentype.Font | null>(null);
   const [fontLoaded, setFontLoaded] = useState(false);
 
-  // Individual contours (each is a single continuous subpath)
-  const [contours, setContours] = useState<string[]>([]);
-  const [lengths, setLengths] = useState<number[]>([]);
+  // Full combined path for proper filled rendering (holes stay hollow)
+  const [fullPath, setFullPath] = useState("");
+  // Split contours used only for the mask animation
+  const [contours, setContours] = useState<ContourData[]>([]);
   const [viewBox, setViewBox] = useState("0 0 100 50");
 
-  const contourRefs = useRef<(SVGPathElement | null)[]>([]);
   const maskId = useId();
+
+  // ── Progress-driven animation refs ────────────────────────────
+  const progressRef = useRef(0);
+  const rafRef = useRef<number>(0);
+  const maskPathsRef = useRef<(SVGPathElement | null)[]>([]);
+  const scrubbing = useRef(false);
+  const [sliderValue, setSliderValue] = useState(0);
 
   // ── Load font ────────────────────────────────────────────────
   useEffect(() => {
@@ -107,11 +152,12 @@ export default function SignatureWriter() {
     });
   }, []);
 
-  // ── Generate contours from glyphs ────────────────────────────
-  // Each glyph path is split into individual contours so that
-  // getTotalLength() is accurate (no phantom gaps).
-  const generateContours = useCallback(() => {
-    if (!font || !name.trim()) return;
+  // ── Generate contours + measure lengths in one pass ──────────
+  const generateContours = useCallback((): {
+    full: string;
+    contours: ContourData[];
+  } => {
+    if (!font || !name.trim()) return { full: "", contours: [] };
 
     const scale = FONT_SIZE / font.unitsPerEm;
     const ascender = font.ascender * scale;
@@ -119,7 +165,8 @@ export default function SignatureWriter() {
     const height = ascender + descender;
 
     const glyphs = font.stringToGlyphs(name.trim());
-    const allContours: string[] = [];
+    const result: ContourData[] = [];
+    const fullParts: string[] = [];
     let x = 0;
 
     for (let i = 0; i < glyphs.length; i++) {
@@ -128,7 +175,13 @@ export default function SignatureWriter() {
       const d = path.toPathData(2);
 
       if (d && d.length > 5) {
-        splitContours(d).forEach((c) => allContours.push(c));
+        fullParts.push(d);
+        for (const contour of splitContours(d)) {
+          result.push({
+            d: contour,
+            length: measurePath(contour),
+          });
+        }
       }
 
       const advance = (glyph.advanceWidth || 0) * scale;
@@ -140,92 +193,112 @@ export default function SignatureWriter() {
     }
 
     setViewBox(`${-PAD} ${-PAD} ${x + PAD * 2} ${height + PAD * 2}`);
-    setContours(allContours);
-    setLengths([]);
+    return { full: fullParts.join(" "), contours: result };
   }, [font, name]);
+
+  // ── Pre-compute per-contour progress windows ─────────────────
+  const contourWindows = useMemo(() => {
+    const totalLength = contours.reduce((a, c) => a + c.length, 0);
+    if (totalLength === 0) return [];
+    const result: { start: number; end: number }[] = [];
+    let acc = 0;
+    for (const { length } of contours) {
+      const start = acc / totalLength;
+      const end = (acc + length) / totalLength;
+      result.push({ start, end });
+      acc += length;
+    }
+    return result;
+  }, [contours]);
+
+  // ── Apply progress to mask paths (no React re-render) ────────
+  const applyProgress = useCallback(
+    (progress: number) => {
+      for (let i = 0; i < contours.length; i++) {
+        const el = maskPathsRef.current[i];
+        if (!el) continue;
+        const w = contourWindows[i];
+        if (!w) continue;
+        const local = clamp((progress - w.start) / (w.end - w.start), 0, 1);
+        const offset = contours[i].length * (1 - local);
+        el.style.strokeDashoffset = `${offset}`;
+      }
+    },
+    [contours, contourWindows],
+  );
 
   // ── Sign handler ─────────────────────────────────────────────
   const handleSign = () => {
     if (!font || !name.trim()) return;
-    generateContours();
+
+    const { full, contours: newContours } = generateContours();
+    setFullPath(full);
+    setContours(newContours);
     setPhase("signing");
+
+    // Pre-compute windows for the rAF closure (avoids stale React state)
+    const totalLength = newContours.reduce((a, c) => a + c.length, 0);
+    const windows: { start: number; end: number }[] = [];
+    let acc = 0;
+    for (const { length } of newContours) {
+      windows.push({
+        start: acc / totalLength,
+        end: (acc + length) / totalLength,
+      });
+      acc += length;
+    }
+
+    progressRef.current = 0;
+    scrubbing.current = false;
+    setSliderValue(0);
+
+    cancelAnimationFrame(rafRef.current);
+    // Wait for React to paint the SVG before starting
+    requestAnimationFrame(() => {
+      const startTime = performance.now();
+      const tick = (now: number) => {
+        if (scrubbing.current) return;
+        const elapsed = now - startTime;
+        const raw = clamp(elapsed / DRAW_MS, 0, 1);
+        const eased = easeInOutCubic(raw);
+        progressRef.current = eased;
+        setSliderValue(eased);
+        // Apply directly — no stale closure dependency
+        for (let i = 0; i < newContours.length; i++) {
+          const el = maskPathsRef.current[i];
+          if (!el) continue;
+          const w = windows[i];
+          const local = clamp((eased - w.start) / (w.end - w.start), 0, 1);
+          el.style.strokeDashoffset = `${newContours[i].length * (1 - local)}`;
+        }
+        if (raw < 1) {
+          rafRef.current = requestAnimationFrame(tick);
+        } else {
+          setTimeout(() => setPhase("accepted"), 400);
+        }
+      };
+      rafRef.current = requestAnimationFrame(tick);
+    });
   };
 
-  // ── Measure each contour's length (accurate, no gaps) ────────
-  useLayoutEffect(() => {
-    if (contours.length === 0 || lengths.length > 0) return;
-    const measured = contours.map(
-      (_, i) => contourRefs.current[i]?.getTotalLength() ?? 50,
-    );
-    setLengths(measured);
-  }, [contours, lengths.length]);
-
-  // ── Auto-transition to accepted ──────────────────────────────
+  // Clean up rAF on unmount
   useEffect(() => {
-    if (phase !== "signing" || lengths.length === 0) return;
-    const timer = setTimeout(() => setPhase("accepted"), DRAW_MS + 400);
-    return () => clearTimeout(timer);
-  }, [phase, lengths]);
+    return () => cancelAnimationFrame(rafRef.current);
+  }, []);
 
   // ── Reset ────────────────────────────────────────────────────
   const handleReset = () => {
+    cancelAnimationFrame(rafRef.current);
+    scrubbing.current = false;
+    progressRef.current = 0;
+    setSliderValue(0);
     setPhase("idle");
     setName("");
+    setFullPath("");
     setContours([]);
-    setLengths([]);
   };
 
   const canSign = name.trim().length > 0 && fontLoaded;
-  const ready = lengths.length > 0;
-
-  // ── Pre-compute per-contour timing ───────────────────────────
-  const totalLength = lengths.reduce((a, b) => a + b, 0);
-  const timings: { duration: number; delay: number }[] = [];
-  let acc = 0;
-  for (const len of lengths) {
-    const dur = totalLength > 0 ? (len / totalLength) * DRAW_MS : 0;
-    timings.push({ duration: dur, delay: acc });
-    acc += dur;
-  }
-
-  // ── Signature SVG ────────────────────────────────────────────
-  const SignatureSVG = ({ animated }: { animated: boolean }) => (
-    <svg
-      viewBox={viewBox}
-      className="w-full h-full"
-      preserveAspectRatio="xMidYMid meet"
-    >
-      {animated && (
-        <defs>
-          {contours.map((d, i) => (
-            <mask id={`${maskId}-${i}`} key={i}>
-              <path
-                d={d}
-                fill="none"
-                stroke="white"
-                strokeWidth={FONT_SIZE * 0.6}
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                style={{
-                  strokeDasharray: lengths[i],
-                  strokeDashoffset: lengths[i],
-                  animation: `trim-path ${timings[i].duration}ms linear ${timings[i].delay}ms forwards`,
-                }}
-              />
-            </mask>
-          ))}
-        </defs>
-      )}
-      {contours.map((d, i) => (
-        <path
-          key={i}
-          d={d}
-          fill="#ede8e0"
-          {...(animated ? { mask: `url(#${maskId}-${i})` } : {})}
-        />
-      ))}
-    </svg>
-  );
 
   return (
     <div className="min-h-screen grid place-items-center bg-[#141414] p-6 font-body antialiased selection:bg-white/10">
@@ -249,27 +322,21 @@ export default function SignatureWriter() {
               }
             `}
           >
-            {phase === "accepted" ? (
-              <CheckIcon animated />
-            ) : (
-              <PencilIcon />
-            )}
+            {phase === "accepted" ? <CheckIcon animated /> : <PencilIcon />}
           </div>
 
           {/* ── Title & Description ─────────────────────────── */}
           <div className="space-y-3">
             <h2 className="text-[22px] font-heading text-white/90 tracking-[-0.01em] leading-tight">
-              {phase === "accepted"
-                ? "Contract Signed"
-                : "Sign the Contract"}
+              {phase === "accepted" ? "Contract Signed" : "Sign the Contract"}
             </h2>
             <p className="text-[13px] text-white/35 leading-[1.65] font-body">
               {phase === "accepted" ? (
                 "Your signature has been recorded. The contract is now in effect."
               ) : (
                 <>
-                  Since you've read the fine lines, type your name to
-                  confirm you agree with{" "}
+                  Since you've read the fine lines, type your name to confirm
+                  you agree with{" "}
                   <span className="text-white/55">the terms</span>.
                 </>
               )}
@@ -295,38 +362,58 @@ export default function SignatureWriter() {
                 />
               )}
 
-              {/* Hidden SVG for measuring contour lengths */}
-              {phase === "signing" && !ready && contours.length > 0 && (
-                <svg
-                  className="absolute opacity-0 pointer-events-none"
-                  viewBox={viewBox}
-                >
-                  {contours.map((d, i) => (
-                    <path
-                      key={i}
-                      ref={(el) => {
-                        contourRefs.current[i] = el;
-                      }}
-                      d={d}
-                    />
-                  ))}
-                </svg>
-              )}
-
-              {/* Animated signature */}
-              {phase === "signing" && ready && (
+              {/* Animated signature (signing) */}
+              {phase === "signing" && fullPath && (
                 <div
                   className="w-full h-[60px]"
                   style={{ animation: "fade-in 200ms ease both" }}
                 >
-                  <SignatureSVG animated />
+                  <svg
+                    viewBox={viewBox}
+                    className="w-full h-full"
+                    preserveAspectRatio="xMidYMid meet"
+                  >
+                    <defs>
+                      <mask id={`${maskId}-full`}>
+                        {contours.map(({ d, length }, i) => (
+                          <path
+                            key={i}
+                            ref={(el) => {
+                              maskPathsRef.current[i] = el;
+                            }}
+                            d={d}
+                            fill="none"
+                            stroke="white"
+                            strokeWidth={FONT_SIZE * 0.6}
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            style={{
+                              strokeDasharray: length,
+                              strokeDashoffset: length,
+                            }}
+                          />
+                        ))}
+                      </mask>
+                    </defs>
+                    <path
+                      d={fullPath}
+                      fill="#ede8e0"
+                      mask={`url(#${maskId}-full)`}
+                    />
+                  </svg>
                 </div>
               )}
 
               {/* Static signature (accepted) */}
-              {phase === "accepted" && contours.length > 0 && (
+              {phase === "accepted" && fullPath && (
                 <div className="w-full h-[60px]">
-                  <SignatureSVG animated={false} />
+                  <svg
+                    viewBox={viewBox}
+                    className="w-full h-full"
+                    preserveAspectRatio="xMidYMid meet"
+                  >
+                    <path d={fullPath} fill="#ede8e0" />
+                  </svg>
                 </div>
               )}
             </div>
@@ -379,6 +466,32 @@ export default function SignatureWriter() {
             </button>
           )}
         </div>
+
+        {/* ── Dev scrub slider ─────────────────────────────── */}
+        {DEV_SLIDER && phase === "signing" && (
+          <div className="mt-4 flex items-center gap-3 px-1">
+            <input
+              type="range"
+              min={0}
+              max={1}
+              step={0.001}
+              value={sliderValue}
+              onChange={(e) => {
+                const v = parseFloat(e.target.value);
+                // Pause rAF playback — slider takes over
+                scrubbing.current = true;
+                cancelAnimationFrame(rafRef.current);
+                progressRef.current = v;
+                setSliderValue(v);
+                applyProgress(v);
+              }}
+              className="flex-1 h-1 accent-white/60 cursor-pointer"
+            />
+            <span className="text-[11px] text-white/30 tabular-nums w-10 text-right font-body">
+              {(sliderValue * 100).toFixed(0)}%
+            </span>
+          </div>
+        )}
       </div>
     </div>
   );
