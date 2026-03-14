@@ -35,7 +35,6 @@ export function LetterComposer() {
 
   const letterControls = useAnimationControls();
   const flapControls = useAnimationControls();
-  const envelopeControls = useAnimationControls();
   const postmarkControls = useAnimationControls();
   const assemblyControls = useAnimationControls();
 
@@ -48,25 +47,14 @@ export function LetterComposer() {
     if (!letterContent.trim() || isAnimating) return;
     setIsAnimating(true);
 
-    // STEP 1: Envelope rises into view
-    await envelopeControls.start({
-      y: 0,
-      opacity: 1,
-      transition: { duration: 0.8, ease: softEasing },
-    });
-
-    // Measure letter height to calculate descent distance
-    const letterHeight = letterRef.current?.offsetHeight ?? 400;
-    const gap = 32; // gap between letter and envelope
-    const targetY = letterHeight + gap;
-
-    // STEP 2: Letter descends into open envelope
-    // The letter scales down (receding into depth) and translates down
-    // behind the envelope face (envelope has higher z-index)
+    // STEP 1: Letter slides down into envelope
+    // Starts at y:-240 (above), descends to y:10 (inside).
+    // overflow-hidden on the assembly clips the letter as it enters.
+    // z-index stack: back(10) < letter(20) < pocket(30) creates the illusion.
     await letterControls.start({
-      scaleY: 0.2,
-      scaleX: 0.8,
-      y: targetY,
+      y: 10,
+      scaleY: 1,
+      scaleX: 1,
       transition: { duration: 1.0, ease: softEasing },
     });
 
@@ -100,9 +88,8 @@ export function LetterComposer() {
 
     // Reset all transforms before unmounting to prevent residual slant
     assemblyControls.set({ y: 0, x: 0, rotate: 0 });
-    letterControls.set({ scaleY: 1, scaleX: 1, y: 0 });
+    letterControls.set({ scaleY: 1, scaleX: 1, y: -240 });
     flapControls.set({ rotateX: FLAP_OPEN });
-    envelopeControls.set({ y: 300, opacity: 0 });
     postmarkControls.set({ scale: 0, rotate: -30 });
 
     setShowConfirmation(true);
@@ -113,9 +100,8 @@ export function LetterComposer() {
     setShowConfirmation(false);
     setLetterContent("");
 
-    letterControls.set({ scaleY: 1, scaleX: 1, y: 0 });
+    letterControls.set({ scaleY: 1, scaleX: 1, y: -240 });
     flapControls.set({ rotateX: FLAP_OPEN });
-    envelopeControls.set({ y: 300, opacity: 0 });
     postmarkControls.set({ scale: 0, rotate: -30 });
     assemblyControls.set({ y: 0, x: 0, rotate: 0 });
   };
@@ -160,29 +146,52 @@ export function LetterComposer() {
         <motion.div
           animate={assemblyControls}
           initial={{ y: 0, x: 0, rotate: 0 }}
-          className="relative z-10 flex flex-col items-center"
+          className="relative z-10 overflow-hidden"
           style={{
             perspective: "1000px",
-            transformStyle: "preserve-3d",
             width: "90vw",
             maxWidth: "440px",
+            height: envelopeHeight,
           }}
         >
-          {/*
-            STEP 1 — Composition state:
-            Letter sits above, envelope below with flap open.
-            Letter z-10 < envelope z-20, so letter slides BEHIND
-            the envelope face during the descent animation.
-          */}
+          {/* ENVELOPE BACK — z:10 */}
+          <div
+            className="absolute inset-0"
+            style={{
+              zIndex: 10,
+              backgroundColor: "#e8dcc8",
+              backgroundImage: ENVELOPE_WEAVE,
+              borderRadius: "4px",
+              boxShadow: "0 20px 40px rgba(0,0,0,0.35)",
+            }}
+          >
+            {/* Paper noise on envelope back */}
+            <div
+              className="absolute inset-0 pointer-events-none"
+              style={{
+                backgroundImage: PAPER_NOISE,
+                opacity: 0.035,
+                borderRadius: "4px",
+              }}
+            />
+            <div
+              className="absolute rounded"
+              style={{
+                inset: "16px",
+                background:
+                  "linear-gradient(180deg, rgba(0,0,0,0.04) 0%, rgba(0,0,0,0.12) 100%)",
+              }}
+            />
+          </div>
 
-          {/* THE LETTER */}
+          {/* THE LETTER — z:20, starts above envelope, slides down into it */}
           <motion.div
             ref={letterRef}
             animate={letterControls}
-            className="relative origin-top"
+            initial={{ y: -240, scaleY: 1, scaleX: 1 }}
+            className="absolute inset-x-0 origin-top"
             style={{
               zIndex: 20,
-              transformStyle: "preserve-3d",
             }}
           >
             <div
@@ -385,209 +394,166 @@ export function LetterComposer() {
             </div>
           </motion.div>
 
-          {/* THE ENVELOPE — rises into view when send is pressed */}
-          <motion.div
-            animate={envelopeControls}
-            initial={{ y: 300, opacity: 0 }}
-            className="relative"
+          {/* ENVELOPE FRONT (POCKET) — z:30, V-shaped face */}
+          <div
+            className="absolute bottom-0 left-0 right-0 overflow-hidden"
             style={{
-              width: "100%",
-              height: envelopeHeight,
-              marginTop: "32px",
+              zIndex: 30,
+              height: envelopeHeight * 0.65,
+              borderRadius: "0 0 4px 4px",
             }}
           >
-            {/* ENVELOPE BACK */}
+            {/* Crosshatch texture on front pocket */}
+            <div
+              className="absolute inset-0 pointer-events-none"
+              style={{
+                backgroundImage: ENVELOPE_WEAVE,
+                zIndex: 1,
+              }}
+            />
+
             <div
               className="absolute inset-0"
               style={{
-                zIndex: 10,
-                backgroundColor: "#e8dcc8",
-                backgroundImage: ENVELOPE_WEAVE,
-                borderRadius: "4px",
-                boxShadow: "0 20px 40px rgba(0,0,0,0.35)",
+                background:
+                  "linear-gradient(180deg, #f2ead8 0%, #f8f4eb 100%)",
+                clipPath:
+                  "polygon(0 30%, 50% 100%, 100% 30%, 100% 100%, 0 100%)",
               }}
-            >
-              {/* Paper noise on envelope back */}
-              <div
-                className="absolute inset-0 pointer-events-none"
-                style={{
-                  backgroundImage: PAPER_NOISE,
-                  opacity: 0.035,
-                  borderRadius: "4px",
-                }}
-              />
-              <div
-                className="absolute rounded"
-                style={{
-                  inset: "16px",
-                  background:
-                    "linear-gradient(180deg, rgba(0,0,0,0.04) 0%, rgba(0,0,0,0.12) 100%)",
-                }}
-              />
-            </div>
+            />
 
-            {/* ENVELOPE FRONT (POCKET) — V-shaped face visible inside the mouth */}
+            {/* Left diagonal fold */}
             <div
-              className="absolute bottom-0 left-0 right-0 overflow-hidden"
+              className="absolute top-0 left-0 h-full"
               style={{
-                zIndex: 30,
-                height: envelopeHeight * 0.65,
-                borderRadius: "0 0 4px 4px",
+                width: "50%",
+                background:
+                  "linear-gradient(135deg, #efe7d5 0%, #f5f0e6 50%, transparent 50%)",
+              }}
+            />
+
+            {/* Right diagonal fold */}
+            <div
+              className="absolute top-0 right-0 h-full"
+              style={{
+                width: "50%",
+                background:
+                  "linear-gradient(-135deg, #efe7d5 0%, #f5f0e6 50%, transparent 50%)",
+              }}
+            />
+
+            {/* Bottom edge highlight */}
+            <div
+              className="absolute bottom-0 left-0 right-0 h-[2px]"
+              style={{
+                background:
+                  "linear-gradient(90deg, transparent, rgba(255,255,255,0.5), transparent)",
+              }}
+            />
+          </div>
+
+          {/* TOP FLAP — z:40, starts open (rotateX ~160), hinges closed to 0 */}
+          <motion.div
+            animate={flapControls}
+            initial={{ rotateX: FLAP_OPEN }}
+            className="absolute left-0 right-0 origin-top"
+            style={{
+              zIndex: 40,
+              top: -1,
+              height: envelopeHeight * 0.55,
+              transformStyle: "preserve-3d",
+            }}
+          >
+            {/* Front face of flap (visible when closed) */}
+            <div
+              className="absolute inset-0"
+              style={{
+                clipPath: "polygon(0 0, 50% 100%, 100% 0)",
+                background:
+                  "linear-gradient(180deg, #f5f0e6 0%, #e8dcc8 100%)",
+                backfaceVisibility: "hidden",
               }}
             >
-              {/* Crosshatch texture on front pocket */}
+              {/* Crosshatch on flap front */}
               <div
                 className="absolute inset-0 pointer-events-none"
                 style={{
                   backgroundImage: ENVELOPE_WEAVE,
-                  zIndex: 1,
-                }}
-              />
-
-              <div
-                className="absolute inset-0"
-                style={{
-                  background:
-                    "linear-gradient(180deg, #f2ead8 0%, #f8f4eb 100%)",
-                  clipPath:
-                    "polygon(0 30%, 50% 100%, 100% 30%, 100% 100%, 0 100%)",
-                }}
-              />
-
-              {/* Left diagonal fold */}
-              <div
-                className="absolute top-0 left-0 h-full"
-                style={{
-                  width: "50%",
-                  background:
-                    "linear-gradient(135deg, #efe7d5 0%, #f5f0e6 50%, transparent 50%)",
-                }}
-              />
-
-              {/* Right diagonal fold */}
-              <div
-                className="absolute top-0 right-0 h-full"
-                style={{
-                  width: "50%",
-                  background:
-                    "linear-gradient(-135deg, #efe7d5 0%, #f5f0e6 50%, transparent 50%)",
-                }}
-              />
-
-              {/* Bottom edge highlight */}
-              <div
-                className="absolute bottom-0 left-0 right-0 h-[2px]"
-                style={{
-                  background:
-                    "linear-gradient(90deg, transparent, rgba(255,255,255,0.5), transparent)",
+                  clipPath: "polygon(0 0, 50% 100%, 100% 0)",
                 }}
               />
             </div>
-
-            {/* TOP FLAP — starts open (rotateX ~160), hinges closed to 0 */}
-            <motion.div
-              animate={flapControls}
-              initial={{ rotateX: FLAP_OPEN }}
-              className="absolute left-0 right-0 origin-top"
+            {/* Back face of flap (visible when open) */}
+            <div
+              className="absolute inset-0"
               style={{
-                zIndex: 40,
-                top: -1,
-                height: envelopeHeight * 0.55,
-                transformStyle: "preserve-3d",
+                clipPath: "polygon(0 0, 50% 100%, 100% 0)",
+                background: "linear-gradient(0deg, #d4c8b4 0%, #efe7d5 100%)",
+                transform: "rotateY(180deg)",
+                backfaceVisibility: "hidden",
               }}
-            >
-              {/* Front face of flap (visible when closed) */}
-              <div
-                className="absolute inset-0"
-                style={{
-                  clipPath: "polygon(0 0, 50% 100%, 100% 0)",
-                  background:
-                    "linear-gradient(180deg, #f5f0e6 0%, #e8dcc8 100%)",
-                  backfaceVisibility: "hidden",
-                }}
-              >
-                {/* Crosshatch on flap front */}
-                <div
-                  className="absolute inset-0 pointer-events-none"
-                  style={{
-                    backgroundImage: ENVELOPE_WEAVE,
-                    clipPath: "polygon(0 0, 50% 100%, 100% 0)",
-                  }}
-                />
-              </div>
-              {/* Back face of flap (visible when open) */}
-              <div
-                className="absolute inset-0"
-                style={{
-                  clipPath: "polygon(0 0, 50% 100%, 100% 0)",
-                  background:
-                    "linear-gradient(0deg, #d4c8b4 0%, #efe7d5 100%)",
-                  transform: "rotateY(180deg)",
-                  backfaceVisibility: "hidden",
-                }}
-              />
-            </motion.div>
+            />
+          </motion.div>
 
-            {/* POSTMARK — hidden initially, spins in after flap closes */}
-            <motion.div
-              animate={postmarkControls}
-              initial={{ scale: 0, rotate: -30 }}
-              className="absolute"
+          {/* POSTMARK — z:50, hidden initially, spins in after flap closes */}
+          <motion.div
+            animate={postmarkControls}
+            initial={{ scale: 0, rotate: -30 }}
+            className="absolute"
+            style={{
+              zIndex: 50,
+              top: 24,
+              right: 80,
+            }}
+          >
+            <div
+              className="flex items-center justify-center rounded-full"
               style={{
-                zIndex: 50,
-                top: 24,
-                right: 80,
+                width: "48px",
+                height: "48px",
+                border: "2px solid #8b4513",
               }}
             >
               <div
-                className="flex items-center justify-center rounded-full"
+                className="flex flex-col items-center justify-center rounded-full"
                 style={{
-                  width: "48px",
-                  height: "48px",
-                  border: "2px solid #8b4513",
+                  width: "40px",
+                  height: "40px",
+                  border: "1px solid #8b4513",
                 }}
               >
-                <div
-                  className="flex flex-col items-center justify-center rounded-full"
+                <span
                   style={{
-                    width: "40px",
-                    height: "40px",
-                    border: "1px solid #8b4513",
+                    fontFamily: FONT_SERIF,
+                    fontSize: "7px",
+                    color: "#8b4513",
+                    fontWeight: 600,
+                    lineHeight: 1.2,
+                    textAlign: "center",
                   }}
                 >
-                  <span
-                    style={{
-                      fontFamily: FONT_SERIF,
-                      fontSize: "7px",
-                      color: "#8b4513",
-                      fontWeight: 600,
-                      lineHeight: 1.2,
-                      textAlign: "center",
-                    }}
-                  >
-                    13 MAR
-                    <br />
-                    '26
-                  </span>
-                </div>
+                  13 MAR
+                  <br />
+                  '26
+                </span>
               </div>
-              {/* Postmark lines */}
-              <div
-                className="absolute top-1/2 -translate-y-1/2 flex flex-col"
-                style={{ right: "-16px", gap: "2px" }}
-              >
-                {[...Array(4)].map((_, i) => (
-                  <div
-                    key={i}
-                    style={{
-                      height: "1.5px",
-                      width: "14px",
-                      backgroundColor: "#8b4513",
-                    }}
-                  />
-                ))}
-              </div>
-            </motion.div>
+            </div>
+            {/* Postmark lines */}
+            <div
+              className="absolute top-1/2 -translate-y-1/2 flex flex-col"
+              style={{ right: "-16px", gap: "2px" }}
+            >
+              {[...Array(4)].map((_, i) => (
+                <div
+                  key={i}
+                  style={{
+                    height: "1.5px",
+                    width: "14px",
+                    backgroundColor: "#8b4513",
+                  }}
+                />
+              ))}
+            </div>
           </motion.div>
         </motion.div>
       ) : (
