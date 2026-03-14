@@ -148,7 +148,7 @@ export function LetterComposer() {
                 // step 0: visible (letter appears above)
                 // step 1: clip bottom only (letter entering from top)
                 // step 2+: clip all (letter fully inside)
-                overflow: step >= 2 ? "hidden" : "visible",
+                overflow: step >= 2 && step <= 3 ? "hidden" : "visible",
                 clipPath: step === 1 ? "inset(-200% -200% 0 -200%)" : "none",
               }}
             >
