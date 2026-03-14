@@ -57,10 +57,10 @@ export function LetterComposer() {
   useEffect(() => {
     const timings: Record<number, number> = {
       1: 1000, // meeting duration
-      2: 500,  // flap close duration
-      3: 600,  // postmark + pause
-      4: 500,  // rocking duration
-      5: 650,  // fly away duration
+      2: 500, // flap close duration
+      3: 600, // postmark + pause
+      4: 500, // rocking duration
+      5: 650, // fly away duration
     };
     const delay = timings[step];
     if (delay != null) {
@@ -148,7 +148,7 @@ export function LetterComposer() {
                 // step 0: visible (letter appears above)
                 // step 1: clip bottom only (letter entering from top)
                 // step 2+: clip all (letter fully inside)
-                overflow: step >= 2 && step <= 3 ? "hidden" : "visible",
+                overflow: step >= 2 && step <= 4 ? "hidden" : "visible",
                 clipPath: step === 1 ? "inset(-200% -200% 0 -200%)" : "none",
               }}
             >
@@ -157,11 +157,7 @@ export function LetterComposer() {
                 className="absolute inset-0"
                 animate={{
                   rotate:
-                    step === 4
-                      ? [0, 4, -4, 3, -2, 0]
-                      : step >= 5
-                        ? 10
-                        : 0,
+                    step === 4 ? [0, 4, -4, 3, -2, 0] : step >= 5 ? 10 : 0,
                   y: step >= 5 ? -800 : 0,
                   x: step >= 5 ? 120 : 0,
                 }}
@@ -433,7 +429,7 @@ export function LetterComposer() {
                   className="absolute bottom-0 left-0 right-0 overflow-hidden"
                   style={{
                     zIndex: 30,
-                    height: ENVELOPE_HEIGHT * 0.65,
+                    height: ENVELOPE_HEIGHT * 0.85,
                     borderRadius: "0 0 4px 4px",
                   }}
                 >
@@ -572,9 +568,13 @@ export function LetterComposer() {
                           textAlign: "center",
                         }}
                       >
-                        13 MAR
-                        <br />
-                        '26
+                        {new Date()
+                          .toLocaleDateString("en-GB", {
+                            day: "numeric",
+                            month: "short",
+                          })
+                          .toUpperCase()}
+                        <br />'{String(new Date().getFullYear()).slice(-2)}
                       </span>
                     </div>
                   </div>
