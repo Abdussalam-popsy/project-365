@@ -58,8 +58,9 @@ Seen from the side (cross-section):
 
     You (the viewer)
          |
-    [50] Postmark        — the circular date stamp
+    [50] Postmark        — the circular date stamp (auto-updates to today's date)
     [40] Flap            — the triangular top flap
+    [35] Stamp           — the small postage stamp on the envelope
     [30] Front pocket    — the V-shaped front face
     [20] Letter          — YOUR letter paper
     [10] Back            — the back panel of the envelope
@@ -123,10 +124,10 @@ Without clipping, when the letter slides down into the envelope at step 1, the b
 
 ### The three clipping phases
 
-The clipping changes across the animation in three distinct phases:
+The clipping changes across the animation in three phases:
 
 ```tsx
-overflow: step >= 2 && step <= 3 ? "hidden" : "visible",
+overflow: step >= 2 ? "hidden" : "visible",
 clipPath: step === 1 ? "inset(-200% -200% 0 -200%)" : "none",
 ```
 
@@ -144,13 +145,11 @@ The letter is descending into the envelope. We want to hide any part of the lett
 
 So `inset(-200% -200% 0 -200%)` means: don't clip top, don't clip right, clip at the bottom edge, don't clip left. The letter can extend above the envelope freely, but anything below the envelope's bottom edge is hidden.
 
-**Phase 3 — Steps 2-3: Clip everything** (`overflow: hidden`)
+**Phase 3 — Steps 2+: Clip everything permanently** (`overflow: hidden`)
 
-The letter is fully inside the envelope now. The flap is closing and the postmark is appearing. We clip all sides so nothing peeks out.
+Once the letter is fully inside the envelope, clipping stays on for the rest of the animation — during the flap closing, the postmark, the rocking, *and* the fly-away. The letter never peeks out again.
 
-**Phase 4 — Steps 4-5: No clipping again** (`overflow: visible`)
-
-The envelope needs to rock and fly off-screen. If we kept `overflow: hidden`, the envelope would get cut off as soon as it moved outside its container's boundaries — it would look like it's disappearing into an invisible wall. So we release all clipping, letting the envelope move freely.
+You might wonder: if `overflow: hidden` is on the envelope container, how does the fly-away work? Won't the envelope get cut off as it moves? The trick is that the fly-away animation (the tilt, the upward launch) is applied to the *container itself*, not to things inside it. The container — with its clipped contents — moves as one sealed unit off the screen. Think of it like picking up a sealed box and throwing it: the box moves, but nothing falls out of it because the lid is shut.
 
 ---
 
@@ -180,21 +179,27 @@ The flap also changes its z-index:
 
 ## The Fly Away (Steps 4-5)
 
-The rocking and flying happen on an inner wrapper that contains all the envelope pieces:
+The rocking and flying are split across two different layers — and this split is important for keeping the letter hidden.
+
+**Step 4 — Rocking** happens on an *inner wrapper* inside the envelope container:
 
 ```tsx
-// Step 4: Rock back and forth
-rotate: step === 4 ? [0, 4, -4, 3, -2, 0] : ...
-
-// Step 5: Tilt and shoot upward
-rotate: step >= 5 ? 10 : 0,
-y: step >= 5 ? -800 : 0,
-x: step >= 5 ? 120 : 0,
+// Inner assembly: only handles the wobble
+rotate: step === 4 ? [0, 4, -4, 3, -2, 0] : 0,
 ```
 
-At step 4, the `rotate` value is an array `[0, 4, -4, 3, -2, 0]`. Framer Motion treats arrays as **keyframes** — it smoothly goes through each value in sequence. So the envelope tilts right 4 degrees, then left 4, then right 3, left 2, and back to centre. This creates the wobble.
+The `rotate` value is an array `[0, 4, -4, 3, -2, 0]`. Framer Motion treats arrays as **keyframes** — it smoothly goes through each value in sequence. So the envelope tilts right 4 degrees, then left 4, then right 3, left 2, and back to centre. This creates the wobble. Because the rocking happens *inside* the clipped container, the letter stays hidden.
 
-At step 5, the envelope tilts 10 degrees, moves 800 pixels up and 120 pixels to the right, and uses a special easing curve that starts slowly and accelerates — like something being launched.
+**Step 5 — Flying** happens on the *outer envelope container* itself:
+
+```tsx
+// Outer container: handles the launch
+y: step >= 5 ? -800 : 0,
+x: step >= 5 ? 120 : 0,
+rotate: step >= 5 ? 10 : 0,
+```
+
+The envelope tilts 10 degrees, moves 800 pixels up and 120 pixels to the right, and uses a special easing curve that starts slowly and accelerates — like something being launched. Because the animation is on the container (which has `overflow: hidden`), the entire sealed envelope moves as one unit. The letter can't poke out because it's clipped inside.
 
 ---
 
@@ -297,8 +302,9 @@ Step 6
 
 | z-index | Layer | Role |
 |---------|-------|------|
-| 50 | Postmark | Circular date stamp on the sealed envelope |
+| 50 | Postmark | Circular date stamp on the sealed envelope (date updates automatically) |
 | 40 | Flap (when closed) | Triangular top flap, seals the envelope |
+| 35 | Stamp | Small postage stamp with envelope icon, on the envelope front |
 | 30 | Front pocket | V-shaped front face of the envelope |
 | 20 | Letter | The paper you write on |
 | 10 | Back panel | The back wall of the envelope |

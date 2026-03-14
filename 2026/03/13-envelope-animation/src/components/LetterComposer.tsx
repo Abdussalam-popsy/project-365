@@ -135,35 +135,35 @@ export function LetterComposer() {
             <motion.div
               className="relative"
               animate={{
-                y: step === 0 ? ENVELOPE_OFFSCREEN_Y : 0,
+                y: step === 0 ? ENVELOPE_OFFSCREEN_Y : step >= 5 ? -800 : 0,
+                x: step >= 5 ? 120 : 0,
+                rotate: step >= 5 ? 10 : 0,
               }}
               transition={{
-                duration: step === 1 ? 1.0 : 0,
-                ease: softEasing,
+                duration: step === 1 ? 1.0 : step >= 5 ? 0.65 : 0,
+                ease: step >= 5 ? [0.55, 0, 1, 0.45] : softEasing,
               }}
               style={{
                 height: ENVELOPE_HEIGHT,
                 perspective: "1000px",
-                // Three-phase clipping:
-                // step 0: visible (letter appears above)
+                // Clipping phases:
+                // step 0: visible (letter floats above)
                 // step 1: clip bottom only (letter entering from top)
-                // step 2+: clip all (letter fully inside)
-                overflow: step >= 2 && step <= 4 ? "hidden" : "visible",
+                // step 2+: clip all sides permanently (letter hidden inside,
+                //   fly-away is on THIS div so the whole clipped box moves)
+                overflow: step >= 2 ? "hidden" : "visible",
                 clipPath: step === 1 ? "inset(-200% -200% 0 -200%)" : "none",
               }}
             >
-              {/* Assembly inner — handles rocking + fly away */}
+              {/* Assembly inner — handles rocking only */}
               <motion.div
                 className="absolute inset-0"
                 animate={{
-                  rotate:
-                    step === 4 ? [0, 4, -4, 3, -2, 0] : step >= 5 ? 10 : 0,
-                  y: step >= 5 ? -800 : 0,
-                  x: step >= 5 ? 120 : 0,
+                  rotate: step === 4 ? [0, 4, -4, 3, -2, 0] : 0,
                 }}
                 transition={{
-                  duration: step === 4 ? 0.5 : step >= 5 ? 0.65 : 0.3,
-                  ease: step >= 5 ? [0.55, 0, 1, 0.45] : "easeInOut",
+                  duration: step === 4 ? 0.5 : 0.3,
+                  ease: "easeInOut",
                 }}
               >
                 {/* ENVELOPE BACK — z:10 */}
@@ -247,84 +247,6 @@ export function LetterComposer() {
                         opacity: 0.045,
                       }}
                     />
-
-                    {/* STAMP — postcard-style, always visible on the letter */}
-                    <div
-                      className="absolute"
-                      style={{
-                        zIndex: 50,
-                        top: 12,
-                        right: 12,
-                      }}
-                    >
-                      <div
-                        className="relative flex items-center justify-center"
-                        style={{
-                          width: "56px",
-                          height: "70px",
-                          backgroundColor: "#faf6ed",
-                          boxShadow: "0 2px 6px rgba(0,0,0,0.15)",
-                          borderRadius: "2px",
-                        }}
-                      >
-                        {/* Perforations */}
-                        <div
-                          className="absolute inset-0 pointer-events-none"
-                          style={{
-                            background: `
-                              radial-gradient(circle at 0 4px, transparent 2.5px, #faf6ed 2.5px),
-                              radial-gradient(circle at 0 12px, transparent 2.5px, #faf6ed 2.5px),
-                              radial-gradient(circle at 0 20px, transparent 2.5px, #faf6ed 2.5px),
-                              radial-gradient(circle at 0 28px, transparent 2.5px, #faf6ed 2.5px),
-                              radial-gradient(circle at 0 36px, transparent 2.5px, #faf6ed 2.5px),
-                              radial-gradient(circle at 0 44px, transparent 2.5px, #faf6ed 2.5px),
-                              radial-gradient(circle at 0 52px, transparent 2.5px, #faf6ed 2.5px),
-                              radial-gradient(circle at 0 60px, transparent 2.5px, #faf6ed 2.5px),
-                              radial-gradient(circle at 0 68px, transparent 2.5px, #faf6ed 2.5px),
-                              radial-gradient(circle at 56px 4px, transparent 2.5px, #faf6ed 2.5px),
-                              radial-gradient(circle at 56px 12px, transparent 2.5px, #faf6ed 2.5px),
-                              radial-gradient(circle at 56px 20px, transparent 2.5px, #faf6ed 2.5px),
-                              radial-gradient(circle at 56px 28px, transparent 2.5px, #faf6ed 2.5px),
-                              radial-gradient(circle at 56px 36px, transparent 2.5px, #faf6ed 2.5px),
-                              radial-gradient(circle at 56px 44px, transparent 2.5px, #faf6ed 2.5px),
-                              radial-gradient(circle at 56px 52px, transparent 2.5px, #faf6ed 2.5px),
-                              radial-gradient(circle at 56px 60px, transparent 2.5px, #faf6ed 2.5px),
-                              radial-gradient(circle at 56px 68px, transparent 2.5px, #faf6ed 2.5px)
-                            `,
-                            backgroundSize: "100% 100%",
-                            backgroundRepeat: "no-repeat",
-                          }}
-                        />
-
-                        {/* Stamp face */}
-                        <div
-                          className="relative flex items-center justify-center overflow-hidden"
-                          style={{
-                            width: "44px",
-                            height: "56px",
-                            backgroundColor: "#c9a86c",
-                            backgroundImage: `
-                              radial-gradient(circle, rgba(74,55,40,0.12) 0.5px, transparent 0.5px),
-                              linear-gradient(135deg, #d4b377 0%, #b8945a 100%)
-                            `,
-                            backgroundSize: "4px 4px, 100% 100%",
-                            border: "2px solid rgba(74, 55, 40, 0.25)",
-                            boxShadow:
-                              "inset 0 0 0 1px rgba(212, 179, 119, 0.4)",
-                          }}
-                        >
-                          <span
-                            style={{
-                              fontFamily: FONT_SERIF,
-                              fontSize: "18px",
-                              color: "#4a3728",
-                            }}
-                          >
-                            &#9993;
-                          </span>
-                        </div>
-                      </div>
-                    </div>
 
                     {/* Decorative double-line border — period stationery motif */}
                     <div
@@ -480,6 +402,78 @@ export function LetterComposer() {
                         "linear-gradient(90deg, transparent, rgba(255,255,255,0.5), transparent)",
                     }}
                   />
+                </div>
+
+                {/* STAMP — on the envelope front, top-right corner */}
+                <div
+                  className="absolute"
+                  style={{
+                    zIndex: 35,
+                    top: 40,
+                    right: 12,
+                  }}
+                >
+                  <div
+                    className="relative flex items-center justify-center"
+                    style={{
+                      width: "42px",
+                      height: "52px",
+                      backgroundColor: "#faf6ed",
+                      boxShadow: "0 2px 6px rgba(0,0,0,0.15)",
+                      borderRadius: "2px",
+                    }}
+                  >
+                    {/* Perforations */}
+                    <div
+                      className="absolute inset-0 pointer-events-none"
+                      style={{
+                        background: `
+                          radial-gradient(circle at 0 4px, transparent 2px, #faf6ed 2px),
+                          radial-gradient(circle at 0 12px, transparent 2px, #faf6ed 2px),
+                          radial-gradient(circle at 0 20px, transparent 2px, #faf6ed 2px),
+                          radial-gradient(circle at 0 28px, transparent 2px, #faf6ed 2px),
+                          radial-gradient(circle at 0 36px, transparent 2px, #faf6ed 2px),
+                          radial-gradient(circle at 0 44px, transparent 2px, #faf6ed 2px),
+                          radial-gradient(circle at 0 52px, transparent 2px, #faf6ed 2px),
+                          radial-gradient(circle at 42px 4px, transparent 2px, #faf6ed 2px),
+                          radial-gradient(circle at 42px 12px, transparent 2px, #faf6ed 2px),
+                          radial-gradient(circle at 42px 20px, transparent 2px, #faf6ed 2px),
+                          radial-gradient(circle at 42px 28px, transparent 2px, #faf6ed 2px),
+                          radial-gradient(circle at 42px 36px, transparent 2px, #faf6ed 2px),
+                          radial-gradient(circle at 42px 44px, transparent 2px, #faf6ed 2px),
+                          radial-gradient(circle at 42px 52px, transparent 2px, #faf6ed 2px)
+                        `,
+                        backgroundSize: "100% 100%",
+                        backgroundRepeat: "no-repeat",
+                      }}
+                    />
+                    {/* Stamp face */}
+                    <div
+                      className="relative flex items-center justify-center overflow-hidden"
+                      style={{
+                        width: "32px",
+                        height: "40px",
+                        backgroundColor: "#c9a86c",
+                        backgroundImage: `
+                          radial-gradient(circle, rgba(74,55,40,0.12) 0.5px, transparent 0.5px),
+                          linear-gradient(135deg, #d4b377 0%, #b8945a 100%)
+                        `,
+                        backgroundSize: "4px 4px, 100% 100%",
+                        border: "2px solid rgba(74, 55, 40, 0.25)",
+                        boxShadow: "inset 0 0 0 1px rgba(212, 179, 119, 0.4)",
+                      }}
+                    >
+                      <span
+                        style={{
+                          fontFamily: FONT_SERIF,
+                          fontSize: "14px",
+                          color: "#4a3728",
+                        }}
+                      >
+                        &#9993;
+                      </span>
+                    </div>
+                  </div>
                 </div>
 
                 {/* TOP FLAP — z-index animates with step */}
