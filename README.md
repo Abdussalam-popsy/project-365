@@ -19,6 +19,8 @@ Each interaction is a self-contained micro-project exploring a single concept â€
 ```bash
 01 - ./scripts/new.sh react-vite signature-writer
 02 - ./scripts/new.sh react-vite follow-draw
+03 - ./scripts/new.sh react-vite envelope-animation
+04 - ./scripts/new.sh react-vite send-a-letter
 ./scripts/new.sh vanilla hover-glow
 ./scripts/new.sh react-vite magnetic-button
 ./scripts/new.sh canvas particle-field
