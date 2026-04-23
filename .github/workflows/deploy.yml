@@ -24,10 +24,16 @@ jobs:
         with:
           node-version: 24
 
-      - name: Build all experiments
+      - name: Build gallery
         run: |
           mkdir -p _site
+          cd gallery && npm install && npm run build
+          cp -r dist/. ../_site/
+          cd ..
+          cp catalog.json _site/catalog.json
 
+      - name: Build all experiments
+        run: |
           # Find every experiment with a package.json (Vite/Next projects)
           find 2026 -name "package.json" -not -path "*/node_modules/*" | while read pkg; do
             dir=$(dirname "$pkg")
