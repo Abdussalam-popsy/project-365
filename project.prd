@@ -133,6 +133,38 @@ When the gallery is mature enough to surface on the personal site:
 
 ---
 
+## Asset loading rules (Vite + GitHub Pages)
+
+GitHub Pages serves experiments from a subdirectory, not the root. This breaks
+absolute asset paths. Always follow these rules:
+
+### src/assets/ — import in JS/TS
+Vite resolves the path at build time. Works everywhere automatically.
+
+  import logo from './assets/logo.png'
+  import './assets/font.css'
+
+Use for: images, icons, fonts referenced in CSS.
+
+### public/ — fetched/loaded at runtime
+Must be prefixed with import.meta.env.BASE_URL, which Vite sets to the correct
+subdirectory path at build time.
+
+  // ✅ correct
+  opentype.load(`${import.meta.env.BASE_URL}fonts/MyFont.ttf`)
+  fetch(`${import.meta.env.BASE_URL}data/config.json`)
+
+  // ❌ breaks on GitHub Pages
+  opentype.load('/fonts/MyFont.ttf')
+  fetch('/data/config.json')
+
+Use for: fonts loaded dynamically (opentype.js), JSON data files, PDFs, any file
+fetched at runtime rather than imported.
+
+Rule of thumb: if you're importing it → src/assets/. If you're fetching it → public/ + BASE_URL.
+
+---
+
 ## Notes on learning different languages
 
 As you expand beyond JS/TS:
