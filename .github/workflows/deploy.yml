@@ -33,7 +33,7 @@ jobs:
             dir=$(dirname "$pkg")
             echo "→ Building $dir"
 
-            (cd "$dir" && npm install && npm run build)
+            (cd "$dir" && npm install && npx vite build --base="/project-365/$dir/")
 
             # Copy dist/ output into _site mirroring the folder structure
             if [ -d "$dir/dist" ]; then
