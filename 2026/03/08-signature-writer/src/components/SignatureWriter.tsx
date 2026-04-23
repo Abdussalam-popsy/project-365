@@ -374,7 +374,7 @@ export default function SignatureWriter() {
 
   // ── Load font ────────────────────────────────────────────────
   useEffect(() => {
-    opentype.load("/fonts/Sacramento-Regular.ttf").then((f) => {
+    opentype.load(`${import.meta.env.BASE_URL}fonts/Sacramento-Regular.ttf`).then((f) => {
       setFont(f);
       setFontLoaded(true);
     });
