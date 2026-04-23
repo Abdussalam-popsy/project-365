@@ -1,2 +1,57 @@
 [
+  {
+    "date": "2026-03-08",
+    "name": "signature-writer",
+    "path": "2026/03/08-signature-writer",
+    "url": "",
+    "tags": ["react", "canvas", "animation", "fonts"],
+    "template": "react-vite",
+    "language": "typescript",
+    "description": "Signature writing animation with custom fonts",
+    "status": "local"
+  },
+  {
+    "date": "2026-03-10",
+    "name": "follow-draw",
+    "path": "2026/03/10-follow-draw",
+    "url": "",
+    "tags": ["react", "canvas", "mouse"],
+    "template": "react-vite",
+    "language": "typescript",
+    "description": "Drawing tool that follows cursor movement",
+    "status": "local"
+  },
+  {
+    "date": "2026-03-13",
+    "name": "envelope-animation",
+    "path": "2026/03/13-envelope-animation",
+    "url": "",
+    "tags": ["react", "animation", "ui"],
+    "template": "react-vite",
+    "language": "typescript",
+    "description": "Envelope open/close animation with letter composer",
+    "status": "local"
+  },
+  {
+    "date": "2026-03-14",
+    "name": "send-a-letter",
+    "path": "2026/03/14-send-a-letter",
+    "url": "",
+    "tags": ["react", "animation", "ui"],
+    "template": "react-vite",
+    "language": "typescript",
+    "description": "Send a letter interaction with envelope transition",
+    "status": "local"
+  },
+  {
+    "date": "2026-04-23",
+    "name": "cursor-intercation",
+    "path": "2026/04/23-cursor-intercation",
+    "url": "",
+    "tags": ["react", "canvas", "tweakpane", "dialkit", "isometric"],
+    "template": "react-vite",
+    "language": "typescript",
+    "description": "Isometric shapes that react to cursor proximity",
+    "status": "local"
+  }
 ]

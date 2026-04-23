@@ -5,27 +5,40 @@ REPO_ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 CATALOG="$REPO_ROOT/catalog.json"
 
 usage() {
-  echo "Usage: $0 <name> <tags> <description>"
+  echo "Usage: $0 <name> <language> <tags> <description> [date]"
   echo ""
   echo "  name         Interaction name (e.g., magnetic-button)"
+  echo "  language     Language used (e.g., typescript, python, go)"
   echo "  tags         Comma-separated tags (e.g., hover,react,spring)"
   echo "  description  Short description in quotes"
+  echo "  date         Optional. Date in YYYY-MM-DD format (defaults to today)"
   echo ""
-  echo "Example: $0 magnetic-button \"hover,react,spring\" \"Button that follows the cursor with spring physics\""
+  echo "Examples:"
+  echo "  $0 magnetic-button typescript \"hover,react,spring\" \"Button that follows the cursor\""
+  echo "  $0 signature-writer typescript \"react,canvas\" \"Signature animation\" 2026-03-08"
   exit 1
 }
 
-if [[ $# -ne 3 ]]; then
+if [[ $# -lt 4 ]] || [[ $# -gt 5 ]]; then
   usage
 fi
 
 NAME="$1"
-TAGS="$2"
-DESCRIPTION="$3"
+LANGUAGE="$2"
+TAGS="$3"
+DESCRIPTION="$4"
+CUSTOM_DATE="${5:-}"
 
-DATE="$(date +%Y-%m-%d)"
-DATE_PATH="$(date +%Y/%m)"
-DAY="$(date +%d)"
+if [[ -n "$CUSTOM_DATE" ]]; then
+  DATE="$CUSTOM_DATE"
+  DATE_PATH="$(echo "$CUSTOM_DATE" | sed 's/-/\//g' | sed 's/\/[0-9][0-9]$//')"
+  DAY="$(echo "$CUSTOM_DATE" | sed 's/.*-//')"
+else
+  DATE="$(date +%Y-%m-%d)"
+  DATE_PATH="$(date +%Y/%m)"
+  DAY="$(date +%d)"
+fi
+
 DIR_PATH="$DATE_PATH/${DAY}-${NAME}"
 
 # Find the template by checking what exists in the directory
@@ -37,7 +50,11 @@ fi
 
 # Detect template
 if [[ -f "$FULL_PATH/package.json" ]]; then
-  TEMPLATE="react-vite"
+  if grep -q '"next"' "$FULL_PATH/package.json" 2>/dev/null; then
+    TEMPLATE="next"
+  else
+    TEMPLATE="react-vite"
+  fi
 elif [[ -f "$FULL_PATH/index.html" ]] && grep -q "canvas" "$FULL_PATH/index.html" 2>/dev/null; then
   TEMPLATE="canvas"
 else
@@ -53,9 +70,12 @@ ENTRY=$(cat <<EOF
     "date": "$DATE",
     "name": "$NAME",
     "path": "$DIR_PATH",
+    "url": "",
     "tags": $TAGS_JSON,
     "template": "$TEMPLATE",
-    "description": "$DESCRIPTION"
+    "language": "$LANGUAGE",
+    "description": "$DESCRIPTION",
+    "status": "local"
   }
 EOF
 )

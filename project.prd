@@ -1,0 +1,145 @@
+# Project 365 — PRD & Architecture Notes
+Date: 2026-04-23
+
+---
+
+## What this is
+
+A daily practice repo for frontend interactions, micro-animations, and creative coding
+experiments across different languages and frameworks. One experiment per day, each
+self-contained, tracked in catalog.json.
+
+---
+
+## Current state
+
+- Git repo: github.com/Abdussalam-popsy/project-365
+- Folder structure: YYYY/MM/DD-name/
+- catalog.json: populated with all 5 existing experiments
+- scripts/new.sh: scaffolds a new experiment from a template
+- scripts/catalog-add.sh: adds an entry to catalog.json (supports --date for past experiments, language field)
+- Templates: vanilla, canvas, react-vite, next
+
+The scripts and catalog schema are solid. The missing pieces are:
+1. Hosting strategy
+2. Gallery/index site
+3. Personal site integration
+
+---
+
+## Vision
+
+A subpage on the personal site (e.g. yoursite.com/experiments or /365) that acts as a
+gallery — browseable by date, filterable by language/tag. Each experiment is a live,
+clickable link. The personal site doesn't host the experiments — it just reads
+catalog.json and links to wherever each experiment is deployed.
+
+---
+
+## Hosting decision
+
+### Why NOT individual Cloudflare Pages per experiment
+- Cloudflare Pages has better use cases (edge functions, Workers, production apps)
+- 365+ separate Pages projects becomes unmanageable
+- Deployment automation overhead per project is high
+
+### Recommended: GitHub Pages via GitHub Actions (static experiments)
+All static experiments (vanilla HTML, Vite/React, canvas) get built and deployed
+automatically to GitHub Pages when pushed to main.
+
+Structure:
+  github.io/project-365/                          ← gallery index
+  github.io/project-365/2026/04/23-cursor-interaction/   ← live experiment
+
+How it works:
+- GitHub Action triggers on push to main
+- Detects which experiments have changed
+- Builds changed experiments (npm run build)
+- Outputs to a single dist/ folder mirroring the date structure
+- Deploys dist/ to GitHub Pages
+
+This means zero manual deployment — push code, it goes live automatically.
+
+### For non-static experiments (Python, Swift, server-side, etc.)
+These need a different host per experiment type:
+  Python      → Railway, Render, or Replit (free tier)
+  Swift/iOS   → screenshots/video only, or TestFlight
+  WASM        → still static, GitHub Pages works
+
+The catalog.json url field handles this — each entry stores whatever URL is live,
+regardless of where it's hosted. The gallery just reads the URL.
+
+---
+
+## catalog.json — recommended schema
+
+{
+  "date": "2026-04-23",
+  "name": "cursor-interaction",
+  "path": "2026/04/23-cursor-intercation",
+  "url": "https://abdussalam.github.io/project-365/2026/04/23-cursor-intercation",
+  "tags": ["canvas", "typescript", "tweakpane"],
+  "template": "react-vite",
+  "language": "typescript",
+  "description": "Isometric shapes that react to cursor proximity",
+  "status": "live"
+}
+
+Key addition: "language" field — as you learn Python, Go, Swift, etc., this lets the
+gallery filter by language. Separate from "template" which is the scaffolding used.
+
+---
+
+## Gallery/index site
+
+Options:
+  A. Add a /experiments page to your existing personal site — reads catalog.json
+     from the GitHub API and renders a grid.
+  B. Build a standalone gallery as another template in this repo — deployed to
+     GitHub Pages at the root, automatically updated on push.
+
+Option B is self-contained — no dependency on personal site infrastructure. When
+ready, the personal site /experiments page just iframes or mirrors the gallery.
+
+---
+
+## Personal site integration (future)
+
+When the gallery is mature enough to surface on the personal site:
+- Personal site fetches catalog.json from GitHub raw URL
+- Renders a grid of experiments with date, title, language, tags
+- Each card links to the live GitHub Pages URL
+- No tight coupling — the catalog is the API
+
+---
+
+## What needs to be built
+
+1. GitHub Action — build + deploy static experiments to GitHub Pages on push
+2. scripts/deploy.sh — local script to manually trigger deploy + update catalog url
+3. Gallery index site — simple page that reads catalog.json, renders by date
+4. ✓ Populate catalog.json — all 5 existing experiments added
+5. ✓ Add "language" field + date override to catalog-add.sh script
+6. Decide on gallery template (standalone vs. personal site page)
+
+---
+
+## What NOT to do
+
+- Don't host individual experiments on Cloudflare Pages (save for production apps)
+- Don't build a heavyweight CMS — catalog.json is the CMS
+- Don't over-engineer the gallery — a static HTML/JS page reading JSON is enough
+- Don't manually deploy each experiment — automate from the start
+
+---
+
+## Notes on learning different languages
+
+As you expand beyond JS/TS:
+- Python experiments → package as a web app (Flask/FastAPI) → Railway free tier
+- Go → same, or compile to WASM for static hosting
+- Swift → record demos, link to GitHub source, no live URL needed
+- Anything WASM-compiled → GitHub Pages handles it
+
+The catalog.json "language" + "url" fields accommodate all of this without changing
+the gallery structure.
