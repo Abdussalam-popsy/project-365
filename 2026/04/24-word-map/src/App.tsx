@@ -93,7 +93,7 @@ function mapDist(
   const t = Math.max(0, Math.min(1, d / tune.proximityRadius));
   return {
     scale: tune.maxScale + (tune.minScale - tune.maxScale) * t,
-    opacity: 1 + (0.1 - 1) * t,
+    opacity: 1 + (tune.idleOpacity - 1) * t,
   };
 }
 
@@ -143,6 +143,15 @@ export default function App() {
   tuneRef.current.maxScale        = p.maxScale;
   tuneRef.current.minScale        = p.minScale;
   tuneRef.current.idleOpacity     = p.idleOpacity;
+
+  // Set initial CSS vars once — never let React overwrite them on re-render
+  useEffect(() => {
+    tagRefs.current.forEach((el) => {
+      if (!el) return;
+      el.style.setProperty("--scale", "1");
+      el.style.setProperty("--opacity", String(tuneRef.current.idleOpacity));
+    });
+  }, []);
 
   // Sync data-theme attribute
   useEffect(() => {
@@ -210,7 +219,7 @@ export default function App() {
       onMouseMove={onMouseMove}
       onMouseLeave={onMouseLeave}
     >
-      <DialRoot />
+      <DialRoot position="bottom-right" />
 
       <button className="theme-toggle" onClick={toggleTheme}>
         {theme === "light" ? "Dark" : "Light"}
@@ -224,15 +233,11 @@ export default function App() {
           }}
           className="word"
           data-hovered={active?.word === tag.word ? "true" : "false"}
-          style={
-            {
+          style={{
               left: `${tag.left}%`,
               top: `${tag.top}%`,
               ...SIZE_STYLES[tag.size],
-              "--scale": "1",
-              "--opacity": String(IDLE_OPACITY), // initial; overwritten by rAF
-            } as React.CSSProperties
-          }
+            }}
           onMouseEnter={() => {
             const el = tagRefs.current[i];
             if (el) {
@@ -251,7 +256,7 @@ export default function App() {
         style={{
           top: active?.pos.top,
           bottom: active?.pos.bottom,
-          left: active?.pos.left,
+          left: active != null ? active.pos.left : -9999,
         }}
       >
         <p className="word-card__def">{active?.def}</p>
