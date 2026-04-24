@@ -65,3 +65,28 @@ That's all the script does — just keep the `DD-name` inside `YYYY/MM/` convent
 ## Interactions
 
 <!-- New interactions will be listed here -->
+
+---
+
+## When You Are Ready
+
+Ideas for improving the gallery workflow — no urgency, just collected here for reference.
+
+**Gallery:** https://abdussalam-popsy.github.io/project-365/
+
+### Make projects appear automatically (no manual catalog.json editing)
+
+Right now adding a project to the gallery takes two steps: create the project, then manually run `catalog-add.sh` (or hand-edit `catalog.json`). Projects built outside `new.sh` (like word-map) require even more manual work.
+
+**The approach:**
+- Each project owns a `project.json` with its metadata (name, description, tags, language)
+- The CI generates `catalog.json` dynamically by scanning all `project.json` files in `2026/`
+- Pushing code is all it takes — no separate catalog step
+
+**What changes:**
+1. Each project gets a `project.json` alongside its source files
+2. A `scripts/generate-catalog.js` script scans `2026/**/project.json` and builds `catalog.json`
+3. The CI runs `node scripts/generate-catalog.js` before building the gallery
+4. `new.sh` auto-creates `project.json` when scaffolding a new project
+
+**Side note:** If a project is missing in the gallery after pushing, try a hard refresh (Cmd+Shift+R) — GitHub Pages caches aggressively and the old version may be stuck in the browser.
