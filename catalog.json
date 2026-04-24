@@ -55,6 +55,17 @@
     "status": "local"
   },
   {
+    "date": "2026-04-23",
+    "name": "gray-boxing",
+    "path": "2026/04/23-gray-boxing",
+    "url": "",
+    "tags": ["react", "canvas", "tweakpane", "dialkit", "isometric"],
+    "template": "react-vite",
+    "language": "typescript",
+    "description": "Gray boxing interaction",
+    "status": "local"
+  },
+  {
     "date": "2026-04-24",
     "name": "word-map",
     "path": "2026/04/24-word-map",
