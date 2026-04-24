@@ -61,6 +61,33 @@ Full redesign: words positioned absolutely across the full viewport, Playfair Di
 - Sets `data-theme="dark"` on `document.documentElement`.
 - CSS custom properties (`--bg`, `--text`, `--card-bg`, etc.) switch all colors.
 
+---
+
+## v2.1 — Polish Pass
+
+Small but meaningful: layout stopped overlapping, the proximity effect got teeth, and the tooltip grew an entrance.
+
+### What changed
+
+**Grid layout (no more overlapping words)**
+- Replaced pure seeded-random scatter with an 8×6 grid — each word owns one cell, jitter is applied *within* that cell.
+- Words never stack; the canvas looks full without feeling crowded.
+
+**Stronger proximity effect**
+- Radius tightened to 200px (was 220), scale range widened to 0.88→1.4 (was 0.92→1.12), opacity range widened to 0.1→1.0 (was 0.18→1.0).
+- The effect is now obvious — nearby words pop, distant ones fade — instead of "is it doing anything?"
+
+**Tooltip entrance animation**
+- Card enters with `translateY(14px) scale(0.95)` → `translateY(0) scale(1)`.
+- `cubic-bezier(0.16, 1, 0.3, 1)` (ease-out-expo) — fast arrival, no bounce. Feels intentional instead of instant.
+
+**Live tuning with dialkit**
+- `useDialKit` exposes four sliders: Radius, Max Scale, Min Scale, Idle Opacity.
+- Sliders sync into a ref so the rAF loop reads updated values without triggering re-renders.
+- Useful for finding the right feel without touching code.
+
+---
+
 ## What I Learned
 
 - Absolute % positioning with seeded random is the simplest way to get a true scatter — no physics engine needed.

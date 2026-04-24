@@ -1,4 +1,6 @@
 import { useRef, useCallback, useState, useEffect } from "react";
+import { DialRoot, useDialKit } from "dialkit";
+import "dialkit/styles.css";
 
 // ── Data ──────────────────────────────────────────────────────────────────────
 
@@ -64,28 +66,34 @@ interface Tag {
   top: number;  // %
 }
 
-const TAGS: Tag[] = RAW_WORDS.map(({ word, def }, i) => ({
-  word,
-  def,
-  size: sizeForIndex(i),
-  left: 8 + seededRand(i * 2) * 80,
-  top: 8 + seededRand(i * 2 + 1) * 77,
-}));
+// ── Grid-based collision-free layout ─────────────────────────────────────────
+
+const COLS = 8;
+const ROWS = 6;
+const CELL_W = (88 - 8) / COLS;   // 10% per cell
+const CELL_H = (85 - 8) / ROWS;   // ~12.8% per cell
+
+const TAGS: Tag[] = RAW_WORDS.map(({ word, def }, i) => {
+  const cellIndex = i * 2;
+  const col = cellIndex % COLS;
+  const row = Math.floor(cellIndex / COLS) % ROWS;
+  const left = 8 + col * CELL_W + seededRand(i * 2) * CELL_W * 0.7;
+  const top  = 8 + row * CELL_H + seededRand(i * 2 + 1) * CELL_H * 0.7;
+  return { word, def, size: sizeForIndex(i), left, top };
+});
 
 // ── Proximity constants ───────────────────────────────────────────────────────
 
-const MAX_DIST = 220;
-const IDLE_OPACITY = 0.28;
-const MIN_OPACITY = 0.18;
-const MAX_OPACITY = 1;
-const MIN_SCALE = 0.92;
-const MAX_SCALE = 1.12;
+const IDLE_OPACITY = 0.22;
 
-function mapDist(d: number): { scale: number; opacity: number } {
-  const t = Math.max(0, Math.min(1, d / MAX_DIST));
+function mapDist(
+  d: number,
+  tune: { proximityRadius: number; maxScale: number; minScale: number; idleOpacity: number }
+): { scale: number; opacity: number } {
+  const t = Math.max(0, Math.min(1, d / tune.proximityRadius));
   return {
-    scale: MAX_SCALE + (MIN_SCALE - MAX_SCALE) * t,
-    opacity: MAX_OPACITY + (MIN_OPACITY - MAX_OPACITY) * t,
+    scale: tune.maxScale + (tune.minScale - tune.maxScale) * t,
+    opacity: 1 + (0.1 - 1) * t,
   };
 }
 
@@ -121,6 +129,20 @@ export default function App() {
   const tagRefs = useRef<(HTMLSpanElement | null)[]>([]);
   const rafRef = useRef<number | null>(null);
   const mousePos = useRef<{ x: number; y: number } | null>(null);
+  const tuneRef = useRef({ proximityRadius: 200, maxScale: 1.4, minScale: 0.88, idleOpacity: 0.22 });
+
+  const p = useDialKit("Word Map", {
+    proximityRadius: [200, 80, 500, 10],
+    maxScale:        [1.4, 1.0, 2.0, 0.05],
+    minScale:        [0.88, 0.5, 1.0, 0.05],
+    idleOpacity:     [0.22, 0.05, 0.5, 0.01],
+  });
+
+  // Sync dialkit values into ref so the rAF loop always reads the latest
+  tuneRef.current.proximityRadius = p.proximityRadius;
+  tuneRef.current.maxScale        = p.maxScale;
+  tuneRef.current.minScale        = p.minScale;
+  tuneRef.current.idleOpacity     = p.idleOpacity;
 
   // Sync data-theme attribute
   useEffect(() => {
@@ -134,7 +156,7 @@ export default function App() {
       const cx = rect.left + rect.width / 2;
       const cy = rect.top + rect.height / 2;
       const dist = Math.hypot(mx - cx, my - cy);
-      const { scale, opacity } = mapDist(dist);
+      const { scale, opacity } = mapDist(dist, tuneRef.current);
       el.style.setProperty("--scale", String(scale));
       el.style.setProperty("--opacity", String(opacity));
     });
@@ -163,7 +185,7 @@ export default function App() {
     tagRefs.current.forEach((el) => {
       if (!el) return;
       el.style.setProperty("--scale", "1");
-      el.style.setProperty("--opacity", String(IDLE_OPACITY));
+      el.style.setProperty("--opacity", String(tuneRef.current.idleOpacity));
     });
   }, []);
 
@@ -188,6 +210,8 @@ export default function App() {
       onMouseMove={onMouseMove}
       onMouseLeave={onMouseLeave}
     >
+      <DialRoot />
+
       <button className="theme-toggle" onClick={toggleTheme}>
         {theme === "light" ? "Dark" : "Light"}
       </button>
@@ -206,7 +230,7 @@ export default function App() {
               top: `${tag.top}%`,
               ...SIZE_STYLES[tag.size],
               "--scale": "1",
-              "--opacity": String(IDLE_OPACITY),
+              "--opacity": String(IDLE_OPACITY), // initial; overwritten by rAF
             } as React.CSSProperties
           }
           onMouseEnter={() => {
