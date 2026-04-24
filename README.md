@@ -21,6 +21,8 @@ Each interaction is a self-contained micro-project exploring a single concept â€
 02 - ./scripts/new.sh react-vite follow-draw
 03 - ./scripts/new.sh react-vite envelope-animation
 04 - ./scripts/new.sh react-vite send-a-letter
+05 - ./scripts/new.sh react-vite gray-boxing
+06 - ./scripts/new.sh react-vite word-map
 ./scripts/new.sh vanilla hover-glow
 ./scripts/new.sh react-vite magnetic-button
 ./scripts/new.sh canvas particle-field
