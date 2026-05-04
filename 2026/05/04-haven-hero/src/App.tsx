@@ -2,15 +2,19 @@ import { useState } from 'react'
 import V1 from './versions/V1'
 import V2 from './versions/V2'
 import V3 from './versions/V3'
+import V4 from './versions/V4'
+import V5 from './versions/V5'
 
 const VERSIONS = [
   { id: 1, label: 'V1 — Hover Interactions', component: V1 },
   { id: 2, label: 'V2 — Navigation', component: V2 },
   { id: 3, label: 'V3 — SVG Logo', component: V3 },
+  { id: 4, label: 'V4 — Spatial Interaction', component: V4 },
+  { id: 5, label: 'V5 — Dense Grid', component: V5 },
 ]
 
 export default function App() {
-  const [current, setCurrent] = useState(1)
+  const [current, setCurrent] = useState(5)
   const [open, setOpen] = useState(false)
 
   const Version = VERSIONS.find(v => v.id === current)!.component

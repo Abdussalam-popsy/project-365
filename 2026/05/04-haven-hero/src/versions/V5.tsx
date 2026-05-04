@@ -1,35 +1,40 @@
 import { useState, useMemo, useRef, useEffect } from "react";
 
 // ─── Shared pixel size ────────────────────────────────────────────────────────
-const PX = 14;
-const PG = 2;
+const PX = 7;
+const PG = 1;
 
 // ─── Animation config ─────────────────────────────────────────────────────────
 const ANIM_CONFIG = {
-  houseTransitionDuration: "0.1s", // 0.5 prev
+  houseTransitionDuration: "0.1s",
   houseTransitionEasing: "ease-in-out",
-  gridFlickerMinDuration: 0.5, // 0.4 prev
-  gridFlickerMaxDuration: 1.0, // 1.6 prev
-  gridFlickerMaxDelay: 0, // 1.0 prev
-  gridFadeOutDuration: "0s", // 0.8 prev
-  gridFadeOutEasing: "ease-out", // ease-out prev
+  gridFlickerMinDuration: 0.5,
+  gridFlickerMaxDuration: 1.0,
+  gridFlickerMaxDelay: 0,
+  gridFadeOutDuration: "0s",
+  gridFadeOutEasing: "ease-out",
 } as const;
 
-// ─── Pixel house bitmap (13 cols × 13 rows) ──────────────────────────────────
+// ─── Pixel house bitmap (19 cols × 17 rows) ───────────────────────────────────
+// Chimney at cols 3–4, roof peaks at col 9, 2 windows, centered door
 const HOUSE_MAP: number[][] = [
-  [0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0],
-  [0, 0, 0, 0, 0, 1, 1, 1, 0, 0, 0, 0, 0],
-  [0, 0, 0, 0, 1, 1, 1, 1, 1, 0, 0, 0, 0],
-  [0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0],
-  [0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0],
-  [0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0],
-  [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
-  [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
-  [1, 1, 0, 0, 0, 1, 1, 1, 0, 0, 0, 1, 1],
-  [1, 1, 0, 0, 0, 1, 1, 1, 0, 0, 0, 1, 1],
-  [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
-  [1, 1, 1, 1, 0, 0, 0, 0, 0, 1, 1, 1, 1],
-  [1, 1, 1, 1, 0, 0, 0, 0, 0, 1, 1, 1, 1],
+  [0,0,0,1,1,0,0,0,0,1,0,0,0,0,0,0,0,0,0], // chimney + peak
+  [0,0,0,1,1,0,0,0,1,1,1,0,0,0,0,0,0,0,0],
+  [0,0,0,1,1,0,0,1,1,1,1,1,0,0,0,0,0,0,0],
+  [0,0,0,1,1,0,1,1,1,1,1,1,1,0,0,0,0,0,0],
+  [0,0,0,1,1,1,1,1,1,1,1,1,1,1,0,0,0,0,0],
+  [0,0,0,1,1,1,1,1,1,1,1,1,1,1,1,0,0,0,0],
+  [0,0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0,0],
+  [0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0],
+  [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1], // roof base
+  [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1], // top wall
+  [1,1,0,0,0,1,1,1,1,1,1,1,1,1,0,0,0,1,1], // windows
+  [1,1,0,0,0,1,1,1,1,1,1,1,1,1,0,0,0,1,1],
+  [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1], // wall divider
+  [1,1,1,1,1,1,1,0,0,0,0,0,1,1,1,1,1,1,1], // door
+  [1,1,1,1,1,1,1,0,0,0,0,0,1,1,1,1,1,1,1],
+  [1,1,1,1,1,1,1,0,0,0,0,0,1,1,1,1,1,1,1],
+  [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1], // base
 ];
 
 const IDLE_COLOR = "#D2C8B4";
@@ -78,7 +83,7 @@ function PixelHouse({
               style={{
                 width: PX,
                 height: PX,
-                borderRadius: 3,
+                borderRadius: 2,
                 backgroundColor: cell ? activeColor : "transparent",
                 transition: `background-color ${ANIM_CONFIG.houseTransitionDuration} ${ANIM_CONFIG.houseTransitionEasing}`,
               }}
@@ -91,8 +96,8 @@ function PixelHouse({
 }
 
 // ─── Pixel base grid — uniform cream, flickers when any house is hovered ──────
-const BASE_COLS = 96;
-const BASE_ROWS = 26;
+const BASE_COLS = 160;
+const BASE_ROWS = 44;
 const BASE_SHADES = ["#DDD5C2", "#D4CBBA", "#E4DECE", "#CAC0AE"];
 
 type GridState = "idle" | "active" | "fading";
@@ -136,7 +141,7 @@ function PixelBase({ isHovered }: { isHovered: boolean }) {
       fadeTimerRef.current = setTimeout(() => {
         setGridState("idle");
         fadeTimerRef.current = null;
-      }, 0); // 800 prev
+      }, 0);
     }
 
     return () => {
@@ -167,7 +172,7 @@ function PixelBase({ isHovered }: { isHovered: boolean }) {
             style={{
               width: PX,
               height: PX,
-              borderRadius: 3,
+              borderRadius: 2,
               backgroundColor: gridState === "idle" ? IDLE_COLOR : color,
               animation,
             }}
@@ -387,7 +392,7 @@ function BottomSection() {
 }
 
 // ─── Page ─────────────────────────────────────────────────────────────────────
-export default function V3() {
+export default function V5() {
   return (
     <div
       style={{

@@ -1,21 +1,18 @@
-import { useState, useMemo, useRef, useEffect } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 
-// ─── Shared pixel size ────────────────────────────────────────────────────────
 const PX = 14;
 const PG = 2;
 
-// ─── Animation config ─────────────────────────────────────────────────────────
 const ANIM_CONFIG = {
-  houseTransitionDuration: "0.1s", // 0.5 prev
-  houseTransitionEasing: "ease-in-out",
-  gridFlickerMinDuration: 0.5, // 0.4 prev
-  gridFlickerMaxDuration: 1.0, // 1.6 prev
-  gridFlickerMaxDelay: 0, // 1.0 prev
-  gridFadeOutDuration: "0s", // 0.8 prev
-  gridFadeOutEasing: "ease-out", // ease-out prev
+  houseTransitionDuration: "150ms",
+  houseTransitionEasing: "cubic-bezier(0.16, 1, 0.3, 1)",
+  gridFlickerMinDuration: 0.72,
+  gridFlickerMaxDuration: 1.35,
+  gridFlickerMaxDelay: 0.18,
+  gridFadeOutMs: 240,
+  gridFadeOutEasing: "cubic-bezier(0.25, 1, 0.5, 1)",
 } as const;
 
-// ─── Pixel house bitmap (13 cols × 13 rows) ──────────────────────────────────
 const HOUSE_MAP: number[][] = [
   [0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0],
   [0, 0, 0, 0, 0, 1, 1, 1, 0, 0, 0, 0, 0],
@@ -33,47 +30,73 @@ const HOUSE_MAP: number[][] = [
 ];
 
 const IDLE_COLOR = "#D2C8B4";
+const BASE_COLS = 96;
+const BASE_ROWS = 26;
+const ZONE_COLS = BASE_COLS / 4;
+const BASE_SHADES = ["#DDD5C2", "#D4CBBA", "#E4DECE", "#CAC0AE"];
 
-// ─── House configs — cream by default, color on hover ────────────────────────
 const HOUSE_CONFIGS = [
-  { hoverColor: "#D86E40" },
-  { hoverColor: "#75927F" },
-  { hoverColor: "#C1CFCA" },
-  { hoverColor: "#E8D5B3" },
-];
+  {
+    label: "Operations",
+    hoverColor: "#D86E40",
+    baseShades: ["#D86E40", "#E07848", "#C86030", "#E08358"],
+  },
+  {
+    label: "Maintenance",
+    hoverColor: "#75927F",
+    baseShades: ["#75927F", "#7D9A87", "#6D8A77", "#8AA492"],
+  },
+  {
+    label: "Leasing",
+    hoverColor: "#C1CFCA",
+    baseShades: ["#C1CFCA", "#B8C9C3", "#CDDAD6", "#AFC0BA"],
+  },
+  {
+    label: "Resident care",
+    hoverColor: "#E8D5B3",
+    baseShades: ["#E8D5B3", "#F0DFC0", "#DFCBA7", "#D8C29D"],
+  },
+] as const;
+
+type GridState = "idle" | "active" | "fading";
 
 function PixelHouse({
+  active,
   idleColor,
   hoverColor,
+  label,
   onHoverChange,
+  onSelect,
 }: {
+  active: boolean;
   idleColor: string;
   hoverColor: string;
+  label: string;
   onHoverChange: (h: boolean) => void;
+  onSelect: () => void;
 }) {
-  const [hovered, setHovered] = useState(false);
-
-  function handleEnter() {
-    setHovered(true);
-    onHoverChange(true);
-  }
-  function handleLeave() {
-    setHovered(false);
-    onHoverChange(false);
-  }
-
-  const activeColor = hovered ? hoverColor : idleColor;
+  const activeColor = active ? hoverColor : idleColor;
 
   return (
-    <div
-      onMouseEnter={handleEnter}
-      onMouseLeave={handleLeave}
-      style={{ cursor: "pointer", display: "inline-block" }}
+    <button
+      aria-label={`${label} house`}
+      aria-pressed={active}
+      className="v4-pixel-house"
+      onBlur={() => onHoverChange(false)}
+      onClick={onSelect}
+      onFocus={() => onHoverChange(true)}
+      onMouseEnter={() => onHoverChange(true)}
+      onMouseLeave={() => onHoverChange(false)}
+      style={{
+        "--house-shadow": active ? hoverColor : "transparent",
+        transform: active ? "translateY(-5px) scale(1.035)" : "translateY(0) scale(1)",
+      } as React.CSSProperties}
+      type="button"
     >
       {HOUSE_MAP.map((row, ri) => (
-        <div key={ri} style={{ display: "flex", gap: PG, marginBottom: PG }}>
+        <span key={ri} style={{ display: "flex", gap: PG, marginBottom: PG }}>
           {row.map((cell, ci) => (
-            <div
+            <span
               key={ci}
               style={{
                 width: PX,
@@ -84,68 +107,70 @@ function PixelHouse({
               }}
             />
           ))}
-        </div>
+        </span>
       ))}
-    </div>
+    </button>
   );
 }
 
-// ─── Pixel base grid — uniform cream, flickers when any house is hovered ──────
-const BASE_COLS = 96;
-const BASE_ROWS = 26;
-const BASE_SHADES = ["#DDD5C2", "#D4CBBA", "#E4DECE", "#CAC0AE"];
-
-type GridState = "idle" | "active" | "fading";
-
-function PixelBase({ isHovered }: { isHovered: boolean }) {
-  const { colors, animParams } = useMemo(() => {
-    const colors: string[] = [];
+function PixelBase({ activeHouse }: { activeHouse: number | null }) {
+  const { idleColors, shadeIndexes, animParams } = useMemo(() => {
+    const idleColors: string[] = [];
+    const shadeIndexes: number[] = [];
     const animParams: { duration: number; delay: number }[] = [];
 
     for (let r = 0; r < BASE_ROWS; r++) {
       for (let c = 0; c < BASE_COLS; c++) {
-        colors.push(
-          BASE_SHADES[Math.floor(Math.random() * BASE_SHADES.length)],
-        );
+        idleColors.push(BASE_SHADES[Math.floor(Math.random() * BASE_SHADES.length)]);
+        shadeIndexes.push(Math.floor(Math.random() * BASE_SHADES.length));
         animParams.push({
           duration:
             ANIM_CONFIG.gridFlickerMinDuration +
             Math.random() *
-              (ANIM_CONFIG.gridFlickerMaxDuration -
-                ANIM_CONFIG.gridFlickerMinDuration),
+              (ANIM_CONFIG.gridFlickerMaxDuration - ANIM_CONFIG.gridFlickerMinDuration),
           delay: Math.random() * ANIM_CONFIG.gridFlickerMaxDelay,
         });
       }
     }
 
-    return { colors, animParams };
+    return { idleColors, shadeIndexes, animParams };
   }, []);
 
   const [gridState, setGridState] = useState<GridState>("idle");
+  const [visibleHouse, setVisibleHouse] = useState<number | null>(activeHouse);
   const fadeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
-    if (isHovered) {
+    if (activeHouse !== null) {
       if (fadeTimerRef.current) {
         clearTimeout(fadeTimerRef.current);
         fadeTimerRef.current = null;
       }
+      setVisibleHouse(activeHouse);
       setGridState("active");
-    } else {
-      setGridState("fading");
-      fadeTimerRef.current = setTimeout(() => {
-        setGridState("idle");
-        fadeTimerRef.current = null;
-      }, 0); // 800 prev
+      return;
     }
+
+    if (visibleHouse === null) {
+      setGridState("idle");
+      return;
+    }
+
+    setGridState("fading");
+    fadeTimerRef.current = setTimeout(() => {
+      setGridState("idle");
+      setVisibleHouse(null);
+      fadeTimerRef.current = null;
+    }, ANIM_CONFIG.gridFadeOutMs);
 
     return () => {
       if (fadeTimerRef.current) clearTimeout(fadeTimerRef.current);
     };
-  }, [isHovered]);
+  }, [activeHouse, visibleHouse]);
 
   return (
     <div
+      aria-hidden="true"
       style={{
         display: "grid",
         gridTemplateColumns: `repeat(${BASE_COLS}, ${PX}px)`,
@@ -153,23 +178,40 @@ function PixelBase({ isHovered }: { isHovered: boolean }) {
         overflow: "hidden",
       }}
     >
-      {colors.map((color, i) => {
+      {idleColors.map((idleColor, i) => {
+        const col = i % BASE_COLS;
+        const activeCenter = visibleHouse === null ? -1 : visibleHouse * ZONE_COLS + ZONE_COLS / 2;
+        const cellCenter = col + 0.5;
+        const distance = Math.abs(cellCenter - activeCenter) / ZONE_COLS;
+        const intensity =
+          visibleHouse === null || gridState === "idle"
+            ? 0
+            : Math.max(0, 1 - distance / 1.45);
+        const shouldAnimate = intensity > 0.08 && gridState !== "idle";
+        const palette =
+          visibleHouse === null ? BASE_SHADES : HOUSE_CONFIGS[visibleHouse].baseShades;
+        const highlightColor = palette[shadeIndexes[i] % palette.length];
+        const backgroundColor = intensity > 0.12 ? highlightColor : idleColor;
         const { duration, delay } = animParams[i];
+
         let animation = "none";
-        if (gridState === "active") {
-          animation = `pixel-flicker ${duration}s ease-in-out ${delay}s infinite`;
-        } else if (gridState === "fading") {
-          animation = `pixel-flicker-fadeout ${ANIM_CONFIG.gridFadeOutDuration} ${ANIM_CONFIG.gridFadeOutEasing} forwards`;
+        if (gridState === "active" && shouldAnimate) {
+          animation = `pixel-flicker-soft ${duration}s ease-in-out ${delay + distance * 0.04}s infinite`;
+        } else if (gridState === "fading" && shouldAnimate) {
+          animation = `pixel-settle ${ANIM_CONFIG.gridFadeOutMs}ms ${ANIM_CONFIG.gridFadeOutEasing} forwards`;
         }
+
         return (
-          <div
+          <span
             key={i}
             style={{
               width: PX,
               height: PX,
               borderRadius: 3,
-              backgroundColor: gridState === "idle" ? IDLE_COLOR : color,
+              backgroundColor,
               animation,
+              opacity: gridState === "active" ? 0.42 + intensity * 0.58 : 1,
+              transition: `background-color ${ANIM_CONFIG.gridFadeOutMs}ms ${ANIM_CONFIG.gridFadeOutEasing}, opacity ${ANIM_CONFIG.gridFadeOutMs}ms ${ANIM_CONFIG.gridFadeOutEasing}`,
             }}
           />
         );
@@ -178,7 +220,6 @@ function PixelBase({ isHovered }: { isHovered: boolean }) {
   );
 }
 
-// ─── Navbar ───────────────────────────────────────────────────────────────────
 function Navbar() {
   return (
     <nav
@@ -197,7 +238,7 @@ function Navbar() {
         fill="none"
         xmlns="http://www.w3.org/2000/svg"
       >
-        <g clipPath="url(#clip0_248_16728)">
+        <g clipPath="url(#clip0_248_16728_v4)">
           <path
             fillRule="evenodd"
             clipRule="evenodd"
@@ -206,7 +247,7 @@ function Navbar() {
           />
         </g>
         <defs>
-          <clipPath id="clip0_248_16728">
+          <clipPath id="clip0_248_16728_v4">
             <rect width="88" height="24.2759" fill="white" />
           </clipPath>
         </defs>
@@ -214,30 +255,15 @@ function Navbar() {
 
       <div style={{ display: "flex", gap: 8 }}>
         {["Products", "Testimonials", "What we do"].map((item) => (
-          <button
-            key={item}
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: 4,
-              padding: "6px 10px",
-              background: "none",
-              border: "none",
-              cursor: "pointer",
-              fontSize: 15,
-              color: "#1C1C1A",
-              fontFamily: "inherit",
-              borderRadius: 8,
-            }}
-          >
+          <button className="v4-nav-button" key={item} type="button">
             {item}
             <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
               <path
                 d="M4 6L8 10L12 6"
                 stroke="currentColor"
-                strokeWidth="1.8"
                 strokeLinecap="round"
                 strokeLinejoin="round"
+                strokeWidth="1.8"
               />
             </svg>
           </button>
@@ -245,33 +271,10 @@ function Navbar() {
       </div>
 
       <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-        <button
-          style={{
-            background: "none",
-            border: "none",
-            cursor: "pointer",
-            padding: "8px 16px",
-            fontSize: 15,
-            color: "#1C1C1A",
-            fontFamily: "inherit",
-            borderRadius: 8,
-          }}
-        >
+        <button className="v4-text-button" type="button">
           Log in
         </button>
-        <button
-          style={{
-            backgroundColor: "#D4582A",
-            color: "white",
-            border: "none",
-            borderRadius: 100,
-            padding: "9px 22px",
-            fontSize: 15,
-            fontWeight: 600,
-            cursor: "pointer",
-            fontFamily: "inherit",
-          }}
-        >
+        <button className="v4-primary-button v4-primary-button-small" type="button">
           Book a demo
         </button>
       </div>
@@ -279,7 +282,6 @@ function Navbar() {
   );
 }
 
-// ─── Hero Section ─────────────────────────────────────────────────────────────
 function Hero() {
   return (
     <section style={{ textAlign: "center", padding: "72px 80px 0" }}>
@@ -326,28 +328,8 @@ function Hero() {
         follow-up. Your team stays in control. Your PMS stays up to date.
       </p>
 
-      <div
-        style={{
-          display: "flex",
-          justifyContent: "center",
-          alignItems: "center",
-          gap: 12,
-        }}
-      >
-        <button
-          style={{
-            backgroundColor: "#D4582A",
-            color: "white",
-            border: "none",
-            borderRadius: 100,
-            padding: "12px 28px",
-            fontSize: 15,
-            fontWeight: 600,
-            cursor: "pointer",
-            fontFamily: "inherit",
-            boxShadow: "0 4px 16px rgba(212, 88, 42, 0.3)",
-          }}
-        >
+      <div style={{ display: "flex", justifyContent: "center", alignItems: "center", gap: 12 }}>
+        <button className="v4-primary-button" type="button">
           Book a demo
         </button>
       </div>
@@ -355,9 +337,10 @@ function Hero() {
   );
 }
 
-// ─── Bottom: 4 cream houses on uniform cream base ─────────────────────────────
 function BottomSection() {
   const [hoveredHouse, setHoveredHouse] = useState<number | null>(null);
+  const [selectedHouse, setSelectedHouse] = useState<number | null>(null);
+  const activeHouse = hoveredHouse ?? selectedHouse;
 
   return (
     <section style={{ marginTop: 64, overflow: "hidden" }}>
@@ -371,23 +354,25 @@ function BottomSection() {
         }}
       >
         {HOUSE_CONFIGS.map((h, i) => (
-          <div key={i} style={{ display: "flex", justifyContent: "center" }}>
+          <div key={h.label} style={{ display: "flex", justifyContent: "center" }}>
             <PixelHouse
+              active={activeHouse === i}
               idleColor={IDLE_COLOR}
               hoverColor={h.hoverColor}
+              label={h.label}
               onHoverChange={(hovered) => setHoveredHouse(hovered ? i : null)}
+              onSelect={() => setSelectedHouse((current) => (current === i ? null : i))}
             />
           </div>
         ))}
       </div>
 
-      <PixelBase isHovered={hoveredHouse !== null} />
+      <PixelBase activeHouse={activeHouse} />
     </section>
   );
 }
 
-// ─── Page ─────────────────────────────────────────────────────────────────────
-export default function V3() {
+export default function V4() {
   return (
     <div
       style={{
