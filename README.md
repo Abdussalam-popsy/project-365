@@ -23,6 +23,7 @@ Each interaction is a self-contained micro-project exploring a single concept �
 04 - ./scripts/new.sh react-vite send-a-letter
 05 - ./scripts/new.sh react-vite gray-boxing
 06 - ./scripts/new.sh react-vite word-map
+./scripts/new.sh react-vite haven-hero
 ./scripts/new.sh vanilla hover-glow
 ./scripts/new.sh react-vite magnetic-button
 ./scripts/new.sh canvas particle-field
@@ -79,11 +80,13 @@ Ideas for improving the gallery workflow — no urgency, just collected here for
 Right now adding a project to the gallery takes two steps: create the project, then manually run `catalog-add.sh` (or hand-edit `catalog.json`). Projects built outside `new.sh` (like word-map) require even more manual work.
 
 **The approach:**
+
 - Each project owns a `project.json` with its metadata (name, description, tags, language)
 - The CI generates `catalog.json` dynamically by scanning all `project.json` files in `2026/`
 - Pushing code is all it takes — no separate catalog step
 
 **What changes:**
+
 1. Each project gets a `project.json` alongside its source files
 2. A `scripts/generate-catalog.js` script scans `2026/**/project.json` and builds `catalog.json`
 3. The CI runs `node scripts/generate-catalog.js` before building the gallery
