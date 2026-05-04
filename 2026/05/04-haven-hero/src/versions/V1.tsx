@@ -21,17 +21,49 @@ const HOUSE_MAP: number[][] = [
   [1,1,1,1,0,0,0,0,0,1,1,1,1],
 ]
 
-// Cream when idle — same shades as the base grid so they blend in
-const HOUSE_IDLE = '#D2C8B4'
+// ─── House configs — each house always shows its real color ──────────────────
+const HOUSE_CONFIGS = [
+  {
+    color: '#D86E40',
+    shades: ['#D86E40', '#E07848', '#C86030', '#D07038', '#E08050', '#D86E40', '#D86E40'],
+  },
+  {
+    color: '#75927F',
+    shades: ['#75927F', '#7D9A87', '#6D8A77', '#658070', '#7D9A87', '#75927F', '#75927F'],
+  },
+  {
+    color: '#C1CFCA',
+    shades: ['#C1CFCA', '#B9C7C2', '#C9D7D2', '#B1BFB8', '#C1CFCA', '#C9D7D2', '#B9C7C2'],
+  },
+  {
+    color: '#E8D5B3',
+    shades: ['#E8D5B3', '#F0DFC0', '#E0CCB0', '#D8C8A8', '#E8D5B3', '#F0DFC0', '#E8D5B3'],
+  },
+]
 
-function PixelHouse({ hoverColor }: { hoverColor: string }) {
+function PixelHouse({
+  color,
+  onHoverChange,
+}: {
+  color: string
+  onHoverChange: (hovered: boolean) => void
+}) {
   const [hovered, setHovered] = useState(false)
+
+  function handleEnter() { setHovered(true); onHoverChange(true) }
+  function handleLeave() { setHovered(false); onHoverChange(false) }
 
   return (
     <div
-      onMouseEnter={() => setHovered(true)}
-      onMouseLeave={() => setHovered(false)}
-      style={{ cursor: 'pointer', display: 'inline-block' }}
+      onMouseEnter={handleEnter}
+      onMouseLeave={handleLeave}
+      style={{
+        cursor: 'pointer',
+        display: 'inline-block',
+        transform: hovered ? 'scale(1.06)' : 'scale(1)',
+        filter: hovered ? 'brightness(1.18)' : 'brightness(1)',
+        transition: 'transform 0.18s ease, filter 0.18s ease',
+      }}
     >
       {HOUSE_MAP.map((row, ri) => (
         <div key={ri} style={{ display: 'flex', gap: PG, marginBottom: PG }}>
@@ -42,10 +74,7 @@ function PixelHouse({ hoverColor }: { hoverColor: string }) {
                 width: PX,
                 height: PX,
                 borderRadius: 3,
-                backgroundColor: cell
-                  ? hovered ? hoverColor : HOUSE_IDLE
-                  : 'transparent',
-                transition: 'background-color 0.18s ease',
+                backgroundColor: cell ? color : 'transparent',
               }}
             />
           ))}
@@ -55,30 +84,30 @@ function PixelHouse({ hoverColor }: { hoverColor: string }) {
   )
 }
 
-// ─── Pixel base grid ─────────────────────────────────────────────────────────
-// Full-bleed grid of squares, same unit as house pixels, varied cream shades.
-const BASE_SHADES = [
-  '#DDD5C2', // most common — medium tan
-  '#D4CBBA', // slightly darker
-  '#E4DECE', // lighter
-  '#CAC0AE', // darkest
-  '#DDD5C2', // repeat medium to weight it higher
-  '#DDD5C2',
-  '#E4DECE',
-]
+// ─── Pixel base grid — 4 colored zones, one per house ────────────────────────
+const BASE_COLS = 96   // enough to bleed past any viewport width
+const BASE_ROWS = 26   // enough to fill remaining screen height
+const ZONE_COLS = BASE_COLS / 4  // 24 cols per zone
 
-const BASE_COLS = 96  // enough to bleed past any viewport width
-const BASE_ROWS = 26  // enough to fill remaining screen height
+function PixelBase({ hoveredHouse }: { hoveredHouse: number | null }) {
+  const { colors, animParams } = useMemo(() => {
+    const colors: string[] = []
+    const animParams: { duration: number; delay: number }[] = []
 
-function PixelBase() {
-  // Generate once on mount — static, no animation needed
-  const colors = useMemo(
-    () =>
-      Array.from({ length: BASE_ROWS * BASE_COLS }, () =>
-        BASE_SHADES[Math.floor(Math.random() * BASE_SHADES.length)]
-      ),
-    []
-  )
+    for (let r = 0; r < BASE_ROWS; r++) {
+      for (let c = 0; c < BASE_COLS; c++) {
+        const zone = Math.min(3, Math.floor(c / ZONE_COLS))
+        const { shades } = HOUSE_CONFIGS[zone]
+        colors.push(shades[Math.floor(Math.random() * shades.length)])
+        animParams.push({
+          duration: 0.4 + Math.random() * 1.2,
+          delay: Math.random() * 1.0,
+        })
+      }
+    }
+
+    return { colors, animParams }
+  }, [])
 
   return (
     <div
@@ -89,17 +118,27 @@ function PixelBase() {
         overflow: 'hidden',
       }}
     >
-      {colors.map((color, i) => (
-        <div
-          key={i}
-          style={{
-            width: PX,
-            height: PX,
-            borderRadius: 3,
-            backgroundColor: color,
-          }}
-        />
-      ))}
+      {colors.map((color, i) => {
+        const col = i % BASE_COLS
+        const zone = Math.min(3, Math.floor(col / ZONE_COLS))
+        const isActive = hoveredHouse === zone
+        const { duration, delay } = animParams[i]
+
+        return (
+          <div
+            key={i}
+            style={{
+              width: PX,
+              height: PX,
+              borderRadius: 3,
+              backgroundColor: color,
+              animation: isActive
+                ? `pixel-flicker ${duration}s ease-in-out ${delay}s infinite`
+                : 'none',
+            }}
+          />
+        )
+      })}
     </div>
   )
 }
@@ -230,21 +269,11 @@ function Hero() {
 }
 
 // ─── Bottom: 4 houses sitting on the pixel base ───────────────────────────────
-const HOUSES = [
-  { hoverColor: '#D4582A' }, // orange
-  { hoverColor: '#7C3AED' }, // purple
-  { hoverColor: '#D4582A' }, // orange
-  { hoverColor: '#7C3AED' }, // purple
-]
-
 function BottomSection() {
+  const [hoveredHouse, setHoveredHouse] = useState<number | null>(null)
+
   return (
     <section style={{ marginTop: 64, overflow: 'hidden' }}>
-      {/*
-        4 equal columns — houses sit centered in each column, flush with
-        the base grid below. The grid starts at PG (2px) gap after the
-        last house row, matching the house's internal row spacing.
-      */}
       <div
         style={{
           display: 'grid',
@@ -254,15 +283,18 @@ function BottomSection() {
           marginBottom: PG,
         }}
       >
-        {HOUSES.map((h, i) => (
+        {HOUSE_CONFIGS.map((h, i) => (
           <div key={i} style={{ display: 'flex', justifyContent: 'center' }}>
-            <PixelHouse hoverColor={h.hoverColor} />
+            <PixelHouse
+              color={h.color}
+              onHoverChange={(hovered) => setHoveredHouse(hovered ? i : null)}
+            />
           </div>
         ))}
       </div>
 
       {/* Full-bleed pixel base — no side padding, bleeds edge to edge */}
-      <PixelBase />
+      <PixelBase hoveredHouse={hoveredHouse} />
     </section>
   )
 }
