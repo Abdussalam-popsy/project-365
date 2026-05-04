@@ -1,6 +1,19 @@
 @import "tailwindcss";
 
+@font-face {
+  font-family: 'Geist';
+  src: url('../node_modules/geist/dist/fonts/geist-sans/Geist-Variable.woff2') format('woff2');
+  font-weight: 100 900;
+  font-style: normal;
+  font-display: swap;
+}
+
 @keyframes pixel-flicker {
   0%, 100% { opacity: 1; }
   50% { opacity: 0.25; }
+}
+
+@keyframes pixel-flicker-fadeout {
+  from { opacity: 0.25; }
+  to { opacity: 1; }
 }
