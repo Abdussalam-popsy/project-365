@@ -8,6 +8,18 @@
   font-display: swap;
 }
 
+/* ─── V5 pixel grid ────────────────────────────────────────────────────────── */
+.v5-pixel-grid[data-state="active"] .v5-pixel-cell {
+  animation: pixel-flicker var(--dur) ease-in-out var(--delay) infinite;
+}
+.v5-pixel-grid[data-state="fading"] .v5-pixel-cell {
+  animation: pixel-flicker-fadeout var(--fade-dur, 0s) var(--fade-ease, ease-out) forwards;
+}
+.v5-pixel-grid[data-state="idle"] .v5-pixel-cell {
+  background-color: #D2C8B4 !important;
+  animation: none;
+}
+
 @keyframes pixel-flicker {
   0%, 100% { opacity: 1; }
   50% { opacity: 0.25; }

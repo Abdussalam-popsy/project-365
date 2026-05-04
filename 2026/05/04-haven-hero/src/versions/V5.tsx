@@ -1,24 +1,14 @@
-import { useState, useMemo, useRef, useEffect } from "react";
+import { useMemo, useRef, useEffect, forwardRef, useImperativeHandle } from "react";
+import { useDialKit, DialRoot } from "dialkit";
+import "dialkit/styles.css";
 
 // ─── Shared pixel size ────────────────────────────────────────────────────────
 const PX = 7;
 const PG = 1;
 
-// ─── Animation config ─────────────────────────────────────────────────────────
-const ANIM_CONFIG = {
-  houseTransitionDuration: "0.1s",
-  houseTransitionEasing: "ease-in-out",
-  gridFlickerMinDuration: 0.5,
-  gridFlickerMaxDuration: 1.0,
-  gridFlickerMaxDelay: 0,
-  gridFadeOutDuration: "0s",
-  gridFadeOutEasing: "ease-out",
-} as const;
-
 // ─── Pixel house bitmap (19 cols × 17 rows) ───────────────────────────────────
-// Chimney at cols 3–4, roof peaks at col 9, 2 windows, centered door
 const HOUSE_MAP: number[][] = [
-  [0,0,0,1,1,0,0,0,0,1,0,0,0,0,0,0,0,0,0], // chimney + peak
+  [0,0,0,1,1,0,0,0,0,1,0,0,0,0,0,0,0,0,0],
   [0,0,0,1,1,0,0,0,1,1,1,0,0,0,0,0,0,0,0],
   [0,0,0,1,1,0,0,1,1,1,1,1,0,0,0,0,0,0,0],
   [0,0,0,1,1,0,1,1,1,1,1,1,1,0,0,0,0,0,0],
@@ -26,20 +16,19 @@ const HOUSE_MAP: number[][] = [
   [0,0,0,1,1,1,1,1,1,1,1,1,1,1,1,0,0,0,0],
   [0,0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0,0],
   [0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0],
-  [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1], // roof base
-  [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1], // top wall
-  [1,1,0,0,0,1,1,1,1,1,1,1,1,1,0,0,0,1,1], // windows
+  [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+  [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
   [1,1,0,0,0,1,1,1,1,1,1,1,1,1,0,0,0,1,1],
-  [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1], // wall divider
-  [1,1,1,1,1,1,1,0,0,0,0,0,1,1,1,1,1,1,1], // door
+  [1,1,0,0,0,1,1,1,1,1,1,1,1,1,0,0,0,1,1],
+  [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
   [1,1,1,1,1,1,1,0,0,0,0,0,1,1,1,1,1,1,1],
   [1,1,1,1,1,1,1,0,0,0,0,0,1,1,1,1,1,1,1],
-  [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1], // base
+  [1,1,1,1,1,1,1,0,0,0,0,0,1,1,1,1,1,1,1],
+  [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
 ];
 
 const IDLE_COLOR = "#D2C8B4";
 
-// ─── House configs — cream by default, color on hover ────────────────────────
 const HOUSE_CONFIGS = [
   { hoverColor: "#D86E40" },
   { hoverColor: "#75927F" },
@@ -47,33 +36,46 @@ const HOUSE_CONFIGS = [
   { hoverColor: "#E8D5B3" },
 ];
 
+// ─── Types ────────────────────────────────────────────────────────────────────
+type HouseAnimParams = { transitionDuration: number; transitionEasing: string };
+type GridAnimParams  = {
+  flickerMinDuration: number;
+  flickerMaxDuration: number;
+  flickerMaxDelay:    number;
+  fadeOutDuration:    number;
+  fadeOutEasing:      string;
+};
+
+// ─── PixelHouse ───────────────────────────────────────────────────────────────
+// No React state — color is updated via CSS custom property directly on the DOM.
 function PixelHouse({
   idleColor,
   hoverColor,
   onHoverChange,
+  anim,
 }: {
   idleColor: string;
   hoverColor: string;
   onHoverChange: (h: boolean) => void;
+  anim: HouseAnimParams;
 }) {
-  const [hovered, setHovered] = useState(false);
+  const wrapperRef = useRef<HTMLDivElement>(null);
 
   function handleEnter() {
-    setHovered(true);
+    wrapperRef.current?.style.setProperty("--cell-color", hoverColor);
     onHoverChange(true);
   }
   function handleLeave() {
-    setHovered(false);
+    wrapperRef.current?.style.setProperty("--cell-color", idleColor);
     onHoverChange(false);
   }
 
-  const activeColor = hovered ? hoverColor : idleColor;
-
   return (
     <div
+      ref={wrapperRef}
       onMouseEnter={handleEnter}
       onMouseLeave={handleLeave}
-      style={{ cursor: "pointer", display: "inline-block" }}
+      style={{ "--cell-color": idleColor, cursor: "pointer", display: "inline-block" } as React.CSSProperties}
     >
       {HOUSE_MAP.map((row, ri) => (
         <div key={ri} style={{ display: "flex", gap: PG, marginBottom: PG }}>
@@ -84,8 +86,8 @@ function PixelHouse({
                 width: PX,
                 height: PX,
                 borderRadius: 2,
-                backgroundColor: cell ? activeColor : "transparent",
-                transition: `background-color ${ANIM_CONFIG.houseTransitionDuration} ${ANIM_CONFIG.houseTransitionEasing}`,
+                backgroundColor: cell ? "var(--cell-color)" : "transparent",
+                transition: `background-color ${anim.transitionDuration}s ${anim.transitionEasing}`,
               }}
             />
           ))}
@@ -95,93 +97,96 @@ function PixelHouse({
   );
 }
 
-// ─── Pixel base grid — uniform cream, flickers when any house is hovered ──────
-const BASE_COLS = 160;
+// ─── PixelBase ────────────────────────────────────────────────────────────────
+// Hover state is managed imperatively — no React re-renders on hover.
+// data-state on the grid container drives animation via CSS classes in index.css.
+const BASE_COLS = 200;
 const BASE_ROWS = 44;
 const BASE_SHADES = ["#DDD5C2", "#D4CBBA", "#E4DECE", "#CAC0AE"];
 
-type GridState = "idle" | "active" | "fading";
+export type PixelBaseHandle = { setHovered: (h: boolean) => void };
 
-function PixelBase({ isHovered }: { isHovered: boolean }) {
-  const { colors, animParams } = useMemo(() => {
-    const colors: string[] = [];
-    const animParams: { duration: number; delay: number }[] = [];
+const PixelBase = forwardRef<PixelBaseHandle, { anim: GridAnimParams }>(
+  function PixelBase({ anim }, ref) {
+    const gridRef = useRef<HTMLDivElement>(null);
+    const fadeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+    // Always-current anim values — read imperatively so setHovered never goes stale
+    const animRef = useRef(anim);
+    useEffect(() => { animRef.current = anim; });
 
-    for (let r = 0; r < BASE_ROWS; r++) {
-      for (let c = 0; c < BASE_COLS; c++) {
-        colors.push(
-          BASE_SHADES[Math.floor(Math.random() * BASE_SHADES.length)],
-        );
-        animParams.push({
-          duration:
-            ANIM_CONFIG.gridFlickerMinDuration +
-            Math.random() *
-              (ANIM_CONFIG.gridFlickerMaxDuration -
-                ANIM_CONFIG.gridFlickerMinDuration),
-          delay: Math.random() * ANIM_CONFIG.gridFlickerMaxDelay,
-        });
-      }
-    }
+    // Stable random seed per cell — only re-runs when component mounts
+    const normParams = useMemo(() =>
+      Array.from({ length: BASE_ROWS * BASE_COLS }, () => ({
+        color: BASE_SHADES[Math.floor(Math.random() * BASE_SHADES.length)],
+        normDuration: Math.random(),
+        normDelay:    Math.random(),
+      })),
+    []);
 
-    return { colors, animParams };
-  }, []);
-
-  const [gridState, setGridState] = useState<GridState>("idle");
-  const fadeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-
-  useEffect(() => {
-    if (isHovered) {
-      if (fadeTimerRef.current) {
-        clearTimeout(fadeTimerRef.current);
-        fadeTimerRef.current = null;
-      }
-      setGridState("active");
-    } else {
-      setGridState("fading");
-      fadeTimerRef.current = setTimeout(() => {
-        setGridState("idle");
-        fadeTimerRef.current = null;
-      }, 0);
-    }
-
-    return () => {
-      if (fadeTimerRef.current) clearTimeout(fadeTimerRef.current);
-    };
-  }, [isHovered]);
-
-  return (
-    <div
-      style={{
-        display: "grid",
-        gridTemplateColumns: `repeat(${BASE_COLS}, ${PX}px)`,
-        gap: PG,
-        overflow: "hidden",
-      }}
-    >
-      {colors.map((color, i) => {
-        const { duration, delay } = animParams[i];
-        let animation = "none";
-        if (gridState === "active") {
-          animation = `pixel-flicker ${duration}s ease-in-out ${delay}s infinite`;
-        } else if (gridState === "fading") {
-          animation = `pixel-flicker-fadeout ${ANIM_CONFIG.gridFadeOutDuration} ${ANIM_CONFIG.gridFadeOutEasing} forwards`;
-        }
+    // Cell JSX — recomputes only when flicker range/delay sliders change
+    const cells = useMemo(() =>
+      normParams.map(({ color, normDuration, normDelay }, i) => {
+        const duration =
+          anim.flickerMinDuration +
+          normDuration * (anim.flickerMaxDuration - anim.flickerMinDuration);
+        const delay = normDelay * anim.flickerMaxDelay;
         return (
           <div
             key={i}
+            className="v5-pixel-cell"
             style={{
-              width: PX,
-              height: PX,
+              "--dur":   `${duration}s`,
+              "--delay": `${delay}s`,
+              width:       PX,
+              height:      PX,
               borderRadius: 2,
-              backgroundColor: gridState === "idle" ? IDLE_COLOR : color,
-              animation,
-            }}
+              backgroundColor: color,
+            } as React.CSSProperties}
           />
         );
-      })}
-    </div>
-  );
-}
+      }),
+    [normParams, anim.flickerMinDuration, anim.flickerMaxDuration, anim.flickerMaxDelay]);
+
+    useImperativeHandle(ref, () => ({
+      setHovered(h: boolean) {
+        const el = gridRef.current;
+        if (!el) return;
+        // Push current fade params onto the element so CSS can read them
+        el.style.setProperty("--fade-dur",  `${animRef.current.fadeOutDuration}s`);
+        el.style.setProperty("--fade-ease", animRef.current.fadeOutEasing);
+        if (h) {
+          if (fadeTimerRef.current) {
+            clearTimeout(fadeTimerRef.current);
+            fadeTimerRef.current = null;
+          }
+          el.dataset.state = "active";
+        } else {
+          el.dataset.state = "fading";
+          fadeTimerRef.current = setTimeout(() => {
+            el.dataset.state = "idle";
+            fadeTimerRef.current = null;
+          }, animRef.current.fadeOutDuration * 1000);
+        }
+      },
+    }), []);
+
+    return (
+      <div
+        ref={gridRef}
+        className="v5-pixel-grid"
+        data-state="idle"
+        style={{
+          display: "grid",
+          gridTemplateColumns: `repeat(${BASE_COLS}, ${PX}px)`,
+          gap: PG,
+          overflow: "hidden",
+        }}
+      >
+        {cells}
+      </div>
+    );
+  },
+);
 
 // ─── Navbar ───────────────────────────────────────────────────────────────────
 function Navbar() {
@@ -195,13 +200,7 @@ function Navbar() {
         height: 65,
       }}
     >
-      <svg
-        width="88"
-        height="25"
-        viewBox="0 0 88 25"
-        fill="none"
-        xmlns="http://www.w3.org/2000/svg"
-      >
+      <svg width="88" height="25" viewBox="0 0 88 25" fill="none" xmlns="http://www.w3.org/2000/svg">
         <g clipPath="url(#clip0_248_16728)">
           <path
             fillRule="evenodd"
@@ -237,13 +236,7 @@ function Navbar() {
           >
             {item}
             <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
-              <path
-                d="M4 6L8 10L12 6"
-                stroke="currentColor"
-                strokeWidth="1.8"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
+              <path d="M4 6L8 10L12 6" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
             </svg>
           </button>
         ))}
@@ -284,7 +277,7 @@ function Navbar() {
   );
 }
 
-// ─── Hero Section ─────────────────────────────────────────────────────────────
+// ─── Hero ─────────────────────────────────────────────────────────────────────
 function Hero() {
   return (
     <section style={{ textAlign: "center", padding: "72px 80px 0" }}>
@@ -331,14 +324,7 @@ function Hero() {
         follow-up. Your team stays in control. Your PMS stays up to date.
       </p>
 
-      <div
-        style={{
-          display: "flex",
-          justifyContent: "center",
-          alignItems: "center",
-          gap: 12,
-        }}
-      >
+      <div style={{ display: "flex", justifyContent: "center", alignItems: "center", gap: 12 }}>
         <button
           style={{
             backgroundColor: "#D4582A",
@@ -360,9 +346,16 @@ function Hero() {
   );
 }
 
-// ─── Bottom: 4 cream houses on uniform cream base ─────────────────────────────
-function BottomSection() {
-  const [hoveredHouse, setHoveredHouse] = useState<number | null>(null);
+// ─── Bottom ───────────────────────────────────────────────────────────────────
+// No React state — houses call the grid imperatively. Zero re-renders on hover.
+function BottomSection({
+  houseAnim,
+  gridAnim,
+}: {
+  houseAnim: HouseAnimParams;
+  gridAnim: GridAnimParams;
+}) {
+  const pixelBaseRef = useRef<PixelBaseHandle>(null);
 
   return (
     <section style={{ marginTop: 64, overflow: "hidden" }}>
@@ -380,19 +373,36 @@ function BottomSection() {
             <PixelHouse
               idleColor={IDLE_COLOR}
               hoverColor={h.hoverColor}
-              onHoverChange={(hovered) => setHoveredHouse(hovered ? i : null)}
+              onHoverChange={(hovered) => pixelBaseRef.current?.setHovered(hovered)}
+              anim={houseAnim}
             />
           </div>
         ))}
       </div>
 
-      <PixelBase isHovered={hoveredHouse !== null} />
+      <PixelBase ref={pixelBaseRef} anim={gridAnim} />
     </section>
   );
 }
 
 // ─── Page ─────────────────────────────────────────────────────────────────────
 export default function V5() {
+  const easingOptions = ["ease-in-out", "ease-in", "ease-out", "linear"];
+
+  const p = useDialKit("V5 Animation", {
+    houses: {
+      transitionDuration: [0.1, 0, 1.5, 0.01],
+      easing: { type: "select" as const, options: easingOptions, default: "ease-in-out" },
+    },
+    grid: {
+      flickerMinDuration: [0.5, 0.1, 3.0, 0.05],
+      flickerMaxDuration: [1.0, 0.1, 3.0, 0.05],
+      flickerMaxDelay:    [0.0, 0.0, 2.0, 0.05],
+      fadeOutDuration:    [0.0, 0.0, 2.0, 0.05],
+      fadeOutEasing: { type: "select" as const, options: easingOptions, default: "ease-out" },
+    },
+  });
+
   return (
     <div
       style={{
@@ -404,7 +414,17 @@ export default function V5() {
     >
       <Navbar />
       <Hero />
-      <BottomSection />
+      <BottomSection
+        houseAnim={{ transitionDuration: p.houses.transitionDuration, transitionEasing: p.houses.easing }}
+        gridAnim={{
+          flickerMinDuration: p.grid.flickerMinDuration,
+          flickerMaxDuration: p.grid.flickerMaxDuration,
+          flickerMaxDelay:    p.grid.flickerMaxDelay,
+          fadeOutDuration:    p.grid.fadeOutDuration,
+          fadeOutEasing:      p.grid.fadeOutEasing,
+        }}
+      />
+      <DialRoot />
     </div>
   );
 }
