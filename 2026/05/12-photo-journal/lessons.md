@@ -1,330 +1,269 @@
 # Lessons Learned: Photo Journal Animation
 
-This file documents the patterns and concepts used to build the photo journal animation.
-Written for beginners — no assumed knowledge.
+This file documents the patterns and concepts used to build the photo journal animation in `src/App.tsx`.  
+Written for beginners — no assumed knowledge. **Keep this file in sync** when phases or layout constants change.
 
 ---
 
 ## 1. The Animation Sequence (State Machine)
 
-The whole interaction is driven by a single `phase` state variable:
+The whole interaction is driven by a single `phase` state variable plus **`isFlipped`** for the Polaroid’s front vs back (letter).
+
+**Full phase flow (current):**
 
 ```
-spread → converge → polaroid (with isFlipped state)
-   ↑                              |
-   └──────── loop ────────────────┘
+intro → spread → converge → transitioning → polaroid
+                                              ↓ (auto-flip via isFlipped)
+                                    letter click: isFlipped false
+                                              ↓
+                                       spread-out → converge → …
+                         ↑___________________________________|
+                                    (loop; intro does not repeat)
 ```
 
-- **spread**: 4 photos are at their positions in the horizontal strip. Static.
-- **converge**: Photos animate toward the center, stacking like a deck of cards.
-- **polaroid**: A single polaroid card appears, auto-flips to the letter, waits for a click.
+| Phase | What you see |
+|--------|----------------|
+| **intro** | First load only: four photos start stacked at center, **`z` pulled back** (close to “camera”), then spread horizontally while easing **`z` → 0**. |
+| **spread** | Strip is fully spread and static; a short dwell, then auto **converge**. |
+| **spread-out** | After letter → Polaroid flip-back: photos **fan out** from center again (no intro `z`). |
+| **converge** | Photos slide to the **same `x`** and stack via **z-index** (glasses on top). |
+| **transitioning** | Strip **fades out** while Polaroid **fades/scales in** — overlap so there is no empty frame. |
+| **polaroid** | Strip unmounts; Polaroid is the hero; timers drive auto-flip to letter. |
 
-**Lesson**: When building multi-step animations, represent each "scene" as a named state.
-It makes the code readable — you can tell what's happening just by looking at the state value.
+**`isFlipped`** is separate from `phase`: it only controls the **3D flip** between Polaroid front and diary letter.
+
+**Lesson**: Name every “scene” as a phase. When you add beats (intro, cross-fade), extend the machine instead of bolting on unrelated booleans.
 
 ---
 
-## 2. How the Card Stack Effect Works (No Opacity Changes!)
+## 2. How the Card Stack Effect Works (During Converge)
 
-Each photo has a different `z-index`. The "main" photo (index 2, glasses) gets the highest z-index (4).
+Each photo has a different **`z-index`**. The “main” photo (index 2, glasses) gets the highest z-index (4).
 
-When all photos animate to the same X position, the higher z-index photos sit visually "on top" of the lower ones. They cover each other, so the stack looks like one photo — without any fading.
+When all photos animate to the same **`x`** (`CENTER_X`), higher z-index tiles sit on top. The stack reads as **one thick card** without fading the stack itself.
 
 ```js
-const Z_ORDER = [1, 2, 4, 3]
-// Index 2 (glasses) has z-index 4 → it's always on top
+const Z_ORDER = [1, 2, 4, 3];
+// Index 2 (glasses) has z-index 4 → always on top when stacked
 ```
 
-**Lesson**: You can create a "merge" illusion purely with z-index + position — no opacity needed.
-Opacity fades feel cheap; physical stacking feels real.
+**During `transitioning`**, the **strip** uses **opacity → 0** so it can cross-fade with the Polaroid. That opacity is for the **handoff**, not for the converge illusion.
+
+**Lesson**: z-index + shared `x` = physical deck. Opacity is reserved for the **transition** between two different components (strip vs Polaroid).
 
 ---
 
-## 3. Framer Motion Basics
+## 3. Layout Constants — One Ruler for Strip and Polaroid
+
+Magic numbers are grouped so strip and card **share the same vertical story**:
+
+| Constant | Role |
+|----------|------|
+| `PHOTO_WIDTH` | Width of each strip cell (and Polaroid inner photo width). |
+| `STRIP_HEIGHT` | Height of strip cells (and Polaroid inner photo height). |
+| `STRIP_TOP` | Distance from viewport top to the **top** of the strip container. |
+| `STRIP_CENTER_Y` | `STRIP_TOP + STRIP_HEIGHT / 2` — **vertical center of the strip band**. |
+| `PHOTO_CENTER_STEP` | Horizontal spacing between photo **centers** when spread (from design). |
+| `SPREAD_X[i]` | Horizontal offset of each photo’s center from viewport center (derived from step + index). |
+| `CENTER_X` | `-PHOTO_WIDTH / 2` — shifts a 260px-wide tile so its center sits on the strip’s `left: 50%` anchor. |
+
+The **Polaroid** outer wrapper uses **`top: STRIP_CENTER_Y`** with **`left: 50%` + `translateX(-50%)` + `translateY(-50%)`** so the **card’s vertical center** aligns with the **strip’s vertical center**. Previously the strip used `top: 393` while the Polaroid used viewport `50%`, which caused a visible **vertical jump**.
+
+**Lesson**: If two heroes replace each other on screen, anchor both to the **same computed point** (here: strip midline).
+
+---
+
+## 4. Framer Motion Basics
 
 Framer Motion is a React animation library. The core idea:
 
 ```jsx
-<motion.div animate={{ x: 100 }} transition={{ duration: 0.5 }}>
+<motion.div animate={{ x: 100 }} transition={{ duration: 0.5 }} />
 ```
 
-- `animate` = where you want the element to end up
-- `transition` = how it gets there (duration, easing, spring, etc.)
-- When `animate` changes, framer-motion automatically animates to the new value
+- **`animate`** — target values.
+- **`transition`** — duration, easing, spring, **or per-property** objects (see §14).
+- When `animate` changes, Framer tweens to the new target.
 
-**`initial={false}`**: Tells framer-motion "don't animate on first render, just snap to the animate value."
-Useful when you want photos to appear already spread out, not fly in from their center position.
+**`initial={false}`** — “On first mount, don’t run an entry animation; snap to `animate`.”
+
+**`initial={{ x: CENTER_X, z: 500 }}`** (intro only) — “On first mount, start here, then `animate` pulls to spread + `z: 0`.”
+
+For **`spread-out`**, `initial` sets **`x` only** (stacked); **`z`** is not replayed so the **intro** stays first-load-only.
+
+**Lesson**: `initial` is how you declare different “first frames” per phase or per remount strategy.
 
 ---
 
-## 4. Easing Curves
+## 5. Easing Curves
 
-Easing controls the "feel" of movement — does it speed up, slow down, or bounce?
+Easing controls acceleration — linear vs natural deceleration, etc.
 
 ```js
-ease: [0.25, 0.46, 0.45, 0.94]  // cubic-bezier: starts fast, decelerates smoothly
+ease: [0.25, 0.46, 0.45, 0.94]; // cubic-bezier — ease-out style deceleration
 ```
 
-This is called `easeOutQuad`. It mimics real physics — things decelerate as they arrive.
-A linear ease (no curve) looks robotic. Ease-out feels natural.
+Intro uses its own longer curve (see `App.tsx`) for a more “luxurious” pull-back.
 
-**Lesson**: Pick easing intentionally. For UI elements arriving on screen, ease-out is usually right.
-For spring-based motion (like the 3D tilt), use Framer's spring config instead.
+**Lesson**: Match easing to intent — snappy UI vs slow cinematic intro.
 
 ---
 
-## 5. The 3D Card Flip
+## 6. The 3D Card Flip
 
-To flip a card and show a different face, you need three CSS concepts working together:
+Three CSS ideas together:
 
 ### `transform-style: preserve-3d`
-Tells the browser: "my children exist in 3D space, don't flatten them."
-Without this, child elements collapse into a flat plane and the flip looks broken.
+
+Children live in 3D; without this, nested rotations flatten and break.
 
 ### `backface-visibility: hidden`
-Hides a face when it's rotated away from the camera (facing "inward").
-The front face has no extra rotation. The back face has `rotateY(180deg)` pre-applied.
 
-```
-Container rotateY: 0   → front face (0deg) visible, back face (180deg) hidden
-Container rotateY: 180 → front face (0+180=180deg) hidden, back face (180+180=360=0deg) visible
-```
+Hides the face pointed away from the viewer. Back face is pre-rotated `rotateY(180deg)`.
 
 ### `perspective`
-Applied to the parent container. Controls how "deep" the 3D effect looks.
-Think of it as the distance between your eyes and the screen.
-`perspective: 1200` = subtle, realistic. `perspective: 200` = extreme, fish-eye.
+
+On a parent (e.g. `1200`) — sets how strong depth feels.
 
 ---
 
-## 6. Animating a MotionValue Directly
+## 7. Animating a MotionValue Directly
 
-Instead of re-rendering the component to change an animation, you can animate a `MotionValue` directly:
+`flipY` is a `MotionValue`. When `isFlipped` changes, **`animate(flipY, …)`** runs a spring to `0` or `180` without spamming React re-renders for every frame.
+
+---
+
+## 8. The 3D Hover Tilt (`useTilt`)
+
+Mouse position inside the card is normalized to about **-0.5 … 0.5**, then **`useTransform`** maps to **±`maxDeg`** rotation, then **`useSpring`** smooths it.
+
+**Lesson**: Normalize input, map to output, smooth — same pattern for many interaction micro-animations.
+
+---
+
+## 9. Tilt + Flip Together (Nested 3D)
+
+Outer `motion.div`: tilt (`rotateX` / `rotateY` from mouse).  
+Inner `motion.div`: flip (`rotateY` from `flipY`).  
+Both layers need **`transform-style: preserve-3d`** so they compose.
+
+---
+
+## 10. AnimatePresence
+
+Lets the Polaroid play an **`exit`** animation before unmount when `showPolaroid` becomes false. **`key="polaroid"`** helps AnimatePresence track identity.
+
+---
+
+## 11. Managing Timers in React
+
+One **`timerRef`**, always **`clearTimer()`** before scheduling a new timeout — avoids stale callbacks firing after the user has moved to another phase.
+
+---
+
+## 12. `onAnimationComplete` — One Driver, Many Phases
+
+Framer calls this when the element reaches its **`animate`** target for the current animation.
+
+Only **one** strip tile (index **`2`**, the glasses / hero stack) runs the callbacks so the timeline **does not fire four times**.
+
+Current wiring (simplified):
+
+```text
+i === 2 &&
+  phase === 'intro'        → handleIntroDone
+  phase === 'converge'     → handleConvDone
+  phase === 'spread-out'   → handleSpreadOutDone
+```
+
+Each handler updates `phase` and/or schedules the next timeout.
+
+**Lesson**: Pick a single “lead” element for “animation finished” gates.
+
+---
+
+## 13. Google Fonts in Vite
+
+`@import` fonts at the top of `index.css`; always include a **fallback** `fontFamily` in styles.
+
+---
+
+## 14. The `transitioning` Phase — Cross-Fade
+
+**Problem**: Unmount strip → mount Polaroid reads as a **hard cut** or flash.
+
+**Fix**: A short phase where **both** render: strip **`opacity → 0`**, Polaroid **`opacity / scale` in**. Then switch to **`polaroid`** and unmount strip.
 
 ```js
-const flipY = useMotionValue(0)
-
-// When isFlipped changes, animate the value with a spring
-useEffect(() => {
-  animate(flipY, isFlipped ? 180 : 0, {
-    type: 'spring',
-    stiffness: 90,
-    damping: 22,
-  })
-}, [isFlipped])
-```
-
-This is more efficient than changing state. The DOM updates directly without a React re-render.
-Use this pattern for any "smooth transition between two values" scenario.
-
----
-
-## 7. The 3D Hover Tilt Trick
-
-The hover tilt uses mouse position to calculate tiny rotation angles:
-
-```js
-// When mouse is at the left edge: rotateY = -12deg (tilts left)
-// When mouse is at the right edge: rotateY = +12deg (tilts right)
-const rotateY = useSpring(useTransform(mouseX, [-0.5, 0.5], [-12, 12]))
-```
-
-`useTransform` maps one range to another (mouse position → rotation degrees).
-`useSpring` smooths the movement so it doesn't feel jittery.
-
-The mouse position is normalized to -0.5 to +0.5 relative to the card:
-```js
-mx.set((e.clientX - rect.left) / rect.width - 0.5)
-```
-
-**Lesson**: Normalize values to a consistent range (-0.5 to 0.5 or -1 to 1) before mapping them.
-It makes the math cleaner and the magic numbers more intuitive.
-
----
-
-## 8. Tilt + Flip Together (Nested 3D Transforms)
-
-The tilt and flip need to coexist without breaking each other.
-The solution: nest them, with `transform-style: preserve-3d` on each layer.
-
-```
-<div perspective>                    ← camera lens
-  <motion.div tiltX tiltY>           ← outer: mouse tilt (small angles)
-    <motion.div rotateY=flipY>       ← inner: card flip (0 or 180deg)
-      <div front-face />
-      <div back-face rotateY=180 />
-    </motion.div>
-  </motion.div>
-</div>
-```
-
-When the flip card is at 180deg AND the tilt adds 10deg, the card is actually at 190deg.
-The tilt affects both faces equally, which feels natural.
-
----
-
-## 9. AnimatePresence (Animate Out Before Unmounting)
-
-React normally removes components from the DOM instantly. `AnimatePresence` lets them
-play an exit animation first:
-
-```jsx
-<AnimatePresence>
-  {showPolaroid && <PolaroidCard key="polaroid" ... />}
-</AnimatePresence>
-```
-
-The `key` is important — it lets AnimatePresence track which component is which.
-The `exit` prop on the child defines what happens before it disappears:
-```jsx
-exit={{ opacity: 0, scale: 0.9 }}
+const showStrip = phase !== "polaroid";
+const showPolaroid = phase === "polaroid" || phase === "transitioning";
 ```
 
 ---
 
-## 10. Managing Timers in React
+## 15. Per-Property Transition Durations
 
-Multiple async timers can conflict — timer A might fire after timer B has already changed state.
-The solution: keep a single `ref` that points to the most recent timer, and cancel it before scheduling a new one.
-
-```js
-const timerRef = useRef(null)
-
-function clearTimer() {
-  if (timerRef.current) clearTimeout(timerRef.current)
-}
-
-// Always clear before scheduling
-clearTimer()
-timerRef.current = setTimeout(() => setPhase('converge'), 1200)
-```
-
-**Why a ref and not state?** Refs don't trigger re-renders. A timer ID isn't visual data — it's plumbing.
+Strip tiles animate **`x`**, **`z`**, and **`opacity`** with different durations depending on phase (e.g. intro vs converge). Opacity fades should usually be **shorter** than position so the overlap feels crisp, not muddy.
 
 ---
 
-## 11. `onAnimationComplete` — Acting When an Animation Finishes
+## 16. Expanding the State Machine
 
-Framer Motion fires this callback when an element reaches its `animate` target:
-
-```jsx
-onAnimationComplete={
-  phase === 'converge' && i === 2 ? handleConvDone : undefined
-}
-```
-
-Only attach it to the "last" element (the glasses photo, index 2) to avoid firing multiple times.
-The phase check `phase === 'converge'` guards against it firing during other animations.
+Phases were added incrementally: **`spread-out`**, **`transitioning`**, **`intro`**.  
+New phases should only adjust **`showStrip` / `showPolaroid` / `animate` / `initial`** as needed; avoid duplicating timer logic.
 
 ---
 
-## 12. Google Fonts in Vite
+## 17. Intro Phase — Depth on First Load Only
 
-Add fonts via `@import` at the top of `index.css` (before any other imports):
+- Strip container gets **`perspective: 1200`** (shared with intro depth).
+- Each **`motion.div`** in **`intro`**: `initial` includes **`z: 500`**, **`animate`** includes **`z: 0`** with **`x`** spreading out.
+- **`handleIntroDone`**: `setPhase('spread')`, then same **1200ms** dwell → **`converge`** as before.
 
-```css
-@import url('https://fonts.googleapis.com/css2?family=Gambarino&display=swap');
-```
-
-Then use the font name in CSS/JS:
-```js
-fontFamily: 'Gambarino, Georgia, serif'
-```
-
-The fallback (`Georgia, serif`) matters — it shows if the font fails to load.
+Loop restarts use **`spread-out`** without the intro **`z`** replay.
 
 ---
 
-## 13. The "Transitioning" Phase — Cross-Fading Between Two Elements
+## 18. FLIP vs What This Project Does
 
-When two elements occupy the same position on screen (like stacked photos and a polaroid card), the naive approach is: unmount element A, then mount element B. This creates a harsh cut — a visible gap where nothing is on screen.
+**FLIP** (First, Last, Invert, Play) measures layout before/after a change, applies an inverse transform for one frame, then animates to identity — great for **list reorder** or **shared element** continuity.
 
-The fix is a **cross-fade**: briefly keep both elements alive and animate them in opposite directions at the same time.
-
-We added a `'transitioning'` phase specifically for this overlap:
-
-```
-converge → transitioning → polaroid
-             (both visible)
-              strip: opacity 0→ fade out
-              polaroid: opacity 0→ fade in
-```
-
-```js
-// When photos finish converging:
-setPhase('transitioning')         // strip stays rendered, polaroid mounts
-setTimeout(() => setPhase('polaroid'), 350)  // after cross-fade, strip unmounts
-
-// showStrip stays true during transitioning:
-const showStrip = phase !== 'polaroid'
-
-// showPolaroid becomes true during transitioning:
-const showPolaroid = phase === 'polaroid' || phase === 'transitioning'
-```
-
-**Lesson**: If a transition between two elements looks harsh, the fix is almost always overlap.
-Create a short "in-between" phase where both exist, animate in opposite directions, then clean up.
+**This app** mostly uses **explicit targets** (`SPREAD_X`, `CENTER_X`, Framer **`x` / `z` / `opacity`**), not measured FLIP. That is simpler to reason about; the tradeoff is described in §19.
 
 ---
 
-## 14. Per-Property Transition Durations
+## 19. The “Last 2%” — Stack → Polaroid (Match-Cut Feel)
 
-A single `motion.div` can animate multiple properties at once — and each property can have its own timing.
+**Is it possible to get closer to reference-quality “one object, no mush”?**  
+**Yes**, with a spectrum of effort:
 
-```js
-animate={{
-  x: phase === 'converge' ? CENTER_X : SPREAD_X[i],
-  opacity: phase === 'transitioning' ? 0 : 1,
-}}
-transition={{
-  x:       { duration: 0.75, ease: [0.25, 0.46, 0.45, 0.94] },
-  opacity: { duration: 0.3,  ease: 'easeOut' },
-}}
-```
+| Approach | What it improves | Cost |
+|----------|------------------|------|
+| **Tune overlap only** | Shorter cross-fade, polaroid enters **earlier** in the last part of converge, matched **easing** with strip motion. | Low — still two DOM trees. |
+| **Geometry lock** | Same outer **size, radius, shadow** during overlap; avoid fading **motion-blurred** imagery. | Low–medium. |
+| **Single-handoff** | Only the **top** stack image fades / morphs while others hide first — less double exposure. | Medium. |
+| **Shared layout / layoutId (Framer)** | One logical element “flies” from stack to Polaroid position. | Medium–high; API constraints. |
+| **True FLIP or one canvas/WebGL hero** | Strongest continuity; highest build cost. | High. |
 
-Here `x` slides over 0.75s (the full converge motion) while `opacity` fades over 0.3s (a quick dissolve).
-If you used one global `transition`, the opacity would also take 0.75s — far too slow for a fade.
+**Why the current cross-fade can read softer than inspiration:** Two independent components (four tiles vs Polaroid) + **opacity** overlap; the eye can still read **dissolve** even when timed well. Reference work often **time-aligns motion and opacity to one curve** or uses a **single surface** so there is no “two paintings” moment.
 
-**Lesson**: When multiple properties animate together but need different "feels", give each its own timing.
-A position change and an opacity change rarely want the same duration.
-
----
-
-## 15. Expanding a State Machine (Adding Phases Without Breaking Things)
-
-This project's animation is a state machine — a finite set of named phases with defined transitions between them.
-
-We started with 3 phases: `spread | converge | polaroid`
-
-We added 2 more phases without rewriting anything:
-- `spread-out` — reverse of converge, photos fan back outward
-- `transitioning` — the brief cross-fade between photos and polaroid
-
-The key insight: **each new phase only changes what it needs to change.** `showStrip` and `showPolaroid` are derived from phase, so adding a new phase just means deciding what those booleans should be in that phase. Existing phases are untouched.
-
-```js
-const showStrip   = phase !== 'polaroid'           // transitioning: strip still shows
-const showPolaroid = phase === 'polaroid' || phase === 'transitioning'  // polaroid starts early
-```
-
-**Lesson**: State machines scale cleanly. When an animation feels wrong, the answer is usually
-"add a phase between these two" rather than adding flags or timeouts on top of existing logic.
+**Practical next step when you implement:** Decide whether you want **low-effort tuning** (durations, delay, easing, which layer fades) or a **structural** change (layoutId / solo top tile). Both are valid; the second category is where “match cut” lives.
 
 ---
 
 ## Summary: Key Concepts
 
 | Concept | What it does |
-|---|---|
-| `motion.div` + `animate` | Animate any CSS property declaratively |
-| `initial={false}` | Skip entry animation, snap to value |
-| `transform-style: preserve-3d` | Enable 3D space for children |
-| `backface-visibility: hidden` | Hide a face when it's rotated away |
-| `perspective` | Set 3D "depth" on a container |
-| `useMotionValue` + `animate()` | Animate a value without re-rendering |
-| `useSpring` + `useTransform` | Smooth, physics-based value mapping |
-| `AnimatePresence` | Play exit animations before unmounting |
-| `useRef` for timers | Track timeouts without triggering re-renders |
-| Cross-fade phase | Keep both elements alive briefly to avoid hard cuts |
-| Per-property `transition` | Give each animated property its own duration |
-| Expanding state machines | Add phases between existing ones to fix transitions |
+|--------|----------------|
+| `phase` + `isFlipped` | Scene + Polaroid flip, separate concerns |
+| `STRIP_*` + `STRIP_CENTER_Y` | Shared vertical anchor for strip and Polaroid |
+| `intro` vs `spread-out` | Depth intro once; loop fan-out without `z` replay |
+| `motion.div` + `animate` / `initial` | Declarative motion per phase |
+| `z` + strip `perspective` | First-load “pull back from camera” |
+| `Z_ORDER` | Stack reads as one deck at converge |
+| `transitioning` | Overlap strip + Polaroid instead of hard cut |
+| Per-property `transition` | Different timings for `x`, `z`, `opacity` |
+| `onAnimationComplete` (index 2) | Single timeline driver |
+| `timerRef` + `clearTimer` | Safe sequencing between beats |
+| FLIP (optional future) | Measured continuity — not required for current approach |
+| §19 “last 2%” | How to push stack → Polaroid toward reference precision |
