@@ -41,12 +41,14 @@ const Z_ORDER = [1, 2, 4, 3];
 const STRIP_RADIUS = ["40px 0 0 40px", "0", "0", "0 40px 40px 0"];
 
 // ─── Animation phases ─────────────────────────────────────────────────────────
-// spread        → initial page load, photos static at their spread positions
+// intro         → first-load only: photos pull back from "camera" (z→0) while spreading outward
+// spread        → photos static at their spread positions (after intro or after spread-out)
 // spread-out    → loop restart: photos animate FROM center OUTWARD to spread positions
 // converge      → photos animate inward to center (card-stack effect)
 // transitioning → cross-fade: strip fades out while polaroid fades in (both visible briefly)
 // polaroid      → polaroid card shown, auto-flips to letter
 type Phase =
+  | "intro"
   | "spread"
   | "spread-out"
   | "converge"
@@ -270,7 +272,7 @@ function PolaroidCard({
 
 // ─── App ──────────────────────────────────────────────────────────────────────
 export default function App() {
-  const [phase, setPhase] = useState<Phase>("spread");
+  const [phase, setPhase] = useState<Phase>("intro");
   const [isFlipped, setIsFlipped] = useState(false);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -278,11 +280,12 @@ export default function App() {
     if (timerRef.current) clearTimeout(timerRef.current);
   }
 
-  // Auto-start: begin converging after a short pause
-  useEffect(() => {
+  // Intro pull-back finished → dwell briefly then converge (same as the old auto-start timer)
+  function handleIntroDone() {
+    clearTimer();
+    setPhase("spread");
     timerRef.current = setTimeout(() => setPhase("converge"), 1200);
-    return clearTimer;
-  }, []);
+  }
 
   // Photos reached center → cross-fade into polaroid
   function handleConvDone() {
@@ -348,33 +351,60 @@ export default function App() {
       {/* ── Photo strip ── */}
       {showStrip && (
         <div
-          style={{ position: "absolute", top: STRIP_TOP, left: "50%", height: STRIP_HEIGHT }}
+          style={{
+            position: "absolute",
+            top: STRIP_TOP,
+            left: "50%",
+            height: STRIP_HEIGHT,
+            // Perspective context for the intro z pull-back effect.
+            // Origin defaults to 50% 50% of this element; because left=50vw and width≈0,
+            // x-origin lands at the viewport center — exactly where the stacked photos are.
+            perspective: 1200,
+          }}
         >
           {IMAGES.map((src, i) => (
             <motion.div
               key={i}
-              // On 'spread-out': photos remount and start at center, then animate outward.
-              // On 'spread' (page load): snap directly to spread positions — no entry animation.
-              initial={phase === "spread-out" ? { x: CENTER_X } : false}
+              // intro:     start stacked at center, close to camera; animate to spread + z=0
+              // spread-out: remount stacked at center, animate outward (no depth)
+              // spread/other: snap (no entry animation)
+              initial={
+                phase === "intro"
+                  ? { x: CENTER_X, z: 500 }
+                  : phase === "spread-out"
+                    ? { x: CENTER_X }
+                    : false
+              }
               animate={{
                 x:
                   phase === "converge" || phase === "transitioning"
                     ? CENTER_X
                     : SPREAD_X[i] + CENTER_X,
+                z: 0,
                 // Fade out during 'transitioning' so the polaroid cross-fades in over the stacked photos
                 opacity: phase === "transitioning" ? 0 : 1,
               }}
-              transition={{
-                x: { duration: 0.75, ease: [0.25, 0.46, 0.45, 0.94] },
-                opacity: { duration: 0.3, ease: "easeOut" },
-              }}
+              transition={
+                phase === "intro"
+                  ? {
+                      x: { duration: 1.1, ease: [0.16, 1, 0.3, 1] },
+                      z: { duration: 1.1, ease: [0.16, 1, 0.3, 1] },
+                      opacity: { duration: 0.4 },
+                    }
+                  : {
+                      x: { duration: 0.75, ease: [0.25, 0.46, 0.45, 0.94] },
+                      opacity: { duration: 0.3, ease: "easeOut" },
+                    }
+              }
               onAnimationComplete={
                 i === 2
-                  ? phase === "converge"
-                    ? handleConvDone
-                    : phase === "spread-out"
-                      ? handleSpreadOutDone
-                      : undefined
+                  ? phase === "intro"
+                    ? handleIntroDone
+                    : phase === "converge"
+                      ? handleConvDone
+                      : phase === "spread-out"
+                        ? handleSpreadOutDone
+                        : undefined
                   : undefined
               }
               style={{
