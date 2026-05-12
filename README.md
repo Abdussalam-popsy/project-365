@@ -25,6 +25,8 @@ Each interaction is a self-contained micro-project exploring a single concept â€
 06 - ./scripts/new.sh react-vite word-map
 ./scripts/new.sh react-vite haven-hero
 ./scripts/new.sh vanilla hover-glow
+./scripts/new.sh react-vite invoice-app
+./scripts/new.sh react-vite photo-journal
 ./scripts/new.sh react-vite magnetic-button
 ./scripts/new.sh canvas particle-field
 ```

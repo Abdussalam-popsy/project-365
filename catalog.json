@@ -75,5 +75,27 @@
     "language": "typescript",
     "description": "Tooltip with flip behavior — appears above by default, flips below when near the top edge.",
     "status": "local"
+  },
+  {
+    "date": "2026-05-04",
+    "name": "haven-hero",
+    "path": "2026/05/04-haven-hero",
+    "url": "",
+    "tags": ["react", "canvas", "tweakpane", "dialkit", "isometric"],
+    "template": "react-vite",
+    "language": "typescript",
+    "description": "Haven Hero interaction",
+    "status": "local"
+  },
+  {
+    "date": "2026-05-12",
+    "name": "photo-journal",
+    "path": "2026/05/12-photo-journal",
+    "url": "",
+    "tags": ["react", "framer-motion"],
+    "template": "react-vite",
+    "language": "typescript",
+    "description": "Photo journal interaction",
+    "status": "local"
   }
 ]
