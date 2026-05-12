@@ -1,0 +1,6 @@
+@import url('https://fonts.googleapis.com/css2?family=Gambarino&family=Edu+AU+VIC+WA+NT+Hand:wght@400;500&display=swap');
+@import "tailwindcss";
+
+* {
+  box-sizing: border-box;
+}
