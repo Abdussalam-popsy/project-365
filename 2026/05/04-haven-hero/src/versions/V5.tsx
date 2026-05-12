@@ -1,4 +1,10 @@
-import { useMemo, useRef, useEffect, forwardRef, useImperativeHandle } from "react";
+import {
+  useMemo,
+  useRef,
+  useEffect,
+  forwardRef,
+  useImperativeHandle,
+} from "react";
 import { useDialKit, DialRoot } from "dialkit";
 import "dialkit/styles.css";
 
@@ -8,23 +14,23 @@ const PG = 1;
 
 // ─── Pixel house bitmap (19 cols × 17 rows) ───────────────────────────────────
 const HOUSE_MAP: number[][] = [
-  [0,0,0,1,1,0,0,0,0,1,0,0,0,0,0,0,0,0,0],
-  [0,0,0,1,1,0,0,0,1,1,1,0,0,0,0,0,0,0,0],
-  [0,0,0,1,1,0,0,1,1,1,1,1,0,0,0,0,0,0,0],
-  [0,0,0,1,1,0,1,1,1,1,1,1,1,0,0,0,0,0,0],
-  [0,0,0,1,1,1,1,1,1,1,1,1,1,1,0,0,0,0,0],
-  [0,0,0,1,1,1,1,1,1,1,1,1,1,1,1,0,0,0,0],
-  [0,0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0,0],
-  [0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0],
-  [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
-  [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
-  [1,1,0,0,0,1,1,1,1,1,1,1,1,1,0,0,0,1,1],
-  [1,1,0,0,0,1,1,1,1,1,1,1,1,1,0,0,0,1,1],
-  [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
-  [1,1,1,1,1,1,1,0,0,0,0,0,1,1,1,1,1,1,1],
-  [1,1,1,1,1,1,1,0,0,0,0,0,1,1,1,1,1,1,1],
-  [1,1,1,1,1,1,1,0,0,0,0,0,1,1,1,1,1,1,1],
-  [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+  [0, 0, 0, 1, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+  [0, 0, 0, 1, 1, 0, 0, 0, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0],
+  [0, 0, 0, 1, 1, 0, 0, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0],
+  [0, 0, 0, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0],
+  [0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0],
+  [0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0],
+  [0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0],
+  [0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0],
+  [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+  [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+  [1, 1, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 1, 1],
+  [1, 1, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 1, 1],
+  [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+  [1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1],
+  [1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1],
+  [1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1],
+  [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
 ];
 
 const IDLE_COLOR = "#D2C8B4";
@@ -38,12 +44,12 @@ const HOUSE_CONFIGS = [
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 type HouseAnimParams = { transitionDuration: number; transitionEasing: string };
-type GridAnimParams  = {
+type GridAnimParams = {
   flickerMinDuration: number;
   flickerMaxDuration: number;
-  flickerMaxDelay:    number;
-  fadeOutDuration:    number;
-  fadeOutEasing:      string;
+  flickerMaxDelay: number;
+  fadeOutDuration: number;
+  fadeOutEasing: string;
 };
 
 // ─── PixelHouse ───────────────────────────────────────────────────────────────
@@ -75,7 +81,13 @@ function PixelHouse({
       ref={wrapperRef}
       onMouseEnter={handleEnter}
       onMouseLeave={handleLeave}
-      style={{ "--cell-color": idleColor, cursor: "pointer", display: "inline-block" } as React.CSSProperties}
+      style={
+        {
+          "--cell-color": idleColor,
+          cursor: "pointer",
+          display: "inline-block",
+        } as React.CSSProperties
+      }
     >
       {HOUSE_MAP.map((row, ri) => (
         <div key={ri} style={{ display: "flex", gap: PG, marginBottom: PG }}>
@@ -112,63 +124,83 @@ const PixelBase = forwardRef<PixelBaseHandle, { anim: GridAnimParams }>(
     const fadeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
     // Always-current anim values — read imperatively so setHovered never goes stale
     const animRef = useRef(anim);
-    useEffect(() => { animRef.current = anim; });
+    useEffect(() => {
+      animRef.current = anim;
+    });
 
     // Stable random seed per cell — only re-runs when component mounts
-    const normParams = useMemo(() =>
-      Array.from({ length: BASE_ROWS * BASE_COLS }, () => ({
-        color: BASE_SHADES[Math.floor(Math.random() * BASE_SHADES.length)],
-        normDuration: Math.random(),
-        normDelay:    Math.random(),
-      })),
-    []);
+    const normParams = useMemo(
+      () =>
+        Array.from({ length: BASE_ROWS * BASE_COLS }, () => ({
+          color: BASE_SHADES[Math.floor(Math.random() * BASE_SHADES.length)],
+          normDuration: Math.random(),
+          normDelay: Math.random(),
+        })),
+      [],
+    );
 
     // Cell JSX — recomputes only when flicker range/delay sliders change
-    const cells = useMemo(() =>
-      normParams.map(({ color, normDuration, normDelay }, i) => {
-        const duration =
-          anim.flickerMinDuration +
-          normDuration * (anim.flickerMaxDuration - anim.flickerMinDuration);
-        const delay = normDelay * anim.flickerMaxDelay;
-        return (
-          <div
-            key={i}
-            className="v5-pixel-cell"
-            style={{
-              "--dur":   `${duration}s`,
-              "--delay": `${delay}s`,
-              width:       PX,
-              height:      PX,
-              borderRadius: 2,
-              backgroundColor: color,
-            } as React.CSSProperties}
-          />
-        );
-      }),
-    [normParams, anim.flickerMinDuration, anim.flickerMaxDuration, anim.flickerMaxDelay]);
+    const cells = useMemo(
+      () =>
+        normParams.map(({ color, normDuration, normDelay }, i) => {
+          const duration =
+            anim.flickerMinDuration +
+            normDuration * (anim.flickerMaxDuration - anim.flickerMinDuration);
+          const delay = normDelay * anim.flickerMaxDelay;
+          return (
+            <div
+              key={i}
+              className="v5-pixel-cell"
+              style={
+                {
+                  "--dur": `${duration}s`,
+                  "--delay": `${delay}s`,
+                  width: PX,
+                  height: PX,
+                  borderRadius: 2,
+                  backgroundColor: color,
+                } as React.CSSProperties
+              }
+            />
+          );
+        }),
+      [
+        normParams,
+        anim.flickerMinDuration,
+        anim.flickerMaxDuration,
+        anim.flickerMaxDelay,
+      ],
+    );
 
-    useImperativeHandle(ref, () => ({
-      setHovered(h: boolean) {
-        const el = gridRef.current;
-        if (!el) return;
-        // Push current fade params onto the element so CSS can read them
-        el.style.setProperty("--fade-dur",  `${animRef.current.fadeOutDuration}s`);
-        el.style.setProperty("--fade-ease", animRef.current.fadeOutEasing);
-        if (h) {
-          if (fadeTimerRef.current) {
-            clearTimeout(fadeTimerRef.current);
-            fadeTimerRef.current = null;
+    useImperativeHandle(
+      ref,
+      () => ({
+        setHovered(h: boolean) {
+          const el = gridRef.current;
+          if (!el) return;
+          // Push current fade params onto the element so CSS can read them
+          el.style.setProperty(
+            "--fade-dur",
+            `${animRef.current.fadeOutDuration}s`,
+          );
+          el.style.setProperty("--fade-ease", animRef.current.fadeOutEasing);
+          if (h) {
+            if (fadeTimerRef.current) {
+              clearTimeout(fadeTimerRef.current);
+              fadeTimerRef.current = null;
+            }
+            el.dataset.state = "active";
+          } else {
+            el.dataset.state = "fading";
+            fadeTimerRef.current = setTimeout(() => {
+              el.dataset.state = "idle";
+              fadeTimerRef.current = null;
+            }, animRef.current.fadeOutDuration * 1000);
           }
-          el.dataset.state = "active";
-        } else {
-          el.dataset.state = "fading";
-          fadeTimerRef.current = setTimeout(() => {
-            el.dataset.state = "idle";
-            fadeTimerRef.current = null;
-          }, animRef.current.fadeOutDuration * 1000);
-        }
-      },
-    }), []);
+        },
+      }),
+      [],
+    );
 
     return (
       <div
@@ -200,7 +232,13 @@ function Navbar() {
         height: 65,
       }}
     >
-      <svg width="88" height="25" viewBox="0 0 88 25" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <svg
+        width="88"
+        height="25"
+        viewBox="0 0 88 25"
+        fill="none"
+        xmlns="http://www.w3.org/2000/svg"
+      >
         <g clipPath="url(#clip0_248_16728)">
           <path
             fillRule="evenodd"
@@ -236,7 +274,13 @@ function Navbar() {
           >
             {item}
             <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
-              <path d="M4 6L8 10L12 6" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+              <path
+                d="M4 6L8 10L12 6"
+                stroke="currentColor"
+                strokeWidth="1.8"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
             </svg>
           </button>
         ))}
@@ -324,7 +368,14 @@ function Hero() {
         follow-up. Your team stays in control. Your PMS stays up to date.
       </p>
 
-      <div style={{ display: "flex", justifyContent: "center", alignItems: "center", gap: 12 }}>
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "center",
+          alignItems: "center",
+          gap: 12,
+        }}
+      >
         <button
           style={{
             backgroundColor: "#D4582A",
@@ -373,7 +424,9 @@ function BottomSection({
             <PixelHouse
               idleColor={IDLE_COLOR}
               hoverColor={h.hoverColor}
-              onHoverChange={(hovered) => pixelBaseRef.current?.setHovered(hovered)}
+              onHoverChange={(hovered) =>
+                pixelBaseRef.current?.setHovered(hovered)
+              }
               anim={houseAnim}
             />
           </div>
@@ -392,14 +445,22 @@ export default function V5() {
   const p = useDialKit("V5 Animation", {
     houses: {
       transitionDuration: [0.1, 0, 1.5, 0.01],
-      easing: { type: "select" as const, options: easingOptions, default: "ease-in-out" },
+      easing: {
+        type: "select" as const,
+        options: easingOptions,
+        default: "ease-in-out",
+      },
     },
     grid: {
       flickerMinDuration: [0.5, 0.1, 3.0, 0.05],
       flickerMaxDuration: [1.0, 0.1, 3.0, 0.05],
-      flickerMaxDelay:    [0.0, 0.0, 2.0, 0.05],
-      fadeOutDuration:    [0.0, 0.0, 2.0, 0.05],
-      fadeOutEasing: { type: "select" as const, options: easingOptions, default: "ease-out" },
+      flickerMaxDelay: [0.0, 0.0, 2.0, 0.05],
+      fadeOutDuration: [0.0, 0.0, 2.0, 0.05],
+      fadeOutEasing: {
+        type: "select" as const,
+        options: easingOptions,
+        default: "ease-out",
+      },
     },
   });
 
@@ -415,16 +476,19 @@ export default function V5() {
       <Navbar />
       <Hero />
       <BottomSection
-        houseAnim={{ transitionDuration: p.houses.transitionDuration, transitionEasing: p.houses.easing }}
+        houseAnim={{
+          transitionDuration: p.houses.transitionDuration,
+          transitionEasing: p.houses.easing,
+        }}
         gridAnim={{
           flickerMinDuration: p.grid.flickerMinDuration,
           flickerMaxDuration: p.grid.flickerMaxDuration,
-          flickerMaxDelay:    p.grid.flickerMaxDelay,
-          fadeOutDuration:    p.grid.fadeOutDuration,
-          fadeOutEasing:      p.grid.fadeOutEasing,
+          flickerMaxDelay: p.grid.flickerMaxDelay,
+          fadeOutDuration: p.grid.fadeOutDuration,
+          fadeOutEasing: p.grid.fadeOutEasing,
         }}
       />
-      <DialRoot />
+      <DialRoot position="bottom-right" />
     </div>
   );
 }
