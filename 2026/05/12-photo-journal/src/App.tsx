@@ -9,12 +9,12 @@ import {
 } from 'framer-motion'
 
 // ─── Assets ───────────────────────────────────────────────────────────────────
-const IMAGES = [
-  'https://www.figma.com/api/mcp/asset/14f56597-f96e-4899-aaf1-4c37f56e4778',
-  'https://www.figma.com/api/mcp/asset/fd3705e2-5f13-4fde-b05a-9a60612a7ff6',
-  'https://www.figma.com/api/mcp/asset/7b0175c4-5993-4db0-8b82-8f9a63b00ece', // glasses → polaroid
-  'https://www.figma.com/api/mcp/asset/5c58ecb3-b186-4a3b-bf78-b30f65f302e7',
-]
+import photo1 from './assets/photo-1.jpg'
+import photo2 from './assets/photo-2.jpg'
+import photo3 from './assets/photo-3.jpg'
+import photo4 from './assets/photo-4.jpg'
+
+const IMAGES = [photo1, photo2, photo3, photo4] // photo3 = glasses → becomes polaroid
 
 // X offset from the center of the screen for each photo when fully spread out.
 // Based on Figma: 1440px wide canvas, photos at left: 163, 448, 733, 1018, each 260px wide.
