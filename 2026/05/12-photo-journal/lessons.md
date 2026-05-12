@@ -27,7 +27,7 @@ intro → spread → converge → transitioning → polaroid
 | **spread** | Strip is fully spread and static; a short dwell, then auto **converge**. |
 | **spread-out** | After letter → Polaroid flip-back: photos **fan out** from center again (no intro `z`). |
 | **converge** | Photos slide to the **same `x`** and stack via **z-index** (glasses on top). |
-| **transitioning** | Strip **fades out** while Polaroid **fades/scales in** — overlap so there is no empty frame. |
+| **transitioning** | Strip **fades out** (opacity → 0, 300 ms) while Polaroid **fades/scales in** (400 ms) — overlap so there is no empty frame. |
 | **polaroid** | Strip unmounts; Polaroid is the hero; timers drive auto-flip to letter. |
 
 **`isFlipped`** is separate from `phase`: it only controls the **3D flip** between Polaroid front and diary letter.
@@ -47,7 +47,7 @@ const Z_ORDER = [1, 2, 4, 3];
 // Index 2 (glasses) has z-index 4 → always on top when stacked
 ```
 
-**During `transitioning`**, the **strip** uses **opacity → 0** so it can cross-fade with the Polaroid. That opacity is for the **handoff**, not for the converge illusion.
+**During `transitioning`**, the **strip** uses **opacity → 0** (duration 0.3 s, uniform across all tiles) so it can cross-fade with the Polaroid. That opacity is for the **handoff**, not for the converge illusion.
 
 **Lesson**: z-index + shared `x` = physical deck. Opacity is reserved for the **transition** between two different components (strip vs Polaroid).
 
@@ -188,16 +188,21 @@ Each handler updates `phase` and/or schedules the next timeout.
 
 ---
 
-## 14. The `transitioning` Phase — Cross-Fade
+## 14. The `transitioning` Phase — Cross-Dissolve
 
-**Problem**: Unmount strip → mount Polaroid reads as a **hard cut** or flash.
+**Problem**: Unmount strip → mount Polaroid reads as a **hard cut** or flash if not bridged.
 
-**Fix**: A short phase where **both** render: strip **`opacity → 0`**, Polaroid **`opacity / scale` in**. Then switch to **`polaroid`** and unmount strip.
+**Fix**: A short phase (~350 ms) where **both** render simultaneously:
+- Strip `opacity → 0` over 300 ms (uniform for all tiles).
+- Polaroid `opacity: 0 → 1, scale: 0.9 → 1` over 400 ms.
+- The overlap means the eye sees a continuous presence rather than a blank frame.
 
 ```js
 const showStrip = phase !== "polaroid";
 const showPolaroid = phase === "polaroid" || phase === "transitioning";
 ```
+
+**Note (match-cut experiment, reverted):** A hard-snap variant was tried — non-hero tiles snapped to opacity 0 instantly, hero tile lingered 50 ms, and the Polaroid frame materialised via `borderRadius` / `backgroundColor` morph on `motion.div` inner elements. It was reverted because it exposed a visible positional jump at the handoff. The soft cross-dissolve masks that geometry better.
 
 ---
 
@@ -232,22 +237,32 @@ Loop restarts use **`spread-out`** without the intro **`z`** replay.
 
 ---
 
-## 19. The “Last 2%” — Stack → Polaroid (Match-Cut Feel)
+## 19. The “Last 2%” — Stack → Polaroid Handoff
 
-**Is it possible to get closer to reference-quality “one object, no mush”?**  
-**Yes**, with a spectrum of effort:
+**Current approach:** Cross-dissolve — strip opacity out (300 ms), Polaroid opacity/scale in (400 ms), ~350 ms overlap window.
 
-| Approach | What it improves | Cost |
-|----------|------------------|------|
-| **Tune overlap only** | Shorter cross-fade, polaroid enters **earlier** in the last part of converge, matched **easing** with strip motion. | Low — still two DOM trees. |
-| **Geometry lock** | Same outer **size, radius, shadow** during overlap; avoid fading **motion-blurred** imagery. | Low–medium. |
-| **Single-handoff** | Only the **top** stack image fades / morphs while others hide first — less double exposure. | Medium. |
-| **Shared layout / layoutId (Framer)** | One logical element “flies” from stack to Polaroid position. | Medium–high; API constraints. |
-| **True FLIP or one canvas/WebGL hero** | Strongest continuity; highest build cost. | High. |
+**The spectrum (for reference):**
 
-**Why the current cross-fade can read softer than inspiration:** Two independent components (four tiles vs Polaroid) + **opacity** overlap; the eye can still read **dissolve** even when timed well. Reference work often **time-aligns motion and opacity to one curve** or uses a **single surface** so there is no “two paintings” moment.
+| Approach | What it improves | Status |
+|----------|------------------|--------|
+| **Cross-dissolve** ✅ **(current)** | Soft overlap masks geometry difference between strip and Polaroid. | Shipped. |
+| **Match-cut + radius morph** | No double-exposure; frame materialises around photo; radius tells continuity story. | **Tried and reverted** — exposed a visible positional jump. |
+| **Shared layout / `layoutId`** | One logical element “flies” from stack to Polaroid — Framer handles geometry automatically. | Not yet attempted. |
+| **True FLIP or single canvas hero** | Strongest geometric continuity; highest build cost. | Not yet attempted. |
 
-**Practical next step when you implement:** Decide whether you want **low-effort tuning** (durations, delay, easing, which layer fades) or a **structural** change (layoutId / solo top tile). Both are valid; the second category is where “match cut” lives.
+**Why match-cut was reverted:**
+The hard-snap variant (non-hero tiles instant opacity 0, hero tile 50 ms linger, Polaroid frame materialising via `borderRadius` / `backgroundColor` morph) exposed a visible positional jump. The strip's stacked tile and the Polaroid card do not share an identical visual center — the cross-dissolve's opacity overlap was masking that difference. Removing the overlap made the geometry mismatch visible.
+
+**`layoutId` (deferred — not attempted yet):**
+Framer Motion `layoutId` would let the inner photo “fly” from its strip position to its Polaroid position. Potential blockers to investigate:
+- The strip container has `perspective: 1200`; the Polaroid has nested `perspective` + `transformStyle: preserve-3d`. Nested contexts can cause `getBoundingClientRect` to mis-report.
+- Strip tiles are not individually wrapped in `AnimatePresence` — structural refactor needed.
+
+**If you want to attempt `layoutId` later:**
+1. Wrap strip tiles in their own `AnimatePresence`.
+2. Add a `LayoutGroup` spanning both the strip and `PolaroidCard`.
+3. Add `layoutId=”hero-photo”` to strip tile 2's outer `motion.div` and the inner photo element in `PolaroidCard`.
+4. Have strip tile 2 exit (unmount) at the same instant the Polaroid inner photo enters — Framer animates between them including `borderRadius`.
 
 ---
 
@@ -261,7 +276,7 @@ Loop restarts use **`spread-out`** without the intro **`z`** replay.
 | `motion.div` + `animate` / `initial` | Declarative motion per phase |
 | `z` + strip `perspective` | First-load “pull back from camera” |
 | `Z_ORDER` | Stack reads as one deck at converge |
-| `transitioning` | Overlap strip + Polaroid instead of hard cut |
+| `transitioning` | Cross-dissolve: strip fades out, Polaroid fades/scales in — overlap masks geometry |
 | Per-property `transition` | Different timings for `x`, `z`, `opacity` |
 | `onAnimationComplete` (index 2) | Single timeline driver |
 | `timerRef` + `clearTimer` | Safe sequencing between beats |
