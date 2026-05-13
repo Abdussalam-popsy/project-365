@@ -303,18 +303,33 @@ body {
 }
 
 /* ── Version 2: dealing cards ───────────────── */
+.v2-dark-section {
+  background: #0a0a0a;
+  justify-content: center;
+}
+
+.v2-dark-section .text-block {
+  margin: 0 auto;
+}
+
+.intro.v2-dark-section {
+  min-height: 150vh;
+  align-items: flex-end;
+}
+
 .v2-quote {
   max-width: 794px;
-  font-size: clamp(1.5rem, 2.5vw, 2.5rem);
+  font-size: clamp(2rem, 3.5vw, 3.25rem);
   font-weight: 700;
-  line-height: 1.08;
-  letter-spacing: -0.04em;
+  line-height: 1.15;
+  letter-spacing: 0.02em;
+  color: #fff;
 }
 
 .pin-section.v2-pin {
   position: relative;
   height: 100vh;
-  background: #f4edde;
+  background: #f9f5e9;
   display: block;
   padding: 0;
   overflow: hidden;
@@ -361,7 +376,7 @@ body {
   aspect-ratio: 386 / 503;
   padding: clamp(1.25rem, 2vw, 1.875rem);
   border-radius: clamp(1.25rem, 2vw, 1.75rem);
-  color: #fff;
+  color: #f9f5e9;
   display: flex;
   flex-direction: column;
   justify-content: space-between;

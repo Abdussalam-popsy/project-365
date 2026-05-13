@@ -1,6 +1,52 @@
-gsap.registerPlugin(ScrollTrigger);
+gsap.registerPlugin(ScrollTrigger, SplitText);
+// if (typeof SplitText !== "undefined") gsap.registerPlugin(SplitText);
 
-const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+const reduceMotion = window.matchMedia(
+  "(prefers-reduced-motion: reduce)",
+).matches;
+
+// ── Highlight text on scroll ──────────────────────────────────────────────────
+function initHighlightText() {
+  const targets = document.querySelectorAll("[data-highlight-text]");
+  targets.forEach((heading) => {
+    const scrollStart =
+      heading.getAttribute("data-highlight-scroll-start") || "top 85%";
+    const scrollEnd =
+      heading.getAttribute("data-highlight-scroll-end") || "bottom 20%";
+    const fadedValue =
+      parseFloat(heading.getAttribute("data-highlight-fade")) || 0.18;
+    const staggerValue =
+      parseFloat(heading.getAttribute("data-highlight-stagger")) || 0.1;
+
+    new SplitText(heading, {
+      type: "words, chars",
+      autoSplit: true,
+      onSplit(self) {
+        const ctx = gsap.context(() => {
+          const tl = gsap.timeline({
+            scrollTrigger: {
+              scrub: true,
+              trigger: heading,
+              start: scrollStart,
+              end: scrollEnd,
+            },
+          });
+          tl.from(self.chars, {
+            autoAlpha: fadedValue,
+            stagger: staggerValue,
+            ease: "linear",
+          });
+        });
+        return ctx;
+      },
+    });
+  });
+}
+
+document.addEventListener("DOMContentLoaded", () => {
+  initHighlightText();
+});
+// ─────────────────────────────────────────────────────────────────────────────
 
 // ── Tuning knob ──────────────────────────────────────────────────────────────
 // Where the fanned cards' shared centre lands, as a fraction of viewport height.
@@ -19,7 +65,7 @@ function getStartCenterY(cardSelector) {
   const card = document.querySelector(cardSelector);
   const pinTop = pin.getBoundingClientRect().top;
   const cardRect = card.getBoundingClientRect();
-  return (cardRect.top - pinTop) + cardRect.height / 2;
+  return cardRect.top - pinTop + cardRect.height / 2;
 }
 
 /**
@@ -31,9 +77,24 @@ function buildDeal(isNarrow) {
   const fanY = window.innerHeight * FAN_CENTER_VH;
 
   return {
-    card1: { x: -fanX, y: fanY - getStartCenterY(".v2-card-1"), rotation: -12, zIndex: 1 },
-    card2: { x:     0, y: fanY - getStartCenterY(".v2-card-2"), rotation:   2, zIndex: 2 },
-    card3: { x:  fanX, y: fanY - getStartCenterY(".v2-card-3"), rotation:  10, zIndex: 3 },
+    card1: {
+      x: -fanX,
+      y: fanY - getStartCenterY(".v2-card-1"),
+      rotation: -8.22,
+      zIndex: 1,
+    },
+    card2: {
+      x: 0,
+      y: fanY - getStartCenterY(".v2-card-2"),
+      rotation: 0,
+      zIndex: 2,
+    },
+    card3: {
+      x: fanX,
+      y: fanY - getStartCenterY(".v2-card-3"),
+      rotation: 12.22,
+      zIndex: 3,
+    },
   };
 }
 
@@ -87,9 +148,21 @@ function createDealingTimeline(isNarrow) {
   const STEP_3 = 2.8;
   const HOLD_END = 3.8;
 
-  tl.to(".v2-card-1", { ...deal.card1, duration: DEAL_DURATION, ease: EASE }, STEP_1);
-  tl.to(".v2-card-2", { ...deal.card2, duration: DEAL_DURATION, ease: EASE }, STEP_2);
-  tl.to(".v2-card-3", { ...deal.card3, duration: DEAL_DURATION, ease: EASE }, STEP_3);
+  tl.to(
+    ".v2-card-1",
+    { ...deal.card1, duration: DEAL_DURATION, ease: EASE },
+    STEP_1,
+  );
+  tl.to(
+    ".v2-card-2",
+    { ...deal.card2, duration: DEAL_DURATION, ease: EASE },
+    STEP_2,
+  );
+  tl.to(
+    ".v2-card-3",
+    { ...deal.card3, duration: DEAL_DURATION, ease: EASE },
+    STEP_3,
+  );
   tl.to({}, { duration: HOLD_END - STEP_3 - DEAL_DURATION });
 
   // Uncomment to debug step phases:
