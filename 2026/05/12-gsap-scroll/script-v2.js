@@ -2,17 +2,51 @@ gsap.registerPlugin(ScrollTrigger);
 
 const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
-const DEAL = {
-  card1: { x: -180, y: 110, rotation: -12, zIndex: 1 },
-  card2: { x: 0, y: -370, rotation: 2, zIndex: 2 },
-  card3: { x: 180, y: -810, rotation: 10, zIndex: 3 },
-};
+// ── Tuning knob ──────────────────────────────────────────────────────────────
+// Where the fanned cards' shared centre lands, as a fraction of viewport height.
+// Increase to push the fan further down (more gap below title).
+const FAN_CENTER_VH = 0.65;
+// ────────────────────────────────────────────────────────────────────────────
 
-if (reduceMotion) {
-  gsap.set(".v2-card-1", { x: -180, y: -10, rotation: -12, zIndex: 1 });
-  gsap.set(".v2-card-2", { x: 0, y: -30, rotation: 2, zIndex: 2 });
-  gsap.set(".v2-card-3", { x: 180, y: -10, rotation: 10, zIndex: 3 });
-} else {
+/**
+ * Returns each card's starting centre Y in viewport coordinates for the moment
+ * the pin section is at the top of the viewport. Works by computing the card's
+ * position relative to the pin section — so it's accurate regardless of where
+ * the page is currently scrolled.
+ */
+function getStartCenterY(cardSelector) {
+  const pin = document.querySelector(".v2-pin");
+  const card = document.querySelector(cardSelector);
+  const pinTop = pin.getBoundingClientRect().top;
+  const cardRect = card.getBoundingClientRect();
+  return (cardRect.top - pinTop) + cardRect.height / 2;
+}
+
+/**
+ * Computes the GSAP x / y / rotation / zIndex needed to move each card from
+ * its CSS off-screen position into the final fanned layout.
+ */
+function buildDeal(isNarrow) {
+  const fanX = isNarrow ? 96 : 180;
+  const fanY = window.innerHeight * FAN_CENTER_VH;
+
+  return {
+    card1: { x: -fanX, y: fanY - getStartCenterY(".v2-card-1"), rotation: -12, zIndex: 1 },
+    card2: { x:     0, y: fanY - getStartCenterY(".v2-card-2"), rotation:   2, zIndex: 2 },
+    card3: { x:  fanX, y: fanY - getStartCenterY(".v2-card-3"), rotation:  10, zIndex: 3 },
+  };
+}
+
+function setReducedMotionFan(isNarrow) {
+  const deal = buildDeal(isNarrow);
+  gsap.set(".v2-card-1", deal.card1);
+  gsap.set(".v2-card-2", deal.card2);
+  gsap.set(".v2-card-3", deal.card3);
+}
+
+function createDealingTimeline(isNarrow) {
+  const deal = buildDeal(isNarrow);
+
   gsap.set(".v2-card-1", { zIndex: 1 });
   gsap.set(".v2-card-2", { zIndex: 2 });
   gsap.set(".v2-card-3", { zIndex: 3 });
@@ -24,7 +58,7 @@ if (reduceMotion) {
       pin: true,
       scrub: 1,
       start: "top top",
-      end: "+=240%",
+      end: "+=260%",
       // markers: true,
     },
   });
@@ -32,13 +66,11 @@ if (reduceMotion) {
   function addStepMarker({ id, timeStart, timeEnd, indent = 0 }) {
     const st = tl.scrollTrigger;
     if (!st) return;
-
     const toScroll = (t) => {
       const dur = tl.duration() || 1;
       const p = Math.min(1, Math.max(0, t / dur));
       return st.start + (st.end - st.start) * p;
     };
-
     ScrollTrigger.create({
       id,
       trigger: st.trigger,
@@ -51,37 +83,32 @@ if (reduceMotion) {
   const EASE = "power2.out";
   const DEAL_DURATION = 0.6;
   const STEP_1 = 0;
-  const STEP_2 = 1.2;
-  const STEP_3 = 2.4;
-  const HOLD_END = 3.4;
+  const STEP_2 = 1.4;
+  const STEP_3 = 2.8;
+  const HOLD_END = 3.8;
 
-  tl.to(
-    ".v2-card-1",
-    { ...DEAL.card1, duration: DEAL_DURATION, ease: EASE },
-    STEP_1,
-  );
-
-  tl.to(
-    ".v2-card-2",
-    { ...DEAL.card2, duration: DEAL_DURATION, ease: EASE },
-    STEP_2,
-  );
-
-  tl.to(
-    ".v2-card-3",
-    { ...DEAL.card3, duration: DEAL_DURATION, ease: EASE },
-    STEP_3,
-  );
-
+  tl.to(".v2-card-1", { ...deal.card1, duration: DEAL_DURATION, ease: EASE }, STEP_1);
+  tl.to(".v2-card-2", { ...deal.card2, duration: DEAL_DURATION, ease: EASE }, STEP_2);
+  tl.to(".v2-card-3", { ...deal.card3, duration: DEAL_DURATION, ease: EASE }, STEP_3);
   tl.to({}, { duration: HOLD_END - STEP_3 - DEAL_DURATION });
 
-  // Uncomment while tuning the scrub phases.
+  // Uncomment to debug step phases:
   // addStepMarker({ id: "v2-card-1", timeStart: STEP_1, timeEnd: STEP_2, indent: 0 });
   // addStepMarker({ id: "v2-card-2", timeStart: STEP_2, timeEnd: STEP_3, indent: 100 });
-  // addStepMarker({
-  //   id: "v2-card-3",
-  //   timeStart: STEP_3,
-  //   timeEnd: tl.duration(),
-  //   indent: 180,
-  // });
+  // addStepMarker({ id: "v2-card-3", timeStart: STEP_3, timeEnd: tl.duration(), indent: 180 });
+}
+
+const narrowQuery = "(max-width: 760px)";
+
+if (reduceMotion) {
+  setReducedMotionFan(window.matchMedia(narrowQuery).matches);
+} else {
+  const mm = gsap.matchMedia();
+
+  mm.add(narrowQuery, () => createDealingTimeline(true));
+  mm.add("(min-width: 761px)", () => createDealingTimeline(false));
+
+  if (document.fonts) {
+    document.fonts.ready.then(() => ScrollTrigger.refresh());
+  }
 }

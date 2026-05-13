@@ -318,6 +318,16 @@ body {
   display: block;
   padding: 0;
   overflow: hidden;
+
+  /* ── Tuning knobs ───────────────────────────────────────────
+     Change these to adjust the off-screen column layout.
+     --v2-col-first : where card 1's centre sits (must be > 50vh so it starts off-screen)
+     --v2-card-h    : approximate rendered card height — used only to space the hidden column
+     --v2-card-gap  : gap between cards in the off-screen column
+  ─────────────────────────────────────────────────────────── */
+  --v2-col-first: 65vh;
+  --v2-card-h: 500px;
+  --v2-card-gap: 56px;
 }
 
 .v2-section-title {
@@ -362,18 +372,18 @@ body {
 }
 
 .v2-card-1 {
-  --rest-y: -120px;
   background: #050505;
+  --rest-y: var(--v2-col-first);
 }
 
 .v2-card-2 {
-  --rest-y: 340px;
   background: #ff3035;
+  --rest-y: calc(var(--v2-col-first) + var(--v2-card-h) + var(--v2-card-gap));
 }
 
 .v2-card-3 {
-  --rest-y: 800px;
   background: #3031f5;
+  --rest-y: calc(var(--v2-col-first) + 2 * (var(--v2-card-h) + var(--v2-card-gap)));
 }
 
 .v2-card-num {
@@ -393,6 +403,12 @@ body {
 }
 
 @media (max-width: 760px) {
+  .v2-pin {
+    --v2-col-first: 62vh;
+    --v2-card-h: 390px;
+    --v2-card-gap: 40px;
+  }
+
   .v2-section-title {
     top: 5.5rem;
   }
@@ -400,36 +416,7 @@ body {
   .v2-card {
     width: min(68vw, 300px);
   }
-
-  .v2-card-1 {
-    --rest-y: -80px;
-  }
-
-  .v2-card-2 {
-    --rest-y: 300px;
-  }
-
-  .v2-card-3 {
-    --rest-y: 680px;
-  }
 }
 
-@media (prefers-reduced-motion: reduce) {
-  .v2-card-1 {
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%) translate(-180px, -10px) rotate(-12deg);
-  }
-
-  .v2-card-2 {
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%) translate(0, -30px) rotate(2deg);
-  }
-
-  .v2-card-3 {
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%) translate(180px, -10px) rotate(10deg);
-  }
-}
+/* prefers-reduced-motion: GSAP handles the final fan placement via gsap.set()
+   so no static transform overrides are needed here. */
