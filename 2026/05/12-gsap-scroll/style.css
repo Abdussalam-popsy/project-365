@@ -90,7 +90,10 @@ body {
   background: transparent;
   color: #aaa;
   cursor: pointer;
-  transition: background 0.15s, color 0.15s, border-color 0.15s;
+  transition:
+    background 0.15s,
+    color 0.15s,
+    border-color 0.15s;
 }
 
 .debug-toggle[data-debug-active="true"] {
@@ -339,12 +342,15 @@ body {
 }
 
 .v2-quote {
-  max-width: 794px;
+  max-width: 900px;
+  width: 100%;
   font-size: clamp(2rem, 3.5vw, 3.25rem);
   font-weight: 700;
   line-height: 1.15;
   letter-spacing: 0.02em;
   color: #fff;
+  text-wrap: balance;
+  text-align: center;
 }
 
 .pin-section.v2-pin {
@@ -419,7 +425,9 @@ body {
 
 .v2-card-3 {
   background: #3031f5;
-  --rest-y: calc(var(--v2-col-first) + 2 * (var(--v2-card-h) + var(--v2-card-gap)));
+  --rest-y: calc(
+    var(--v2-col-first) + 2 * (var(--v2-card-h) + var(--v2-card-gap))
+  );
 }
 
 .v2-card-num {
@@ -456,3 +464,66 @@ body {
 
 /* prefers-reduced-motion: GSAP handles the final fan placement via gsap.set()
    so no static transform overrides are needed here. */
+
+/* ── Version 3: ball on arc ─────────────────────────────────────────────── */
+.v3-scene {
+  position: relative;
+  height: 100vh;
+  background: #000;
+}
+
+.v3-svg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
+/* #v3-ball is an SVG <g> element — no CSS sizing needed,
+   it inherits the SVG coordinate space and scales with the arc. */
+
+/* ── Version 3: dark page ───────────────────────────────────────────────────── */
+.v3-page {
+  background: #000;
+  color: #fff;
+}
+
+/* Header goes dark / translucent on v3 */
+.v3-page .site-header {
+  background: rgba(0, 0, 0, 0.85);
+  border-bottom-color: rgba(255, 255, 255, 0.08);
+}
+
+.v3-page .site-nav__brand,
+.v3-page .site-nav__link {
+  color: #fff;
+}
+
+.v3-page .site-nav__link:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.v3-page .site-nav__link.is-active {
+  background: #fff;
+  color: #000;
+}
+
+.v3-page .debug-toggle {
+  border-color: rgba(255, 255, 255, 0.2);
+  color: rgba(255, 255, 255, 0.4);
+}
+
+/* Intro + outro inherit the dark background */
+.v3-intro,
+.v3-outro {
+  background: #000;
+  color: #fff;
+}
+
+.v3-outro a {
+  color: rgba(255, 255, 255, 0.6);
+}
+
+.v3-outro a:hover {
+  color: #fff;
+}

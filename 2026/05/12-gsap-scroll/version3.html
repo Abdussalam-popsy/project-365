@@ -12,7 +12,7 @@
     />
     <link rel="stylesheet" href="style.css" />
   </head>
-  <body>
+  <body class="v3-page">
     <header class="site-header">
       <nav class="site-nav" aria-label="Demo versions">
         <a class="site-nav__brand" href="index.html">GSAP Scroll Lab</a>
@@ -25,28 +25,81 @@
         </div>
       </nav>
     </header>
-    <script src="debug.js"></script>
 
     <main class="page-main">
-      <section class="intro intro--compact">
+      <section class="intro intro--compact v3-intro">
         <div class="text-block">
-          <h1 class="big-heading">Version 3</h1>
-          <p class="scroll-hint">
-            Third variation goes here — keep each version on its own page so
-            ScrollTriggers never stack from multiple demos at once.
-          </p>
+          <h1 class="big-heading">Roll with it.</h1>
+          <p class="scroll-hint">Scroll to watch the ball ride the arc ↓</p>
         </div>
       </section>
 
-      <section class="outro">
+      <!-- Pinned arc scene ─────────────────────────────────────────────── -->
+      <section class="v3-scene" id="v3-scene">
+        <svg
+          class="v3-svg"
+          viewBox="0 -200 1440 683"
+          preserveAspectRatio="xMidYMid slice"
+          xmlns="http://www.w3.org/2000/svg"
+          aria-hidden="true"
+        >
+          <defs>
+            <!--
+              Soft blend from yellow → blue over a 30% transition zone (35%–65%).
+              userSpaceOnUse so the gradient spans the full 1440-unit SVG width.
+            -->
+            <linearGradient
+              id="arcGrad"
+              gradientUnits="userSpaceOnUse"
+              x1="0" y1="0"
+              x2="1440" y2="0"
+            >
+              <stop offset="35%" stop-color="#FECB3C" />
+              <stop offset="65%" stop-color="#38B6FF" />
+            </linearGradient>
+          </defs>
+
+          <!--
+            Arc band — exact path from Figma.
+            Two concentric circle paths (non-zero fill rule) create a ring.
+            Center: (720, 1044)  Outer R: 1044  Inner R: 839.44
+          -->
+          <path
+            id="arcBand"
+            fill="url(#arcGrad)"
+            d="M1764 1044C1764 1620.59 1296.59 2088 720 2088C143.415 2088 -324 1620.59 -324 1044C-324 467.415 143.415 0 720 0C1296.59 0 1764 467.415 1764 1044ZM-119.443 1044C-119.443 1507.61 256.388 1883.44 720 1883.44C1183.61 1883.44 1559.44 1507.61 1559.44 1044C1559.44 580.388 1183.61 204.557 720 204.557C256.388 204.557 -119.443 580.388 -119.443 1044Z"
+          />
+
+          <!--
+            Ball inside the SVG — shares the same coordinate space as the arc.
+            <g> origin (0,0) = ball centre. JS drives translate(x y) rotate(deg).
+            Starts at (-190, 800): off-screen below-left, enters as you scroll.
+          -->
+          <g id="v3-ball" transform="translate(-190 800)">
+            <image
+              href="images/ball.svg"
+              x="-96.5" y="-96.5"
+              width="193" height="193"
+            />
+          </g>
+        </svg>
+      </section>
+      <!-- ──────────────────────────────────────────────────────────────── -->
+
+      <section class="outro v3-outro">
         <div class="text-block">
           <p class="scroll-hint">
             <a href="version2.html">← Version 2</a>
             &nbsp;·&nbsp;
-            <a href="version1.html">Version 1 →</a>
+            <a href="version1.html">Version 1</a>
           </p>
         </div>
       </section>
     </main>
+
+    <script src="debug.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/gsap@3.15/dist/gsap.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/gsap@3.15/dist/ScrollTrigger.min.js"></script>
+    <script src="script-v3.js"></script>
   </body>
 </html>

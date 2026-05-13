@@ -187,7 +187,91 @@ This is viewport-size-safe: it measures actual rendered positions, not assumed p
 
 ---
 
+---
+
+## Version 3 — Ball rolling along an arc
+
+**Files:** `version3.html`, `script-v3.js`
+
+**What it does:**
+- Full-viewport black scene with a thick two-tone arc (yellow left, blue right) derived from a Figma circle
+- A smiling ball character enters from below-left, rides over the arc peak, and exits below-right as the user scrolls
+- The section is pinned with ScrollTrigger; scroll progress drives the ball's position via circle math
+
+---
+
+### What I learned in V3
+
+#### 1) DOM element + MotionPathPlugin `align` breaks with `preserveAspectRatio="slice"`
+
+The first approach was a `<div>` ball outside the SVG, using `motionPath: { align: "#centerline" }` to map SVG coordinates to screen coordinates. This relies on reading the path's Current Transformation Matrix (CTM). When the SVG uses `preserveAspectRatio="xMidYMid slice"` (which scales and offsets the content non-trivially), the CTM mapping silently goes wrong and the ball appears at the wrong position or not at all.
+
+Also: having both `gsap.set({ xPercent: -50, yPercent: -50 })` AND `alignOrigin: [0.5, 0.5]` causes a double-offset — the centering is applied twice.
+
+**Fix:** put the ball *inside* the SVG as a `<g>` element. It shares the same coordinate space as the arc, so no coordinate mapping is needed at all.
+
+#### 2) Parametric circle math is more reliable than MotionPathPlugin for known geometry
+
+MotionPath is great for arbitrary paths, but when the arc is a known circle (center + radius from the Figma data), direct math is simpler and has no failure modes:
+
+```js
+const angle = START_ANGLE + progress * (END_ANGLE - START_ANGLE);
+const x = CX + R * Math.cos(angle);
+const y = CY + R * Math.sin(angle);
+ball.setAttribute("transform", `translate(${x} ${y}) rotate(${rot})`);
+```
+
+No plugin needed. The `translate(x y) rotate(deg)` SVG transform first rotates the ball around its own centre (rolling feel), then places it on the arc.
+
+#### 3) Reading the arc geometry from the Figma SVG copy
+
+Instead of exporting the arc (which was 3 overlapping Figma shapes), we copied it as SVG. The path `M1764 1044C... Z M-119.443 1044C... Z` is two concentric circle paths using the non-zero fill rule to punch a donut hole. From the numbers:
+
+- **Center:** `(720, 1044)` — 361px *below* the viewport bottom (that's why the arc looks like a road cresting a hill)
+- **Outer radius:** `1044`
+- **Inner radius:** `839.44`
+- **Band thickness:** `~204 SVG units`
+- **Centerline radius:** `(1044 + 839.44) / 2 ≈ 941.72`
+
+The entry/exit points of the centerline at `y = 800` (below the viewport) are derived as `x = 720 ± √(941.72² − 244²) ≈ −190` and `1630`.
+
+#### 4) SVG viewBox offset for visual centering
+
+The arc peak was at `y = 102` in a `683`px-tall viewBox, which put it flush near the top of the screen. Changing `viewBox="0 0 1440 683"` to `viewBox="0 -200 1440 683"` adds 200 SVG units of black space above — the arc peak then maps to ~44% from the top of the viewport, feeling centered.
+
+#### 5) `linearGradient gradientUnits="userSpaceOnUse"` for precise placement
+
+Using the default `objectBoundingBox` gradient units on a large, complex arc path produces unpredictable gradient placement. `gradientUnits="userSpaceOnUse"` with explicit `x1="0" x2="1440"` coordinates gives precise control — the color split happens exactly at `x = 720` (the arc's centre).
+
+For a softer look, spread the stops: `35%` yellow → `65%` blue gives a 30%-wide blend zone that feels like it follows the arc's curve rather than cutting straight across.
+
+#### 6) `<image href="...">` inside SVG for external SVG assets
+
+The ball is a separate `ball.svg` file referenced as:
+```svg
+<g id="v3-ball" transform="translate(-190 800)">
+  <image href="images/ball.svg" x="-96.5" y="-96.5" width="193" height="193" />
+</g>
+```
+
+The `<g>` origin `(0,0)` is the ball's centre (image offset by half its size). Setting the initial `transform` attribute in HTML puts the ball at its off-screen start position before JavaScript runs, preventing a flash. JS then overwrites `transform` on every scroll frame.
+
+#### 7) Lenis + GSAP ScrollTrigger pinning: they don't play well together without deep setup
+
+Three approaches all failed to restore the pinned ScrollTrigger after adding Lenis:
+
+- **GSAP ticker (`gsap.ticker.add`)** — GSAP ticker time is in seconds; Lenis `raf()` expects milliseconds from `performance.now()`. The conversion (`time * 1000`) starts from a different epoch, which breaks Lenis's velocity/easing delta calculation.
+- **`autoRaf: false` + GSAP ticker** — inconsistent across Lenis versions; if the option is ignored, Lenis starts its own RAF *and* GSAP calls it again → double-tick → scroll position chaos → pin fires at wrong progress values.
+- **Native `requestAnimationFrame` loop** — Lenis ran, but still conflicted with ScrollTrigger's pin spacer system.
+
+**Conclusion:** For scroll-driven animations with `pin: true`, the path of least resistance is no external scroll library. GSAP's `scrub: 1` already gives a smooth, physical scroll feel — the 1-second lag makes the playhead ease toward the scroll position organically. If smooth scrolling is needed alongside pinned sections in a future project, look at GSAP's own **ScrollSmoother** (pairs natively with ScrollTrigger by design).
+
+#### 8) `overflow: hidden` on the pinned section can hide the ball
+
+The first version of `.v3-scene` had `overflow: hidden`. The ball starts at SVG `y = 800` (below the viewport), which maps to below the section's CSS bounds. With `overflow: hidden`, the browser clips it — the ball never appears even mid-scroll. Since the SVG handles its own visual clipping through the viewBox, `overflow: hidden` on the wrapper is unnecessary and should be removed.
+
+---
+
 ## Next iterations (ideas)
 
-- **Version 3**: experiment with pacing (shorter holds, longer transitions) and/or snapping to steps (labels + `snap`).
 - **Debug UX**: add a single `DEBUG` flag in `script.js` to quickly toggle step markers on/off.
