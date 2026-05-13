@@ -97,5 +97,16 @@
     "language": "typescript",
     "description": "Photo journal interaction",
     "status": "local"
+  },
+  {
+    "date": "2026-05-12",
+    "name": "gsap-scroll",
+    "path": "2026/05/12-gsap-scroll",
+    "url": "",
+    "tags": ["vanilla", "gsap", "scroll"],
+    "template": "vanilla",
+    "language": "typescript",
+    "description": "GSAP scroll interaction",
+    "status": "local"
   }
 ]
