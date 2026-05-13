@@ -167,6 +167,7 @@ body {
   border: 1px solid #000;
   background: #fff;
   overflow: hidden;
+  filter: drop-shadow(0 0 1px rgba(0, 0, 0, 0.25));
 }
 
 .slide-img {
@@ -175,7 +176,6 @@ body {
   width: 100%;
   height: 100%;
   object-fit: cover;
-  opacity: 0;
 }
 
 /* ── Content slot (right) ──────────────────── */
@@ -241,17 +241,24 @@ body {
   gap: 16px;
 }
 
-/* All clip elements start hidden — GSAP reveals them */
+/* Panel copy animates via GSAP (translate + opacity), not clip-path */
 .panel-heading,
 .panel-body,
 .panel-buttons {
-  clip-path: inset(0 100% 0 0);
+  will-change: transform, opacity;
 }
 
 .panel-heading {
   font-size: 32px;
   font-weight: 700;
   line-height: 1.25;
+}
+
+/* Split for stagger (script wraps chars / words in spans) */
+.split-char,
+.split-word {
+  display: inline-block;
+  vertical-align: baseline;
 }
 
 .panel-body {
@@ -293,4 +300,136 @@ body {
   font-size: 18px;
   cursor: pointer;
   flex-shrink: 0;
+}
+
+/* ── Version 2: dealing cards ───────────────── */
+.v2-quote {
+  max-width: 794px;
+  font-size: clamp(1.5rem, 2.5vw, 2.5rem);
+  font-weight: 700;
+  line-height: 1.08;
+  letter-spacing: -0.04em;
+}
+
+.pin-section.v2-pin {
+  position: relative;
+  height: 100vh;
+  background: #f4edde;
+  display: block;
+  padding: 0;
+  overflow: hidden;
+}
+
+.v2-section-title {
+  position: absolute;
+  z-index: 20;
+  top: clamp(5rem, 9vh, 6.75rem);
+  left: 50%;
+  transform: translateX(-50%);
+  width: min(794px, calc(100vw - 2rem));
+  text-align: center;
+  font-size: clamp(2.25rem, 4.1vw, 4rem);
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: -0.055em;
+}
+
+.v2-stage {
+  position: relative;
+  height: 100%;
+  width: 100%;
+}
+
+.v2-card {
+  --rest-x: 0px;
+  --rest-y: 0px;
+  position: absolute;
+  top: calc(50% + var(--rest-y));
+  left: calc(50% + var(--rest-x));
+  z-index: 1;
+  width: clamp(250px, 26.8vw, 386px);
+  aspect-ratio: 386 / 503;
+  padding: clamp(1.25rem, 2vw, 1.875rem);
+  border-radius: clamp(1.25rem, 2vw, 1.75rem);
+  color: #fff;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  transform: translate(-50%, -50%);
+  transform-origin: 50% 62%;
+  will-change: transform;
+  overflow: hidden;
+}
+
+.v2-card-1 {
+  --rest-y: -120px;
+  background: #050505;
+}
+
+.v2-card-2 {
+  --rest-y: 340px;
+  background: #ff3035;
+}
+
+.v2-card-3 {
+  --rest-y: 800px;
+  background: #3031f5;
+}
+
+.v2-card-num {
+  display: block;
+  font-size: clamp(4.5rem, 9vw, 9.875rem);
+  font-weight: 700;
+  line-height: 0.9;
+  letter-spacing: -0.08em;
+}
+
+.v2-card-copy {
+  max-width: 15rem;
+  font-size: clamp(1.25rem, 2.1vw, 2rem);
+  font-weight: 700;
+  line-height: 1.1;
+  letter-spacing: -0.055em;
+}
+
+@media (max-width: 760px) {
+  .v2-section-title {
+    top: 5.5rem;
+  }
+
+  .v2-card {
+    width: min(68vw, 300px);
+  }
+
+  .v2-card-1 {
+    --rest-y: -80px;
+  }
+
+  .v2-card-2 {
+    --rest-y: 300px;
+  }
+
+  .v2-card-3 {
+    --rest-y: 680px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .v2-card-1 {
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%) translate(-180px, -10px) rotate(-12deg);
+  }
+
+  .v2-card-2 {
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%) translate(0, -30px) rotate(2deg);
+  }
+
+  .v2-card-3 {
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%) translate(180px, -10px) rotate(10deg);
+  }
 }
