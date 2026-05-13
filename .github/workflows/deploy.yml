@@ -48,6 +48,18 @@ jobs:
             fi
           done
 
+      - name: Copy vanilla experiments
+        run: |
+          # Vanilla projects have no package.json — just copy static files as-is
+          find 2026 -name "index.html" -not -path "*/node_modules/*" -not -path "*/dist/*" | while read html; do
+            dir=$(dirname "$html")
+            if [ ! -f "$dir/package.json" ]; then
+              echo "→ Copying vanilla $dir"
+              mkdir -p "_site/$dir"
+              cp -r "$dir/." "_site/$dir/"
+            fi
+          done
+
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v3
         with:
