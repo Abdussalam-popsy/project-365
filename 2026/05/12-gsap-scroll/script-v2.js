@@ -1,5 +1,8 @@
 gsap.registerPlugin(ScrollTrigger, SplitText);
-// if (typeof SplitText !== "undefined") gsap.registerPlugin(SplitText);
+
+// ── Debug flag — controlled by the nav toggle (debug.js + localStorage) ──────
+const DEBUG = window.DEBUG || false;
+// ─────────────────────────────────────────────────────────────────────────────
 
 const reduceMotion = window.matchMedia(
   "(prefers-reduced-motion: reduce)",
@@ -120,7 +123,7 @@ function createDealingTimeline(isNarrow) {
       scrub: 1,
       start: "top top",
       end: "+=260%",
-      // markers: true,
+      markers: DEBUG,
     },
   });
 
@@ -165,10 +168,11 @@ function createDealingTimeline(isNarrow) {
   );
   tl.to({}, { duration: HOLD_END - STEP_3 - DEAL_DURATION });
 
-  // Uncomment to debug step phases:
-  // addStepMarker({ id: "v2-card-1", timeStart: STEP_1, timeEnd: STEP_2, indent: 0 });
-  // addStepMarker({ id: "v2-card-2", timeStart: STEP_2, timeEnd: STEP_3, indent: 100 });
-  // addStepMarker({ id: "v2-card-3", timeStart: STEP_3, timeEnd: tl.duration(), indent: 180 });
+  if (DEBUG) {
+    addStepMarker({ id: "v2-card-1", timeStart: STEP_1, timeEnd: STEP_2, indent: 0 });
+    addStepMarker({ id: "v2-card-2", timeStart: STEP_2, timeEnd: STEP_3, indent: 100 });
+    addStepMarker({ id: "v2-card-3", timeStart: STEP_3, timeEnd: tl.duration(), indent: 180 });
+  }
 }
 
 const narrowQuery = "(max-width: 760px)";

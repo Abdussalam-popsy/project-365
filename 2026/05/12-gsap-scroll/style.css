@@ -78,6 +78,27 @@ body {
   color: #fff;
 }
 
+.debug-toggle {
+  font-size: 0.75rem;
+  font-weight: 600;
+  font-family: inherit;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  padding: 0.3rem 0.65rem;
+  border-radius: 6px;
+  border: 1px solid #d0d0d0;
+  background: transparent;
+  color: #aaa;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s, border-color 0.15s;
+}
+
+.debug-toggle[data-debug-active="true"] {
+  background: #ff3035;
+  border-color: #ff3035;
+  color: #fff;
+}
+
 .page-main {
   padding-top: var(--site-header-h);
 }

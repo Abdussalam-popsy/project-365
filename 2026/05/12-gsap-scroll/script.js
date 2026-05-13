@@ -1,5 +1,9 @@
 gsap.registerPlugin(ScrollTrigger);
 
+// ── Debug flag — controlled by the nav toggle (debug.js + localStorage) ──────
+const DEBUG = window.DEBUG || false;
+// ─────────────────────────────────────────────────────────────────────────────
+
 /**
  * Split heading/body into spans for stagger (no SplitText plugin).
  * Headings → characters; body → words (long copy reads better by word).
@@ -80,7 +84,7 @@ const tl = gsap.timeline({
     scrub: 1,
     start: "top top",
     end: "+=300%",
-    // markers: true,
+    markers: DEBUG,
   },
 });
 
@@ -314,12 +318,8 @@ tl.fromTo(
   T2in + S * 2,
 );
 
-// indent controls the spacing between the step markers
-addStepMarker({ id: "step-1", timeStart: 0, timeEnd: T1in, indent: 0 });
-addStepMarker({ id: "step-2", timeStart: T1in, timeEnd: T2in, indent: 100 });
-addStepMarker({
-  id: "step-3",
-  timeStart: T2in,
-  timeEnd: tl.duration(),
-  indent: 180,
-});
+if (DEBUG) {
+  addStepMarker({ id: "step-1", timeStart: 0, timeEnd: T1in, indent: 0 });
+  addStepMarker({ id: "step-2", timeStart: T1in, timeEnd: T2in, indent: 100 });
+  addStepMarker({ id: "step-3", timeStart: T2in, timeEnd: tl.duration(), indent: 180 });
+}
