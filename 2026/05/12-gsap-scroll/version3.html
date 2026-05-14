@@ -21,7 +21,9 @@
           <a class="site-nav__link" href="version1.html">Version 1</a>
           <a class="site-nav__link" href="version2.html">Version 2</a>
           <a class="site-nav__link is-active" href="version3.html">Version 3</a>
-          <button id="debug-toggle" class="debug-toggle" type="button">Markers OFF</button>
+          <button id="debug-toggle" class="debug-toggle" type="button">
+            Markers OFF
+          </button>
         </div>
       </nav>
     </header>
@@ -51,8 +53,10 @@
             <linearGradient
               id="arcGrad"
               gradientUnits="userSpaceOnUse"
-              x1="0" y1="0"
-              x2="1440" y2="0"
+              x1="0"
+              y1="0"
+              x2="1440"
+              y2="0"
             >
               <stop offset="35%" stop-color="#FECB3C" />
               <stop offset="65%" stop-color="#38B6FF" />
@@ -78,8 +82,10 @@
           <g id="v3-ball" transform="translate(-190 800)">
             <image
               href="images/ball.svg"
-              x="-96.5" y="-96.5"
-              width="193" height="193"
+              x="-96.5"
+              y="-96.5"
+              width="193"
+              height="193"
             />
           </g>
         </svg>
@@ -101,5 +107,17 @@
     <script src="https://cdn.jsdelivr.net/npm/gsap@3.15/dist/gsap.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/gsap@3.15/dist/ScrollTrigger.min.js"></script>
     <script src="script-v3.js"></script>
+    <script src="https://unpkg.com/lenis@1.3.23/dist/lenis.min.js"></script>
+    <script>
+      // Initialize Lenis
+      const lenis = new Lenis({
+        autoRaf: true,
+      });
+
+      // Listen for the scroll event and log the event data
+      lenis.on("scroll", (e) => {
+        console.log(e);
+      });
+    </script>
   </body>
 </html>
