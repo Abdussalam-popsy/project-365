@@ -1,0 +1,31 @@
+@import "tailwindcss";
+
+@theme {
+  /* Brand palette */
+  --color-cream: #ebe5d8;
+  --color-coral: #d86e40;
+  --color-rust:  #c44225;
+  --color-sage:  #75927f;
+  --color-mist:  #c1cfca;
+  --color-sand:  #dec5a5;
+
+  /* Fonts */
+  --font-sans: "Instrument Sans", system-ui, sans-serif;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+body {
+  margin: 0;
+  font-family: var(--font-sans);
+  background-color: var(--color-cream);
+}
