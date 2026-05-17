@@ -1,5 +1,16 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { motion } from "motion/react";
+import {
+  RiWhatsappFill,
+  RiMailFill,
+  RiChat3Fill,
+  RiChatVoiceFill,
+  RiAddCircleFill,
+  RiRefreshFill,
+  RiCheckboxFill,
+} from "@remixicon/react";
 import { GradientEditor } from "@/micro-tools/gradient/GradientEditor";
+import { SyncIllustration } from "./sync/SyncIllustration";
 import {
   type GradientKey,
   type GradientMap,
@@ -33,226 +44,277 @@ function CardText({ title, body }: { title: string; body: string }) {
 
 // ─── Card 1: Receive every request ───────────────────────────────────────────
 const CHANNELS = [
-  { label: "W", name: "WhatsApp" },
-  { label: "M", name: "Gmail" },
-  { label: "✦", name: "Slack" },
-  { label: "✆", name: "Phone" },
-  { label: "↗", name: "Telegram" },
-  { label: "✉", name: "iMessage" },
-];
+  { Icon: RiWhatsappFill,  name: "WhatsApp" },
+  { Icon: RiMailFill,      name: "Email" },
+  { Icon: RiChat3Fill,     name: "Message" },
+  { Icon: RiChatVoiceFill, name: "Audio" },
+] as const;
+
+const ICON_SIZE = 48;
+const ICON_GAP  = 8;
+
+function tileStyle(active: boolean): React.CSSProperties {
+  return {
+    width:          ICON_SIZE,
+    height:         ICON_SIZE,
+    flexShrink:     0,
+    borderRadius:   10,
+    border:         `1px solid rgba(255,255,255,${active ? "0.28" : "0.14"})`,
+    background:     "linear-gradient(160deg, rgba(255,255,255,0.14) 0%, rgba(255,255,255,0.07) 100%)",
+    boxShadow:      "inset 0 1px 0 rgba(255,255,255,0.08)",
+    backdropFilter: "blur(10px)",
+    display:        "flex",
+    alignItems:     "center",
+    justifyContent: "center",
+    color:          "white",
+    transition:     "border-color 150ms ease",
+  };
+}
 
 function ReceiveIllustration() {
-  const [active, setActive] = useState(0);
-
-  useEffect(() => {
-    const t = setInterval(() => setActive((i) => (i + 1) % CHANNELS.length), 2000);
-    return () => clearInterval(t);
-  }, []);
+  const [hovered, setHovered] = useState<string | null>(null);
 
   return (
-    <div className="flex h-[236px] items-center justify-center">
-      <div className="animate-float grid grid-cols-3 gap-2.5">
-        {CHANNELS.map((ch, i) => (
-          <div
-            key={ch.name}
-            title={ch.name}
-            className={`relative flex h-16 w-16 select-none items-center justify-center rounded-lg border text-base text-white backdrop-blur-sm transition-all duration-700 ${
-              i === active
-                ? "border-white/30 bg-white/25 shadow-[0_0_20px_rgba(255,255,255,0.15)]"
-                : "border-white/[0.1] bg-white/[0.08]"
-            }`}
-          >
-            {ch.label}
-            {/* Activity ping on active channel */}
-            {i === active && (
-              <span className="absolute -right-0.5 -top-0.5 flex h-2.5 w-2.5">
-                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-white/60 opacity-75" />
-                <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-white/80" />
-              </span>
-            )}
-          </div>
-        ))}
+    <div className="flex h-[236px] flex-col items-center justify-center gap-3">
+      {/* Tooltip — space always reserved so layout never shifts */}
+      <div className="flex h-5 items-center">
+        <span
+          className="rounded-md px-2 py-0.5 text-[11px] font-medium tracking-wide text-white/80"
+          style={{
+            opacity:        hovered ? 1 : 0,
+            transition:     "opacity 120ms ease",
+            background:     "rgba(255,255,255,0.12)",
+            backdropFilter: "blur(6px)",
+            border:         "1px solid rgba(255,255,255,0.15)",
+          }}
+        >
+          {hovered ?? "\u00A0"}
+        </span>
+      </div>
+
+      {/* Dock bar */}
+      <div
+        className="rounded-2xl p-2"
+        style={{
+          background:     "rgba(255,255,255,0.07)",
+          border:         "1px solid rgba(255,255,255,0.12)",
+          backdropFilter: "blur(12px)",
+        }}
+        onMouseLeave={() => setHovered(null)}
+      >
+        <div className="flex items-center" style={{ gap: ICON_GAP }}>
+          {CHANNELS.map(({ Icon, name }) => (
+            <div
+              key={name}
+              style={tileStyle(hovered === name)}
+              onMouseEnter={() => setHovered(name)}
+            >
+              <Icon size={Math.round(ICON_SIZE * 0.4)} />
+            </div>
+          ))}
+        </div>
       </div>
     </div>
   );
 }
 
 // ─── Card 2: Act on your SOPs ─────────────────────────────────────────────────
-const STEPS = [
-  { label: "Adding to PMS",       icon: "⟳" },
-  { label: "Syncing to PMS",      icon: "↻" },
-  { label: "Confirmed & secured", icon: "✓" },
-];
+// soft-blur-in adapted per-word (pixel-point/animate-text):
+//   enter: opacity 0→1, y 8→0px, blur 6→0px
+//   easing: cubic-bezier(0.22, 1, 0.36, 1), duration 600ms, stagger 100ms/word
+
+const SOPS_STEPS = [
+  { label: "Adding to PMS",       Icon: RiAddCircleFill },
+  { label: "Syncing to PMS",      Icon: RiRefreshFill   },
+  { label: "Confirmed & Secured", Icon: RiCheckboxFill  },
+] as const;
+
+const SOPS_ICON_SIZE = 36;
+const LINE_H         = 30;
+const LINE_MS        = 360;
+const WORD_STAGGER   = 100; // ms between words
+const WORD_DUR       = 600; // ms per word animation
+
+type StepState = "hidden" | "animating" | "done";
 
 function SopsIllustration() {
-  const [active, setActive] = useState(0);
+  const [stepStates, setStepStates] = useState<StepState[]>(["done", "done", "done"]);
+  const [animKeys,   setAnimKeys]   = useState([0, 0, 0]);
+  const [lineDrawn,  setLineDrawn]  = useState([true, true]);
+  const timers = useRef<ReturnType<typeof setTimeout>[]>([]);
 
-  useEffect(() => {
-    const t = setInterval(() => setActive((i) => (i + 1) % STEPS.length), 2500);
-    return () => clearInterval(t);
-  }, []);
+  function clear() { timers.current.forEach(clearTimeout); timers.current = []; }
+  function after(fn: () => void, ms: number) { timers.current.push(setTimeout(fn, ms)); }
+
+  function runAnimation() {
+    clear();
+    setStepStates(["hidden", "hidden", "hidden"]);
+    setLineDrawn([false, false]);
+
+    let t = 120;
+
+    SOPS_STEPS.forEach((step, si) => {
+      const wordCount  = step.label.split(" ").length;
+      const wordsDone  = (wordCount - 1) * WORD_STAGGER + WORD_DUR; // last word fully settled
+
+      // Activate step — bump animKey so motion.spans remount with fresh initial
+      after(() => {
+        setStepStates(prev => { const n = [...prev]; n[si] = "animating"; return n; });
+        setAnimKeys(prev => { const n = [...prev]; n[si] = n[si] + 1; return n; });
+      }, t);
+
+      t += wordsDone + 260;
+
+      // Mark done (icon stays bright, no visual change — just state cleanup)
+      after(() => setStepStates(prev => { const n = [...prev]; n[si] = "done"; return n; }), t);
+
+      // Draw connector line
+      if (si < SOPS_STEPS.length - 1) {
+        after(() => setLineDrawn(prev => { const n = [...prev]; n[si] = true; return n; }), t);
+        t += LINE_MS + 100;
+      }
+    });
+  }
+
+  useEffect(() => () => clear(), []);
 
   return (
-    <div className="flex h-[236px] items-start pl-12 pt-7">
-      <div className="flex flex-col gap-3.5">
-        {STEPS.map((step, i) => (
-          <div key={i} className="flex items-start gap-4">
-            {/* Timeline track */}
-            <div className="flex flex-col items-center">
-              <div
-                className={`flex h-8 w-8 items-center justify-center rounded-xl border backdrop-blur-sm transition-all duration-700 ${
-                  i === active
-                    ? "border-white/30 bg-white/25 text-white shadow-[0_0_14px_rgba(255,255,255,0.2)]"
-                    : i < active
-                    ? "border-white/20 bg-white/15 text-white/80"
-                    : "border-white/[0.1] bg-white/[0.08] text-white/40"
-                }`}
-              >
-                <span className="text-sm">{step.icon}</span>
+    <div className="flex h-[236px] items-center pl-8" onMouseEnter={runAnimation}>
+      <div className="flex flex-col">
+        {SOPS_STEPS.map((step, si) => {
+          const ss     = stepStates[si];
+          const active = ss === "animating" || ss === "done";
+          const words  = step.label.split(" ");
+          const { Icon } = step;
+
+          return (
+            <div key={si}>
+              {/* Step row */}
+              <div className="flex items-center gap-3">
+                {/* Glass icon tile — animates in with the words */}
+                <motion.div
+                  key={`icon-${animKeys[si]}`}
+                  initial={ss === "animating" ? { opacity: 0, y: 8, filter: "blur(6px)" } : false}
+                  animate={{
+                    opacity: ss === "hidden" ? 0 : 1,
+                    y:       0,
+                    filter:  "blur(0px)",
+                  }}
+                  transition={ss === "animating"
+                    ? { duration: WORD_DUR / 1000, ease: [0.22, 1, 0.36, 1] }
+                    : { duration: 0.12 }
+                  }
+                  style={{
+                    width: SOPS_ICON_SIZE, height: SOPS_ICON_SIZE, flexShrink: 0,
+                    borderRadius:   10,
+                    border:         `1px solid rgba(255,255,255,${active ? 0.28 : 0.12})`,
+                    background:     "linear-gradient(160deg, rgba(255,255,255,0.14) 0%, rgba(255,255,255,0.07) 100%)",
+                    boxShadow:      "inset 0 1px 0 rgba(255,255,255,0.08)",
+                    backdropFilter: "blur(10px)",
+                    display: "flex", alignItems: "center", justifyContent: "center",
+                    color:      `rgba(255,255,255,${active ? 1 : 0.3})`,
+                    transition: "border-color 300ms ease, color 300ms ease",
+                  }}
+                >
+                  <Icon size={Math.round(SOPS_ICON_SIZE * 0.44)} />
+                </motion.div>
+
+                {/* 3-line text block */}
+                <div className="flex flex-col gap-px">
+                  {/* Line 1 — soft-blur-in per word */}
+                  <p
+                    className="text-sm font-medium leading-none tracking-[-0.04em]"
+                    style={{ color: active ? "white" : "rgba(255,255,255,0.3)", transition: "color 300ms ease" }}
+                  >
+                    {words.map((word, wi) => (
+                      <motion.span
+                        key={`${animKeys[si]}-${wi}`}
+                        // initial only applies on mount — triggered by animKey bump
+                        initial={ss === "animating" ? { opacity: 0, y: 8, filter: "blur(6px)" } : false}
+                        animate={{
+                          opacity: ss === "hidden" ? 0 : 1,
+                          y:       0,
+                          filter:  "blur(0px)",
+                        }}
+                        transition={ss === "animating"
+                          ? { delay: wi * (WORD_STAGGER / 1000), duration: WORD_DUR / 1000, ease: [0.22, 1, 0.36, 1] }
+                          : { duration: 0.12 }
+                        }
+                        style={{ display: "inline-block", marginRight: wi < words.length - 1 ? "0.3em" : 0 }}
+                      >
+                        {word}
+                      </motion.span>
+                    ))}
+                  </p>
+
+                  {/* Line 2 — person & action */}
+                  <p
+                    className="text-[11px] leading-tight tracking-[-0.03em] text-white/40"
+                    style={{ opacity: active ? 1 : 0, transition: "opacity 350ms ease 120ms" }}
+                  >
+                    Andrew P. · Inbound enquiry
+                  </p>
+
+                  {/* Line 3 — date & time */}
+                  <p
+                    className="text-[11px] leading-tight tracking-[-0.03em] text-white/25"
+                    style={{ opacity: active ? 1 : 0, transition: "opacity 350ms ease 240ms" }}
+                  >
+                    Monday, 12 Oct 2026 · 2:00 PM
+                  </p>
+                </div>
               </div>
-              {i < STEPS.length - 1 && (
-                <div
-                  className={`mt-1 h-5 w-px transition-all duration-700 ${
-                    i < active ? "bg-white/30" : "bg-white/10"
-                  }`}
-                />
+
+              {/* Connector line — draws downward */}
+              {si < SOPS_STEPS.length - 1 && (
+                <div style={{ marginLeft: SOPS_ICON_SIZE / 2 - 0.5, height: LINE_H, width: 1, overflow: "hidden" }}>
+                  <div style={{
+                    width:      "100%",
+                    height:     lineDrawn[si] ? "100%" : "0%",
+                    background: "rgba(255,255,255,0.22)",
+                    transition: `height ${LINE_MS}ms linear`,
+                  }} />
+                </div>
               )}
             </div>
-            {/* Step text */}
-            <div className="-mt-0.5 flex flex-col">
-              <p
-                className={`text-sm font-medium leading-none tracking-[-0.04em] transition-colors duration-700 ${
-                  i === active ? "text-white" : "text-white/50"
-                }`}
-              >
-                {step.label}
-              </p>
-              <p className="mt-1 text-[11px] leading-tight tracking-[-0.03em] text-white/30">
-                Andrew P. successfully called for an enquiry
-              </p>
-              <p className="mt-0.5 text-[11px] tracking-[-0.03em] text-white/30">
-                12.10.2026 · 18:14 · Monday
-              </p>
-            </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
     </div>
   );
 }
 
-// ─── Card 3: Sync back to PMS ────────────────────────────────────────────────
-// S-curve wave paths — two mirrored bezier curves spanning the card width.
-// `preserveAspectRatio="none"` lets them stretch to fill any card width.
-const UPPER_WAVE = "M 0 75 C 70 35 150 115 220 75 C 290 35 370 115 440 75";
-const LOWER_WAVE = "M 0 161 C 70 201 150 121 220 161 C 290 201 370 121 440 161";
-
-function SyncIllustration() {
-  return (
-    <div className="relative h-[236px] overflow-hidden">
-      {/* Wave SVG — fills the full illustration area */}
-      <svg
-        className="absolute inset-0 h-full w-full"
-        viewBox="0 0 440 236"
-        preserveAspectRatio="none"
-        aria-hidden
-      >
-        {/* Center horizontal line */}
-        <line x1="0" y1="118" x2="440" y2="118" stroke="rgba(255,255,255,0.12)" strokeWidth="1" />
-
-        {/* Static wave traces */}
-        <path d={UPPER_WAVE} stroke="rgba(255,255,255,0.12)" strokeWidth="1.5" fill="none" />
-        <path d={LOWER_WAVE} stroke="rgba(255,255,255,0.12)" strokeWidth="1.5" fill="none" />
-
-        {/* Animated data-flow dots: `dash-flow` keyframe is in index.css */}
-        <path
-          d={UPPER_WAVE}
-          stroke="rgba(255,255,255,0.55)"
-          strokeWidth="2"
-          fill="none"
-          strokeDasharray="3 20"
-          style={{ animation: "dash-flow 3s linear infinite" }}
-        />
-        <path
-          d={LOWER_WAVE}
-          stroke="rgba(255,255,255,0.55)"
-          strokeWidth="2"
-          fill="none"
-          strokeDasharray="3 20"
-          style={{ animation: "dash-flow 3s linear infinite", animationDelay: "1.5s" }}
-        />
-      </svg>
-
-      {/* Scatter dots (glass) */}
-      <div className="absolute left-[7%]  top-[34%] h-3 w-3 rounded-full border border-white/10 bg-white/15 backdrop-blur-sm" />
-      <div className="absolute left-[20%] top-[54%] h-3 w-3 rounded-full border border-white/10 bg-white/10 backdrop-blur-sm" />
-      <div className="absolute left-[33%] top-[43%] h-3 w-3 rounded-full border border-white/10 bg-white/15 backdrop-blur-sm" />
-      <div className="absolute left-[14%] top-[65%] h-[10px] w-[10px] rounded-full bg-white/10" />
-
-      {/* Central sync icon */}
-      <div className="absolute left-1/2 top-1/2 z-10 -translate-x-1/2 -translate-y-1/2">
-        <div className="flex h-14 w-14 items-center justify-center rounded-lg border border-white/20 bg-white/[0.08] backdrop-blur-md">
-          {/* Sync / refresh icon — SVG so it scales crisp */}
-          <svg
-            className="animate-spin-slow h-6 w-6 text-white"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
-            strokeWidth={2}
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          >
-            <path d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-          </svg>
-        </div>
-      </div>
-
-      {/* PMS record stubs — glass cards with simulated row content */}
-      <div className="absolute right-4 top-1/2 -translate-y-1/2 flex flex-col gap-2">
-        {[0, 1].map((i) => (
-          <div
-            key={i}
-            className="flex h-[54px] w-[42px] flex-col justify-center gap-1.5 rounded-lg border border-white/10 bg-white/[0.08] px-2 py-2 backdrop-blur-sm"
-          >
-            <div className="h-px w-full rounded-full bg-white/30" />
-            <div className="h-px w-3/4 rounded-full bg-white/20" />
-            <div className="h-px w-full rounded-full bg-white/20" />
-            <div className="h-px w-1/2 rounded-full bg-white/15" />
-            <div className="h-px w-2/3 rounded-full bg-white/20" />
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-}
+// ─── Card 3: Sync back to PMS — see ./sync/SyncIllustration.tsx ──────────────
 
 
 // ─── Main section ─────────────────────────────────────────────────────────────
-const CARDS: { key: GradientKey; illustration: React.ReactNode; title: string; body: string }[] = [
-  {
-    key: "receive",
-    illustration: <ReceiveIllustration />,
-    title: "Receive every request",
-    body: "Haven picks up every inbound interaction 24/7 across every channel your residents and owners already use.",
-  },
-  {
-    key: "sops",
-    illustration: <SopsIllustration />,
-    title: "Act on your SOPs",
-    body: "It follows your rules, your escalation paths, and your SLAs and loops in your team only when it has to.",
-  },
-  {
-    key: "pms",
-    illustration: <SyncIllustration />,
-    title: "Sync back to your PMS",
-    body: "Every action, note, and update goes straight into your property management software.",
-  },
-];
 
 export function BentoSection() {
   const [gradients, setGradients] = useState<GradientMap>(DEFAULT_GRADIENTS);
+
   const update = (key: GradientKey, stop: Stop) =>
     setGradients((prev) => ({ ...prev, [key]: stop }));
+
+  const cards = [
+    {
+      key: "receive" as GradientKey,
+      illustration: <ReceiveIllustration />,
+      title: "Receive every request",
+      body: "Haven picks up every inbound interaction 24/7 across every channel your residents and owners already use.",
+    },
+    {
+      key: "sops" as GradientKey,
+      illustration: <SopsIllustration />,
+      title: "Act on your SOPs",
+      body: "It follows your rules, your escalation paths, and your SLAs and loops in your team only when it has to.",
+    },
+    {
+      key: "pms" as GradientKey,
+      illustration: <SyncIllustration />,
+      title: "Sync back to your PMS",
+      body: "Every action, note, and update goes straight into your property management software.",
+    },
+  ];
 
   return (
     <section className="w-full bg-cream px-5 py-[72px] sm:px-10 lg:px-20">
@@ -269,7 +331,7 @@ export function BentoSection() {
 
         {/* Bento grid — cards flex to fill the full 1280px container */}
         <div className="grid w-full grid-cols-3 gap-6">
-          {CARDS.map(({ key, illustration, title, body }) => (
+          {cards.map(({ key, illustration, title, body }) => (
             <div
               key={key}
               className="flex flex-col overflow-hidden rounded-2xl"

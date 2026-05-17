@@ -8,6 +8,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@remixicon/react": "^4.9.0",
     "dialkit": "^1.2.0",
     "geist": "^1.7.0",
     "motion": "^12.38.0",
