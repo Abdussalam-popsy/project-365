@@ -320,8 +320,8 @@ export function BentoSection() {
     <section className="w-full bg-cream px-5 py-[72px] sm:px-10 lg:px-20">
       <div className="mx-auto w-full max-w-[1280px] flex flex-col gap-10">
         {/* Header */}
-        <div className="flex items-center justify-between">
-          <h2 className="w-[361px] text-[40px] font-semibold leading-[1.1] tracking-[-0.05em] text-neutral-900">
+        <div className="flex flex-wrap items-center justify-between gap-4">
+          <h2 className="text-[40px] font-semibold leading-[1.1] tracking-[-0.05em] text-neutral-900">
             Everything you need
           </h2>
           <button className="rounded-[8px] bg-neutral-900 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-neutral-700">
@@ -329,8 +329,8 @@ export function BentoSection() {
           </button>
         </div>
 
-        {/* Bento grid — cards flex to fill the full 1280px container */}
-        <div className="grid w-full grid-cols-3 gap-6">
+        {/* Bento grid — stacks to single column on mobile */}
+        <div className="grid w-full grid-cols-1 gap-6 lg:grid-cols-3">
           {cards.map(({ key, illustration, title, body }) => (
             <div
               key={key}
