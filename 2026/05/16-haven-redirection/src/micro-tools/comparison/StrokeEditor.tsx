@@ -1,11 +1,11 @@
 import { useState } from "react";
 
 const PRESETS = [
-  { label: "Figma",       value: "#e8d5b3" },
-  { label: "Darker",      value: "#c4a87a" },
-  { label: "Dark",        value: "#8a6c42" },
-  { label: "Neutral",     value: "#d4d4d4" },
-  { label: "None",        value: "transparent" },
+  { label: "Figma", value: "#d6d0c5" },
+  { label: "Darker", value: "#c4a87a" },
+  { label: "Dark", value: "#8a6c42" },
+  { label: "Neutral", value: "#d4d4d4" },
+  { label: "None", value: "transparent" },
 ];
 
 export function StrokeEditor({
