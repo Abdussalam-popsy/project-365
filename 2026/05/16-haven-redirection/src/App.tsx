@@ -5,6 +5,7 @@ import { BentoSection } from "./components/BentoSection";
 import { AgentsSection } from "./components/AgentsSection";
 import { ComparisonSection } from "./components/ComparisonSection";
 import { TestimonialsSection } from "./components/TestimonialsSection";
+import { FooterSection } from "./components/FooterSection";
 import { MicroTools } from "./micro-tools/MicroTools";
 
 export default function App() {
@@ -17,6 +18,7 @@ export default function App() {
       <AgentsSection />
       <ComparisonSection />
       <TestimonialsSection />
+      <FooterSection />
       {import.meta.env.DEV && <MicroTools />}
     </div>
   );

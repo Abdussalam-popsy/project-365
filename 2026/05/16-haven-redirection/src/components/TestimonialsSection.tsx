@@ -109,7 +109,7 @@ export function TestimonialsSection() {
         {/* Fade edges */}
         <div
           aria-hidden
-          className="pointer-events-none absolute inset-y-0 left-0 z-10 w-32 sm:w-32"
+          className="pointer-events-none absolute inset-y-0 left-0 z-10 w-20 sm:w-32"
           style={{
             background:
               "linear-gradient(to right, #ebe5d8 0%, transparent 100%)",
@@ -117,7 +117,7 @@ export function TestimonialsSection() {
         />
         <div
           aria-hidden
-          className="pointer-events-none absolute inset-y-0 right-0 z-10 w-32 sm:w-32"
+          className="pointer-events-none absolute inset-y-0 right-0 z-10 w-20 sm:w-32"
           style={{
             background:
               "linear-gradient(to left, #ebe5d8 0%, transparent 100%)",
