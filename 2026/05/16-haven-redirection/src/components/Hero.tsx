@@ -6,19 +6,19 @@ export function Hero() {
       {/* Text content */}
       <div className="mx-auto flex max-w-3xl flex-col items-center px-5 pt-14 text-center sm:pt-20 lg:pt-24">
         {/* Eyebrow tag */}
-        <div className="mb-7 inline-flex items-center rounded-[8px] border border-neutral-300/70 px-4 py-1.5">
-          <span className="text-xs font-medium uppercase tracking-[0.14em] text-neutral-500">
+        <div className="mb-7 inline-flex items-center">
+          <span className="font-mono text-xs font-medium uppercase tracking-[0.14em] text-neutral-800">
             Automate your property business
           </span>
         </div>
 
         {/* Headline */}
-        <h1 className="mb-6 text-[2.5rem] font-semibold leading-[1.06] tracking-tight text-neutral-900 sm:text-6xl lg:text-7xl">
+        <h1 className="mb-6 text-[2.5rem] font-medium leading-[1.06] tracking-tight text-neutral-900 sm:text-6xl lg:text-7xl">
           AI agents that run your property operations
         </h1>
 
         {/* Subtext */}
-        <p className="mb-10 max-w-md text-base leading-relaxed text-neutral-500 sm:text-lg sm:max-w-lg">
+        <p className="mb-10 text-base leading-relaxed text-neutral-500 text-balance">
           Haven handles inbound calls, maintenance coordination, and leasing
           follow-up. Your team stays in control. Your PMS stays up to date.
         </p>

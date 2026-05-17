@@ -11,7 +11,7 @@ const COLORS = [
 const TILE_PX = 18;
 const GAP_PX = 4;
 const STRIDE = TILE_PX + GAP_PX; // 22px
-const ROWS = 14;
+const ROWS = 20;
 
 /** Deterministic Fisher-Yates — same seed + length = same output every time */
 function seededShuffle<T>(arr: T[], seed: number): T[] {
@@ -66,7 +66,7 @@ export function TileGrid() {
               width: TILE_PX,
               height: TILE_PX,
               backgroundColor: color,
-              borderRadius: 3,
+              borderRadius: 0,
             }}
           />
         ))}

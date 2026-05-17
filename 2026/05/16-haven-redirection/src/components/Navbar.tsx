@@ -50,11 +50,12 @@ export function Navbar() {
     <header className="fixed inset-x-0 top-0 z-50 bg-cream">
       <div className="mx-auto flex h-[65px] max-w-[1440px] items-center justify-between px-5 sm:px-10 lg:px-20">
         {/* Logo */}
-        <a
-          href="/"
-          className="text-lg font-semibold tracking-tight text-neutral-900"
-        >
-          Haven
+        <a href="/" className="flex items-center">
+          <img
+            src="/assets/Haven Logo.svg"
+            alt="Haven"
+            className="h-5 w-auto"
+          />
         </a>
 
         {/* Desktop nav — centered absolutely so buttons don't push it */}
@@ -72,10 +73,10 @@ export function Navbar() {
 
         {/* Desktop actions */}
         <div className="hidden items-center gap-2 lg:flex">
-          <button className="rounded-\[8px\] px-4 py-2 text-sm text-neutral-600 transition-colors hover:text-neutral-900">
+          <button className="rounded-none px-4 py-2 text-sm text-neutral-600 transition-colors hover:text-neutral-900">
             Log in
           </button>
-          <button className="rounded-\[8px\] bg-coral px-5 py-2 text-sm font-medium text-white transition-opacity hover:opacity-90">
+          <button className="rounded-[8px] bg-coral px-5 py-2 text-sm font-medium text-white transition-opacity hover:opacity-90">
             Book a demo
           </button>
         </div>
@@ -111,7 +112,7 @@ export function Navbar() {
             <button className="py-1 text-left text-sm text-neutral-600">
               Log in
             </button>
-            <button className="w-full rounded-\[8px\] bg-coral py-3 text-sm font-medium text-white">
+            <button className="w-full rounded-[8px] bg-coral py-3 text-sm font-medium text-white">
               Book a demo
             </button>
           </div>
