@@ -2,12 +2,12 @@ import { useEffect, useRef } from "react";
 
 // ─── Palette — vibrant, high-contrast against cream ───────────────────────────
 const COLORS = [
-  // "#d86e40", // coral
-  // "#c44225", // rust
-  // "#75927f", // sage
-  // "#1E4D7B", // blue
-  // "#2D6B4A", // forest
-  // "#C05A2A", // orange-red
+  "#d86e40", // coral
+  "#c44225", // rust
+  "#75927f", // sage
+  "#1E4D7B", // blue
+  "#2D6B4A", // forest
+  "#C05A2A", // orange-red
   "#c44225", // rust
   "#d86e40", // terracotta
   "#75927f", // sage

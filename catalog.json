@@ -108,5 +108,27 @@
     "language": "typescript",
     "description": "GSAP scroll interaction",
     "status": "local"
+  },
+  {
+    "date": "2026-05-15",
+    "name": "3d-music-card",
+    "path": "2026/05/15-music-3d",
+    "url": "",
+    "tags": ["react", "canvas", "3d", "animation", "dialkit"],
+    "template": "react-vite",
+    "language": "typescript",
+    "description": "3D music card with hold-to-play, tilt interaction, and colored accent lights",
+    "status": "local"
+  },
+  {
+    "date": "2026-05-16",
+    "name": "haven-redirection",
+    "path": "2026/05/16-haven-redirection",
+    "url": "",
+    "tags": ["react", "canvas", "framer-motion", "animation", "tailwind", "pixel-art"],
+    "template": "react-vite",
+    "language": "typescript",
+    "description": "Haven AI property management landing page — pixel tile grid, canvas logo, carousel testimonials",
+    "status": "local"
   }
 ]
