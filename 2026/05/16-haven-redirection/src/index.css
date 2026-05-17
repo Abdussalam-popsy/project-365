@@ -35,6 +35,31 @@
   will-change: transform;
 }
 
+/* Bento card animations */
+@keyframes float {
+  0%, 100% { transform: translateY(0px); }
+  50%       { transform: translateY(-5px); }
+}
+
+@keyframes spin-slow {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
+
+/* SVG data-flow: moves stroke-dasharray pattern along the path */
+@keyframes dash-flow {
+  from { stroke-dashoffset: 0; }
+  to   { stroke-dashoffset: -23; }
+}
+
+@utility animate-float {
+  animation: float 4s ease-in-out infinite;
+}
+
+@utility animate-spin-slow {
+  animation: spin-slow 5s linear infinite;
+}
+
 *,
 *::before,
 *::after {

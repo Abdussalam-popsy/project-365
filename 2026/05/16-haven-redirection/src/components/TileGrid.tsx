@@ -33,28 +33,42 @@ function buildTiles(cols: number): string[] {
   return seededShuffle(base, 0xc0ffee);
 }
 
+function layoutFromWidth(width: number) {
+  const cols = Math.max(1, Math.floor((width + GAP_PX) / STRIDE));
+  // Grow tiles slightly so cols * tile + gaps === container width (no right gap)
+  const tileSize = (width - (cols - 1) * GAP_PX) / cols;
+  return { cols, tileSize };
+}
+
 export function TileGrid() {
   const containerRef = useRef<HTMLDivElement>(null);
-  const [cols, setCols] = useState(70);
+  const [layout, setLayout] = useState(() => layoutFromWidth(1280));
 
   useEffect(() => {
     const el = containerRef.current;
     if (!el) return;
-    const update = () => setCols(Math.max(1, Math.floor(el.clientWidth / STRIDE)));
+    const update = () => setLayout(layoutFromWidth(el.clientWidth));
     update();
     const ro = new ResizeObserver(update);
     ro.observe(el);
     return () => ro.disconnect();
   }, []);
 
+  const { cols, tileSize } = layout;
   const tiles = useMemo(() => buildTiles(cols), [cols]);
+  const gridHeight = ROWS * tileSize + (ROWS - 1) * GAP_PX;
 
   return (
-    <div ref={containerRef} className="w-full overflow-hidden" style={{ minHeight: ROWS * (TILE_PX + GAP_PX) }}>
+    <div
+      ref={containerRef}
+      className="w-full overflow-hidden"
+      style={{ minHeight: gridHeight }}
+    >
       <div
         style={{
           display: "grid",
-          gridTemplateColumns: `repeat(${cols}, ${TILE_PX}px)`,
+          width: "100%",
+          gridTemplateColumns: `repeat(${cols}, ${tileSize}px)`,
           gap: `${GAP_PX}px`,
           willChange: "transform",
         }}
@@ -63,8 +77,8 @@ export function TileGrid() {
           <div
             key={i}
             style={{
-              width: TILE_PX,
-              height: TILE_PX,
+              width: tileSize,
+              height: tileSize,
               backgroundColor: color,
               borderRadius: 0,
             }}

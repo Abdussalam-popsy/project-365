@@ -1,6 +1,8 @@
 import { Navbar } from "./components/Navbar";
 import { Hero } from "./components/Hero";
 import { LogoGrid } from "./components/LogoGrid";
+import { BentoSection } from "./components/BentoSection";
+import { MicroTools } from "./micro-tools/MicroTools";
 
 export default function App() {
   return (
@@ -8,6 +10,8 @@ export default function App() {
       <Navbar />
       <Hero />
       <LogoGrid />
+      <BentoSection />
+      {import.meta.env.DEV && <MicroTools />}
     </div>
   );
 }
