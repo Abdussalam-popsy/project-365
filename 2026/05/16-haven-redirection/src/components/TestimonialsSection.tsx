@@ -7,9 +7,10 @@ import { VignetteEditor } from "@/micro-tools/testimonials/VignetteEditor";
 const DEFAULT_INACTIVE_OPACITY = 0.15;
 
 // ─── Data ─────────────────────────────────────────────────────────────────────
+const BASE = import.meta.env.BASE_URL;
 const TESTIMONIALS = [
   {
-    logo: "/assets/logos/greystar.svg",
+    logo: `${BASE}assets/logos/greystar.svg`,
     quote:
       "Haven answered every after-hours call we were missing. Resident satisfaction scores went up 40% in our first quarter.",
     name: "Sarah Mitchell",
@@ -18,7 +19,7 @@ const TESTIMONIALS = [
     avatarColor: "#1E4D7B",
   },
   {
-    logo: "/assets/logos/cbre.svg",
+    logo: `${BASE}assets/logos/cbre.svg`,
     quote:
       "We went from three coordinators managing maintenance chaos to one — because Haven handles everything else automatically.",
     name: "James Okafor",
@@ -27,7 +28,7 @@ const TESTIMONIALS = [
     avatarColor: "#C05A2A",
   },
   {
-    logo: "/assets/logos/jll.svg",
+    logo: `${BASE}assets/logos/jll.svg`,
     quote:
       "Our leasing velocity improved dramatically. Haven responds to new leads in minutes, schedules tours, and keeps the PMS current.",
     name: "Elena Vasquez",
@@ -36,7 +37,7 @@ const TESTIMONIALS = [
     avatarColor: "#2D6B4A",
   },
   {
-    logo: "/assets/logos/colliers.svg",
+    logo: `${BASE}assets/logos/colliers.svg`,
     quote:
       "I was skeptical about AI handling tenant calls. Now I can't imagine managing our portfolio without it. The best hire we never made.",
     name: "David Park",
@@ -45,7 +46,7 @@ const TESTIMONIALS = [
     avatarColor: "#7B4E1E",
   },
   {
-    logo: "/assets/logos/avalonbay.svg",
+    logo: `${BASE}assets/logos/avalonbay.svg`,
     quote:
       "Maintenance coordination alone saved us 20 hours per week per property. Vendors contacted, appointments scheduled, residents updated — automatically.",
     name: "Rachel Thompson",

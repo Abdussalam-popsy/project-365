@@ -9,7 +9,7 @@ const SCENE_IDS = ["idle", "house"] as const;
 type SceneId = (typeof SCENE_IDS)[number];
 
 const SCENE_SVGS: Partial<Record<SceneId, string>> = {
-  house: "/assets/scenes/house.svg",
+  house: `${import.meta.env.BASE_URL}assets/scenes/house.svg`,
 };
 
 // Background color used for non-shape tiles when a scene is active

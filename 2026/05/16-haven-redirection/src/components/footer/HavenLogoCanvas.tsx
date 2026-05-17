@@ -213,7 +213,7 @@ export function HavenLogoCanvas() {
       startLoop();
     };
 
-    img.src = "/assets/Haven Logo.svg";
+    img.src = `${import.meta.env.BASE_URL}assets/Haven Logo.svg`;
 
     return () => {
       isRunningRef.current = false;

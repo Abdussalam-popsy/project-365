@@ -52,7 +52,7 @@ export function Navbar() {
         {/* Logo */}
         <a href="/" className="flex items-center">
           <img
-            src="/assets/Haven Logo.svg"
+            src={`${import.meta.env.BASE_URL}assets/Haven Logo.svg`}
             alt="Haven"
             className="h-5 w-auto"
           />

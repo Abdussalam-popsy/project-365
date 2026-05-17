@@ -1,13 +1,14 @@
 // Logo entries — swap src files in public/assets/logos/ to replace placeholders.
 // All logo images should be SVG/PNG with transparent backgrounds.
 // The `logo-item` class enforces standard height; width scales automatically.
+const BASE = import.meta.env.BASE_URL;
 const LOGOS: { name: string; src: string }[] = [
-  { name: "Greystar", src: "/assets/logos/greystar.svg" },
-  { name: "CBRE", src: "/assets/logos/cbre.svg" },
-  { name: "JLL", src: "/assets/logos/jll.svg" },
-  { name: "Colliers", src: "/assets/logos/colliers.svg" },
-  { name: "Cushman & Wakefield", src: "/assets/logos/cushman.svg" },
-  { name: "AvalonBay", src: "/assets/logos/avalonbay.svg" },
+  { name: "Greystar", src: `${BASE}assets/logos/greystar.svg` },
+  { name: "CBRE", src: `${BASE}assets/logos/cbre.svg` },
+  { name: "JLL", src: `${BASE}assets/logos/jll.svg` },
+  { name: "Colliers", src: `${BASE}assets/logos/colliers.svg` },
+  { name: "Cushman & Wakefield", src: `${BASE}assets/logos/cushman.svg` },
+  { name: "AvalonBay", src: `${BASE}assets/logos/avalonbay.svg` },
 ];
 
 // Duplicated so the second copy fills the gap as the first scrolls out.
