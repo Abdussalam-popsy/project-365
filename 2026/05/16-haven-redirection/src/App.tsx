@@ -3,6 +3,7 @@ import { Hero } from "./components/Hero";
 import { LogoGrid } from "./components/LogoGrid";
 import { BentoSection } from "./components/BentoSection";
 import { AgentsSection } from "./components/AgentsSection";
+import { ComparisonSection } from "./components/ComparisonSection";
 import { MicroTools } from "./micro-tools/MicroTools";
 
 export default function App() {
@@ -13,6 +14,7 @@ export default function App() {
       <LogoGrid />
       <BentoSection />
       <AgentsSection />
+      <ComparisonSection />
       {import.meta.env.DEV && <MicroTools />}
     </div>
   );
