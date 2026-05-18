@@ -23,6 +23,7 @@ Each interaction is a self-contained micro-project exploring a single concept â€
 04 - ./scripts/new.sh react-vite send-a-letter
 05 - ./scripts/new.sh react-vite gray-boxing
 06 - ./scripts/new.sh react-vite word-map
+06 - ./scripts/new.sh react-vite haven-redirection
 ./scripts/new.sh react-vite haven-hero
 ./scripts/new.sh vanilla hover-glow
 ./scripts/new.sh vanilla gsap-scroll
