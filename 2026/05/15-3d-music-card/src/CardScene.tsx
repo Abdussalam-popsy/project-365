@@ -10,7 +10,7 @@ import {
 import * as THREE from "three";
 import { useDialKit } from "dialkit";
 
-const MODEL_URL = "/models/Lovable-card.glb";
+const MODEL_URL = `${import.meta.env.BASE_URL}models/Lovable-card.glb`;
 const TARGET_MAX_DIM = 2.2;
 
 // Brand accent colors

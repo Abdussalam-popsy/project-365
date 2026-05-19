@@ -3,7 +3,7 @@ import { CardScene } from "./CardScene";
 import { DialRoot } from "dialkit";
 import "dialkit/styles.css";
 
-const AUDIO_URL = "/audio/locked-in.mp3";
+const AUDIO_URL = `${import.meta.env.BASE_URL}audio/locked-in.mp3`;
 
 export default function App() {
   const audioRef = useRef<HTMLAudioElement | null>(null);
