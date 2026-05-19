@@ -112,7 +112,7 @@
   {
     "date": "2026-05-15",
     "name": "3d-music-card",
-    "path": "2026/05/15-music-3d",
+    "path": "2026/05/15-3d-music-card",
     "url": "",
     "tags": ["react", "canvas", "3d", "animation", "dialkit"],
     "template": "react-vite",
