@@ -1,0 +1,109 @@
+:root {
+  --card-width: 320px;
+  --card-aspect-ratio: 5 / 6;
+  --card-radius: 16px;
+  --card-shadow: 0 24px 60px rgb(0 0 0 / 30%);
+  --tilt-perspective: 1000px;
+  --tilt-transition: transform 500ms ease-out;
+
+  font-family: system-ui, sans-serif;
+  color: #f5f5f5;
+  background: #111;
+}
+
+body {
+  margin: 0;
+}
+
+.app {
+  min-height: 100vh;
+  display: grid;
+  place-content: center;
+  gap: 1rem;
+  text-align: center;
+}
+
+.hologram-tilt {
+  transform: perspective(var(--tilt-perspective)) rotateX(0deg) rotateY(0deg);
+  transform-style: preserve-3d;
+  transition: var(--tilt-transition);
+}
+
+.hologram-wrap {
+  position: relative;
+  width: var(--card-width);
+  aspect-ratio: var(--card-aspect-ratio);
+}
+
+.hologram-card {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  border-radius: var(--card-radius);
+  box-shadow: var(--card-shadow);
+}
+
+.hologram-dim,
+.hologram-gradient,
+.hologram-layer,
+.hologram-depth {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.hologram-dim {
+  background: rgb(0 0 0 / 30%);
+}
+
+.hologram-gradient {
+  background: linear-gradient(to bottom, rgb(255 255 255 / 10%), transparent 50%, rgb(0 0 0 / 40%));
+}
+
+.hologram-layer,
+.hologram-depth > img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.hologram-layer.shade {
+  opacity: 0.4;
+  mix-blend-mode: overlay;
+}
+
+.hologram-layer.image {
+  mix-blend-mode: screen;
+}
+
+.hologram-depth {
+  mix-blend-mode: overlay;
+}
+
+.hologram-filters {
+  position: absolute;
+  width: 0;
+  height: 0;
+  pointer-events: none;
+}
+
+.hologram-border {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+  mix-blend-mode: soft-light;
+  pointer-events: none;
+}
+
+.hologram-border rect {
+  fill: none;
+  stroke: white;
+  stroke-width: 2px;
+}
+
+code {
+  color: #7dd3fc;
+}

@@ -131,4 +131,16 @@
     "description": "Haven AI property management landing page — pixel tile grid, canvas logo, carousel testimonials",
     "status": "local"
   }
+
+,{
+    "date": "2026-05-20",
+    "name": "hologram-card",
+    "path": "2026/05/20-hologram-card",
+    "url": "",
+    "tags": ["react","3d","hologram","animation","interaction"],
+    "template": "react-vite",
+    "language": "typescript",
+    "description": "Interactive hologram card with tilt and depth effect",
+    "status": "local"
+  }
 ]
