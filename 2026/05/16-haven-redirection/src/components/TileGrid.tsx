@@ -1,4 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
+import { sampleSvgFixed } from "./pixel-mosaic/sampleSvg";
+import { rippleDelayMs } from "./pixel-mosaic/rippleDelay";
+import { HERO_COLORS } from "./pixel-mosaic/palettes";
 
 // ─── Scene config ──────────────────────────────────────────────────────────────
 // Each bitmap is designed on a 16×10 cell canvas and centered in the live grid.
@@ -15,15 +18,6 @@ const SCENE_SVGS: Partial<Record<SceneId, string>> = {
 
 // Background color used for non-shape tiles when a scene is active
 const SCENE_BG = "#ebe5d8";
-
-// ─── Grid config ──────────────────────────────────────────────────────────────
-const COLORS = [
-  "#c44225", // rust
-  "#d86e40", // terracotta
-  "#75927f", // sage
-  "#c1cfca", // mist
-  "#dec5a5", // sand
-] as const;
 
 const TILE_PX = 18;
 const GAP_PX = 4;
@@ -53,7 +47,7 @@ function buildTiles(cols: number): string[] {
   const total = cols * ROWS;
   const base = Array.from(
     { length: total },
-    (_, i) => COLORS[i % COLORS.length],
+    (_, i) => HERO_COLORS[i % HERO_COLORS.length],
   );
   return seededShuffle(base, 0xc0ffee);
 }
@@ -64,52 +58,9 @@ function layoutFromWidth(width: number) {
   return { cols, tileSize };
 }
 
-// Rasterize an SVG scene asset and return a Set of filled cell indices.
-// Index = col + row * SCENE_COLS (matches the 16×10 bitmap grid).
 async function loadSceneBitmap(url: string): Promise<Set<number>> {
-  return new Promise((resolve) => {
-    const img = new Image();
-    img.onload = () => {
-      const W = SCENE_COLS * TILE_PX;
-      const H = SCENE_ROWS * TILE_PX;
-      const off = document.createElement("canvas");
-      off.width = W;
-      off.height = H;
-      const ctx = off.getContext("2d", { willReadFrequently: true })!;
-      ctx.drawImage(img, 0, 0, W, H);
-      const { data } = ctx.getImageData(0, 0, W, H);
-
-      const filled = new Set<number>();
-      const H2 = TILE_PX >> 1,
-        H4 = TILE_PX >> 2,
-        H34 = H4 * 3;
-
-      for (let row = 0; row < SCENE_ROWS; row++) {
-        for (let col = 0; col < SCENE_COLS; col++) {
-          const x = col * TILE_PX,
-            y = row * TILE_PX;
-          // 5-point coverage sample — catches thin strokes and diagonal edges
-          const pts: [number, number][] = [
-            [x + H2, y + H2],
-            [x + H4, y + H4],
-            [x + H34, y + H4],
-            [x + H4, y + H34],
-            [x + H34, y + H34],
-          ];
-          for (const [px, py] of pts) {
-            const sx = Math.min(px | 0, W - 1),
-              sy = Math.min(py | 0, H - 1);
-            if (data[(sy * W + sx) * 4 + 3] > 100) {
-              filled.add(col + row * SCENE_COLS);
-              break;
-            }
-          }
-        }
-      }
-      resolve(filled);
-    };
-    img.src = url;
-  });
+  const { filled } = await sampleSvgFixed(url, SCENE_COLS, SCENE_ROWS, TILE_PX);
+  return filled;
 }
 
 // ─── Component ────────────────────────────────────────────────────────────────
@@ -210,13 +161,8 @@ export function TileGrid() {
     );
   }
 
-  // Ripple delay: tiles closest to center change first, outer tiles follow.
-  function rippleDelay(col: number, row: number): number {
-    return (
-      Math.sqrt((col - centerCol) ** 2 + (row - centerRow) ** 2) *
-      RIPPLE_MS_PER_UNIT
-    );
-  }
+  const rippleDelay = (col: number, row: number) =>
+    rippleDelayMs(col, row, centerCol, centerRow, RIPPLE_MS_PER_UNIT);
 
   return (
     <div

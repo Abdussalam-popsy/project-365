@@ -1,4 +1,4 @@
-import { HavenLogoCanvas } from "./footer/HavenLogoCanvas";
+import { HavenLogoGrid } from "./footer/HavenLogoGrid";
 
 // ─── Nav link columns ─────────────────────────────────────────────────────────
 const NAV_COLS = [
@@ -48,7 +48,7 @@ export function FooterSection() {
         </div>
 
         {/* ── Wordmark canvas ── */}
-        <HavenLogoCanvas />
+        <HavenLogoGrid />
 
         {/* ── Bottom bar ── */}
         <div className="mt-6 flex flex-col gap-3 text-base leading-[1.3] tracking-[-0.04em] text-black sm:flex-row sm:items-center sm:justify-between">
