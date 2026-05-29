@@ -1,0 +1,1 @@
+{"root":["./src/app.tsx","./src/main.tsx","./src/vite-env.d.ts","./src/components/cardring.tsx","./src/components/carouselcard.tsx","./src/components/carouselscene.tsx","./src/config/carouseldial.ts","./src/data/cards.ts","./src/hooks/usepointertilt.ts","./src/hooks/usescrollprogress.ts","./src/utils/cylinderlayout.ts","./src/utils/drawcardtexture.ts"],"version":"5.7.3"}
