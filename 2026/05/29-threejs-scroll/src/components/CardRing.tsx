@@ -3,7 +3,7 @@ import { useFrame } from "@react-three/fiber";
 import * as THREE from "three";
 import type { CarouselControls } from "../config/carouselDial";
 import { CARDS } from "../data/cards";
-import { getCylinderSlot } from "../utils/cylinderLayout";
+import { getCylinderSlot, depthOpacity, frontnessFromYaw } from "../utils/cylinderLayout";
 import type { PointerState } from "../hooks/usePointerTilt";
 import { CarouselCard } from "./CarouselCard";
 
@@ -31,6 +31,8 @@ export function CardRing({
     backOpacity: controls.Depth.backOpacity,
     frontOpacity: controls.Depth.frontOpacity,
     opacityFalloff: controls.Depth.opacityFalloff,
+    sideSpread: controls.Depth.sideSpread,
+    revealAngle: controls.Depth.revealAngle,
   };
 
   useFrame((_, delta) => {
@@ -67,15 +69,18 @@ export function CardRing({
     );
 
     const tilt = smoothPointer.current.intensity;
+    const pointerYaw = smoothPointer.current.x * controls.Pointer.tiltY * tilt;
+    const yaw = controls.Depth.revealAngle + pointerYaw;
+
     group.position.x = controls.Cylinder.offsetX;
-    group.rotation.y = smoothPointer.current.x * controls.Pointer.tiltY * tilt;
+    group.rotation.y = yaw;
     group.rotation.z = -smoothPointer.current.x * controls.Pointer.tiltZ * tilt;
     group.rotation.x = smoothPointer.current.y * controls.Pointer.tiltX * tilt;
 
     const { radius } = controls.Cylinder;
 
     for (let index = 0; index < cardCount; index++) {
-      const slot = getCylinderSlot(index, cardCount, radius, baseAngle.current, depth);
+      const slot = getCylinderSlot(index, cardCount, radius, baseAngle.current, depth, yaw);
       const wrapper = group.children[index];
       if (!wrapper) continue;
 
@@ -83,14 +88,18 @@ export function CardRing({
       wrapper.rotation.copy(slot.rotation);
       wrapper.scale.setScalar(slot.scale);
 
+      const { x, z } = slot.position;
+      const frontness = frontnessFromYaw(x, z, radius, yaw);
+      const opacity = depthOpacity(frontness, depth);
+
       const mesh = meshRefs.current[index];
       if (mesh) {
-        mesh.renderOrder = Math.round(((slot.position.z + radius) / (2 * radius)) * 100);
+        mesh.renderOrder = Math.round(frontness * 100);
       }
 
       const material = mesh?.material;
       if (material && !Array.isArray(material) && "opacity" in material) {
-        material.opacity = slot.opacity;
+        material.opacity = opacity;
       }
     }
   });
@@ -105,6 +114,13 @@ export function CardRing({
           controls.Cylinder.radius,
           0,
           depth,
+          depth.revealAngle,
+        );
+        const frontness = frontnessFromYaw(
+          slot.position.x,
+          slot.position.z,
+          controls.Cylinder.radius,
+          depth.revealAngle,
         );
 
         return (
@@ -116,7 +132,7 @@ export function CardRing({
               card={card}
               width={controls.Cylinder.cardWidth}
               height={controls.Cylinder.cardHeight}
-              opacity={slot.opacity}
+              opacity={depthOpacity(frontness, depth)}
             />
           </group>
         );

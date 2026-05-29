@@ -29,10 +29,12 @@ export const CAROUSEL_DIAL_CONFIG = {
     lookAtY: [0.2, 0, 0.5, 0.01] as [number, number, number, number],
   },
   Depth: {
-    backOpacity: [0.62, 0, 1, 0.01] as [number, number, number, number],
+    backOpacity: [0.72, 0, 1, 0.01] as [number, number, number, number],
     frontOpacity: [1, 0.5, 1, 0.01] as [number, number, number, number],
-    opacityFalloff: [1, 0.3, 3, 0.05] as [number, number, number, number],
+    opacityFalloff: [0.85, 0.3, 3, 0.05] as [number, number, number, number],
     scaleMin: [0.78, 0.5, 1, 0.01] as [number, number, number, number],
+    sideSpread: [0.55, 0, 1.2, 0.01] as [number, number, number, number],
+    revealAngle: [-0.28, -1.2, 1.2, 0.01] as [number, number, number, number],
   },
 } satisfies DialConfig;
 
@@ -43,4 +45,6 @@ export type DepthOptions = {
   backOpacity: number;
   frontOpacity: number;
   opacityFalloff: number;
+  sideSpread: number;
+  revealAngle: number;
 };

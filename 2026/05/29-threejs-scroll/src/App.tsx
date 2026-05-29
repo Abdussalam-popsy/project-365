@@ -15,7 +15,7 @@ export default function App() {
 
   return (
     <div className="relative bg-[#0a0a12] text-neutral-50">
-      <DialRoot position="top-right" defaultOpen theme="dark" />
+      <DialRoot position="top-right" defaultOpen theme="dark" productionEnabled />
 
       <div
         className="pointer-events-none fixed inset-0 bg-[radial-gradient(ellipse_at_30%_20%,rgba(88,28,135,0.22),transparent_55%)]"

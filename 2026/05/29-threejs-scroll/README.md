@@ -8,61 +8,85 @@ A full-viewport 3D card carousel: cards sit on a vertical cylinder, scroll rotat
 npm run dev
 ```
 
-Scroll the page to advance cards. Move the mouse over the canvas to open up the cylinder depth.
+Scroll the page to advance cards. Move the mouse over the canvas to open up the cylinder depth. Open the **⚙ Carousel** panel (top-right) to tweak live via DialKit — the panel stays visible on the [live demo](https://abdussalam-popsy.github.io/project-365/2026/05/29-threejs-scroll/) via `productionEnabled` on `<DialRoot />`.
 
 ## What I learned
 
-### Vertical cylinder layout
+### 1) A flat Y–Z ring hides the back of the cylinder
 
-Cards are placed on a circle in the **Y–Z plane** (camera looks down +Z):
+The first layout put every card at `x = 0` on a circle in the **Y–Z plane**:
 
 ```ts
-const angle = baseAngle + (index * Math.PI * 2) / cardCount;
-position.set(0, Math.sin(angle) * radius, Math.cos(angle) * radius);
-rotation.x = -angle;
+y = sin(angle) * radius;
+z = cos(angle) * radius;
 ```
 
-At `angle = 0` the card sits front-and-center; cards above/below tilt away on X and recede in Z.
+That gives a convincing vertical stack with tilt — but the back hemisphere sits **directly behind** the front card from the camera’s point of view. You never see the “other side” of the ring.
 
-### Scroll without GSAP/Lenis
+**Fix:** add horizontal spread so the ring is truly 3D:
 
-A sticky full-viewport canvas + tall scroll spacer (`400vh`) drives rotation:
+```ts
+x = cos(angle) * radius * sideSpread;
+y = sin(angle) * radius;
+z = cos(angle) * radius;
+```
+
+Cards at `angle ≈ π` now sit at negative **x** (left) and negative **z** (back) — the far side of the cylinder peeks into the empty space beside the stack.
+
+### 2) `revealAngle` opens the ring toward the camera
+
+A base **Y rotation** on the whole ring (`revealAngle`, default ~−0.28 rad) yaws the cylinder so you look slightly *into* the arc, not dead-on. Pointer tilt adds on top of this base angle.
+
+Opacity, scale, and `renderOrder` all use **camera-facing depth** after yaw:
+
+```ts
+worldZ = -x * sin(yaw) + z * cos(yaw);
+frontness = (worldZ + radius) / (2 * radius);
+```
+
+Without this, back cards could sort or fade using local Z only — wrong once the group rotates.
+
+### 3) Scroll without GSAP/Lenis
+
+A sticky full-viewport canvas + tall scroll spacer (`heightVh`, default `400vh`) drives rotation:
 
 ```ts
 scrollProgress = scrollY / (scrollHeight - innerHeight);
-targetAngle = scrollProgress * Math.PI * 2 * scrollLoops;
+targetAngle = scrollProgress * Math.PI * 2 * loops * speed;
 ```
 
-`baseAngle` lerps toward `targetAngle` each frame in `useFrame` for smooth follow. Fixed card slots wrap visually — no mesh spawning.
+`baseAngle` lerps toward `targetAngle` each frame in `useFrame`. Fixed card slots wrap visually — no mesh spawning. Native scroll avoids the pin/smooth-scroll conflicts called out in the gsap-scroll lab.
 
-### Canvas textures for styled cards
+### 4) Canvas textures beat `Html` overlays for cards
 
-Gradient + headline text is drawn once to an offscreen canvas, then applied as `THREE.CanvasTexture` on a plane. Keeps correct depth sorting vs `Html` overlays from drei.
+Gradient + headline text is drawn once to an offscreen canvas → `THREE.CanvasTexture` on a plane. Correct depth sorting, no DOM/CSS 3D fighting the WebGL layer. Cards use `depthWrite: false` and z-based `renderOrder` for clean transparency stacking.
 
-### Pointer depth reveal
+### 5) DialKit for live tuning — including production
 
-Normalized pointer (−1…1) lerps into:
+All tunables live in [`src/config/carouselDial.ts`](src/config/carouselDial.ts). DialKit’s `<DialRoot />` **hides in production by default** (`productionEnabled` defaults to dev-only).
 
-- Camera XY offset + slight Z push
-- Look-at shift for parallax
-- Group tilt on X/Y/Z when pointer is over the canvas
+To keep sliders on the GitHub Pages URL:
 
-Intensity decays on `pointerleave`. Disabled when `prefers-reduced-motion: reduce` is set.
+```tsx
+<DialRoot position="top-right" defaultOpen theme="dark" productionEnabled />
+```
 
-### Tunable constants
+Without `productionEnabled`, the panel renders locally but disappears in `vite build` output.
 
-Open the **⚙ Carousel** panel (top-right) to tweak live via DialKit:
+### 6) Pointer depth reveal
+
+Normalized pointer (−1…1) lerps into camera XY offset, look-at shift, and group tilt. Intensity ramps on canvas enter and decays on leave. Disabled when `prefers-reduced-motion: reduce`.
+
+### DialKit folders
 
 | Folder | Controls |
 |--------|----------|
-| **Camera** | `distance` (zoom), `fov`, parallax, hover zoom |
-| **Cylinder** | `radius`, `cardCount`, card size, horizontal `offsetX` |
+| **Camera** | `distance`, `fov`, parallax, hover zoom |
+| **Cylinder** | `radius`, `cardCount`, card size, `offsetX` |
 | **Scroll** | `loops`, `heightVh`, `smoothness`, `speed` |
 | **Pointer** | Tilt and look-at multipliers |
-| **Depth** | `backOpacity`, `frontOpacity`, `opacityFalloff`, back-card `scaleMin` |
-
-Defaults are in [`src/config/carouselDial.ts`](src/config/carouselDial.ts). Camera distance starts at **9.5** (pulled back from the original 7).
+| **Depth** | `backOpacity`, `frontOpacity`, `sideSpread`, `revealAngle`, `scaleMin` |
 
 ## Demo
 
-<!-- Screenshot, GIF, or video link -->
+https://abdussalam-popsy.github.io/project-365/2026/05/29-threejs-scroll/
