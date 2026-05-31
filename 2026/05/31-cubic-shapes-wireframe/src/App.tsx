@@ -32,11 +32,15 @@ function Gem() {
 
 // ── Logo Marquee ─────────────────────────────────────────────────────────────
 
+// import.meta.env.BASE_URL resolves to "/" in dev and to the subpath in production.
+// Never use bare "/filename" for public/ assets — it breaks on GitHub Pages subdirectories.
+const base = import.meta.env.BASE_URL;
+
 const LOGOS = [
-  { src: "/logo 1.svg", alt: "Claude" },
-  { src: "/logo 2.svg", alt: "Cursor" },
-  { src: "/logo 3.svg", alt: "Figma" },
-  { src: "/logo 4.svg", alt: "Granola" },
+  { src: `${base}logo-1.svg`, alt: "Claude" },
+  { src: `${base}logo-2.svg`, alt: "Cursor" },
+  { src: `${base}logo-3.svg`, alt: "Figma" },
+  { src: `${base}logo-4.svg`, alt: "Granola" },
 ];
 
 const MARQUEE_ITEMS = [...LOGOS, ...LOGOS, ...LOGOS, ...LOGOS];
@@ -110,7 +114,7 @@ export default function App() {
       {/* ── Navbar ───────────────────────────────────────────────────────── */}
       <CageRow>
         <div className="flex items-center justify-between px-6 py-3">
-          <img src="/logo.svg" alt="Krystal" className="h-7 w-auto" />
+          <img src={`${base}logo.svg`} alt="Krystal" className="h-7 w-auto" />
           <nav className="hidden md:flex items-center gap-8 text-sm text-[#a1a1a1]">
             {["About", "Services", "Solutions", "Contact"].map((link) => (
               <a
