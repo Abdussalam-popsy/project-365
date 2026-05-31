@@ -11,6 +11,7 @@
     "noFallthroughCasesInSwitch": true,
     "isolatedModules": true,
     "skipLibCheck": true,
+    "types": ["node"],
     "esModuleInterop": true,
     "allowImportingTsExtensions": true,
     "noEmit": true,
@@ -19,5 +20,5 @@
       "@/*": ["src/*"]
     }
   },
-  "include": ["src"]
+  "include": ["src", "vite.config.ts"]
 }
