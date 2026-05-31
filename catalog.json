@@ -164,11 +164,11 @@
     "date": "2026-05-31",
     "name": "cubic-shapes-wireframe",
     "path": "2026/05/31-cubic-shapes-wireframe",
-    "url": "",
+    "url": "https://abdussalam-popsy.github.io/project-365/2026/05/31-cubic-shapes-wireframe/",
     "tags": ["react", "three.js", "r3f", "3d", "glass", "transmission", "hero", "geist", "marquee"],
     "template": "threejs",
     "language": "typescript",
     "description": "Krystal security hero — rotating glass diamond (OctahedronGeometry + MeshTransmissionMaterial), cage grid layout, Geist font, logo marquee. Covers R3F mental model, geometry types, environment maps.",
-    "status": "local"
+    "status": "live"
   }
 ]
