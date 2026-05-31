@@ -6,8 +6,8 @@ REPO_ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 usage() {
   echo "Usage: $0 <template> <name>"
   echo ""
-  echo "Templates: vanilla, react-vite, canvas"
-  echo "Example:   $0 react-vite magnetic-button"
+  echo "Templates: vanilla, react-vite, canvas, threejs"
+  echo "Example:   $0 threejs floating-particles"
   exit 1
 }
 
