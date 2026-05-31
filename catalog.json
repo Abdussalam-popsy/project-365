@@ -125,7 +125,14 @@
     "name": "haven-redirection",
     "path": "2026/05/16-haven-redirection",
     "url": "",
-    "tags": ["react", "canvas", "framer-motion", "animation", "tailwind", "pixel-art"],
+    "tags": [
+      "react",
+      "canvas",
+      "framer-motion",
+      "animation",
+      "tailwind",
+      "pixel-art"
+    ],
     "template": "react-vite",
     "language": "typescript",
     "description": "Haven AI property management landing page — pixel tile grid, canvas logo, carousel testimonials",
@@ -152,5 +159,16 @@
     "language": "typescript",
     "description": "Vertical 3D card carousel on a cylinder — scroll rotates the ring, mouse reveals depth",
     "status": "live"
+  },
+  {
+    "date": "2026-05-31",
+    "name": "cubic-shapes-wireframe",
+    "path": "2026/05/31-cubic-shapes-wireframe",
+    "url": "",
+    "tags": ["react", "three.js", "3d", "wireframe"],
+    "template": "threejs",
+    "language": "typescript",
+    "description": "Cubic shapes wireframe exploration",
+    "status": "local"
   }
 ]

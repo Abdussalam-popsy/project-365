@@ -1,191 +1,186 @@
-/**
- * Cuboctahedron — wireframe exploration
- *
- * Vanilla JS → R3F mental model:
- *   new THREE.WebGLRenderer()          → <Canvas>
- *   new THREE.PerspectiveCamera(...)   → <Canvas camera={{ fov, position }}>
- *   new THREE.Scene()                  → implicit, Canvas creates it
- *   new THREE.Mesh(geo, mat)           → <mesh><geometry /><material /></mesh>
- *   scene.add(mesh)                    → just render inside <Canvas>
- *   requestAnimationFrame(animate)     → useFrame((state, delta) => {})
- *   renderer.render(scene, camera)     → R3F handles this automatically
- */
-
-import { useRef, useMemo } from "react";
+import { useRef } from "react";
 import { Canvas, useFrame } from "@react-three/fiber";
-import { OrbitControls } from "@react-three/drei";
+import { Environment, MeshTransmissionMaterial } from "@react-three/drei";
 import * as THREE from "three";
 
-// ---------------------------------------------------------------------------
-// Geometry data — same numbers you'd pass to new THREE.PolyhedronGeometry()
-// A cuboctahedron has 12 vertices: all permutations of (±1, ±1, 0)
-// ---------------------------------------------------------------------------
-const VERTICES = [
-  1,
-  1,
-  0,
-  -1,
-  1,
-  0,
-  1,
-  -1,
-  0,
-  -1,
-  -1,
-  0, // xy-plane ring
-  1,
-  0,
-  1,
-  -1,
-  0,
-  1,
-  1,
-  0,
-  -1,
-  -1,
-  0,
-  -1, // xz-plane ring
-  0,
-  1,
-  1,
-  0,
-  -1,
-  1,
-  0,
-  1,
-  -1,
-  0,
-  -1,
-  -1, // yz-plane ring
-];
+// ── 3D Gem ──────────────────────────────────────────────────────────────────
 
-const INDICES = [
-  // 8 triangular faces
-  0,
-  4,
-  8,
-  1,
-  8,
-  5,
-  2,
-  9,
-  4,
-  3,
-  5,
-  9,
-  0,
-  10,
-  6,
-  1,
-  7,
-  10,
-  2,
-  6,
-  11,
-  3,
-  11,
-  7,
-  // 6 square faces, each split into 2 triangles
-  0,
-  4,
-  2,
-  0,
-  2,
-  6, // +x face
-  1,
-  7,
-  3,
-  1,
-  3,
-  5, // -x face
-  0,
-  8,
-  1,
-  0,
-  1,
-  10, // +y face
-  2,
-  11,
-  3,
-  2,
-  3,
-  9, // -y face
-  8,
-  4,
-  9,
-  8,
-  9,
-  5, // +z face
-  10,
-  6,
-  11,
-  10,
-  11,
-  7, // -z face
-];
+function Gem() {
+  const ref = useRef<THREE.Mesh>(null);
 
-// ---------------------------------------------------------------------------
-// The shape component — owns its own animation loop
-// ---------------------------------------------------------------------------
-function Cuboctahedron() {
-  const groupRef = useRef<THREE.Group>(null);
-
-  // useMemo so geometry is built once, not on every render
-  // In vanilla JS this is just: const geo = new THREE.PolyhedronGeometry(...)
-  const geo = useMemo(
-    () => new THREE.PolyhedronGeometry(VERTICES, INDICES, 1.5, 1),
-    [],
-  );
-
-  // EdgesGeometry traces only the real edges — cleaner than wireframe:true
-  // which draws diagonals across quad faces
-  const edgesGeo = useMemo(() => new THREE.EdgesGeometry(geo), [geo]);
-
-  // useFrame = requestAnimationFrame, runs every render frame
-  // delta = seconds since last frame (frame-rate independent motion)
-  useFrame((_state, delta) => {
-    if (!groupRef.current) return;
-    groupRef.current.rotation.y += delta * 0.25; // control speed of rotate around y-axis
-    groupRef.current.rotation.x += delta * 0.12; // control speed of rotate around x-axis
+  useFrame((_, delta) => {
+    if (!ref.current) return;
+    ref.current.rotation.y += delta * 0.22;
+    ref.current.rotation.z += delta * 0.08;
   });
 
   return (
-    // group acts like a parent Object3D — rotation applies to both children
-    <group ref={groupRef}>
-      {/* Solid faces — equivalent to: new THREE.MeshStandardMaterial() */}
-      <mesh geometry={geo}>
-        {/* <meshStandardMaterial color="#CBC0FC" side={THREE.DoubleSide} /> */}
-        {/* <meshNormalMaterial /> */}
-        {/* <meshBasicMaterial color="#CBC0FC" wireframe={true} /> */}
-        <meshPhongMaterial color="#CBC0FC" shininess={200} specular="#ffffff" />
-      </mesh>
-
-      {/* Wireframe edges — equivalent to: new THREE.LineSegments(edgesGeo, mat) */}
-      <lineSegments geometry={edgesGeo}>
-        <lineBasicMaterial color="#AAF5A1" />
-      </lineSegments>
-    </group>
+    <mesh ref={ref}>
+      <octahedronGeometry args={[1.5, 0]} />
+      <MeshTransmissionMaterial
+        transmission={1}
+        thickness={2}
+        roughness={0}
+        ior={2.4}
+        chromaticAberration={0.08}
+        color="#c8e8ff"
+        backside
+      />
+    </mesh>
   );
 }
 
-// ---------------------------------------------------------------------------
-// Root — Canvas replaces the renderer + camera + scene setup boilerplate
-// ---------------------------------------------------------------------------
+// ── Logo Marquee ─────────────────────────────────────────────────────────────
+
+const LOGOS = [
+  { src: "/logo 1.svg", alt: "Claude" },
+  { src: "/logo 2.svg", alt: "Cursor" },
+  { src: "/logo 3.svg", alt: "Figma" },
+  { src: "/logo 4.svg", alt: "Granola" },
+];
+
+const MARQUEE_ITEMS = [...LOGOS, ...LOGOS, ...LOGOS, ...LOGOS];
+
+function LogoMarquee() {
+  return (
+    <div className="overflow-hidden">
+      <div className="flex w-max animate-marquee">
+        {[...MARQUEE_ITEMS, ...MARQUEE_ITEMS].map((logo, i) => (
+          <div key={i} className="border border-white/10 p-6 shrink-0">
+            <img src={logo.src} alt={logo.alt} className="h-8 w-auto" />
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// ── Arrow icon ───────────────────────────────────────────────────────────────
+
+function Arrow() {
+  return (
+    <svg
+      width="18"
+      height="18"
+      viewBox="0 0 18 18"
+      fill="none"
+      className="shrink-0"
+    >
+      <path
+        d="M3.75 9H14.25M14.25 9L9.75 4.5M14.25 9L9.75 13.5"
+        stroke="currentColor"
+        strokeWidth="1.5"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
+
+// ── Cage wrapper — keeps content at max-w-[1440px] while borders are full-width
+// border-b is on the outer element (full viewport width)
+// border-l/r are on the inner content div (inset by px-[120px])
+// ────────────────────────────────────────────────────────────────────────────
+
+function CageRow({
+  children,
+  borderBottom = true,
+  className = "",
+}: {
+  children: React.ReactNode;
+  borderBottom?: boolean;
+  className?: string;
+}) {
+  return (
+    <div className={borderBottom ? "border-b border-white/10" : ""}>
+      <div
+        className={`mx-auto max-w-[1440px] px-[120px] max-md:px-4 ${className}`}
+      >
+        <div className="border-l border-r border-white/10">{children}</div>
+      </div>
+    </div>
+  );
+}
+
+// ── App ──────────────────────────────────────────────────────────────────────
+
 export default function App() {
   return (
-    <div className="w-screen h-screen bg-black">
-      {/* camera prop = new THREE.PerspectiveCamera(fov, aspect, near, far)
-          aspect is calculated automatically from the canvas size            */}
-      <Canvas camera={{ position: [0, 0, 4.5], fov: 60, near: 0.1, far: 100 }}>
-        {/* Lights — same as adding them to scene in vanilla */}
-        <ambientLight intensity={0.6} />
-        <directionalLight position={[5, 5, 5]} intensity={1.2} />
+    <div className="min-h-screen bg-[#0d0b14] font-geist text-white">
+      {/* ── Navbar ───────────────────────────────────────────────────────── */}
+      <CageRow>
+        <div className="flex items-center justify-between px-6 py-3">
+          <img src="/logo.svg" alt="Krystal" className="h-7 w-auto" />
+          <nav className="hidden md:flex items-center gap-8 text-sm text-[#a1a1a1]">
+            {["About", "Services", "Solutions", "Contact"].map((link) => (
+              <a
+                key={link}
+                href="#"
+                className="hover:text-white transition-colors duration-150"
+              >
+                {link}
+              </a>
+            ))}
+          </nav>
+          <button className="bg-white/10 px-3 py-2 text-[13px] font-medium uppercase tracking-widest text-white hover:bg-white/15 transition-colors duration-150">
+            Get Protected
+          </button>
+        </div>
+      </CageRow>
 
-        <Cuboctahedron />
+      {/* ── Hero ─────────────────────────────────────────────────────────── */}
+      <CageRow>
+        <div className="flex flex-col md:flex-row overflow-hidden">
+          {/* Left — copy */}
+          <div className="flex-1 border-b md:border-b-0 md:border-r border-white/10 flex flex-col justify-between px-6 py-20 max-md:py-12">
+            {/* Top: badge + headline */}
+            <div className="flex flex-col gap-4 max-w-[423px]">
+              <div className="inline-flex w-fit border border-dashed border-white/15 bg-white/[0.04] px-3 py-2">
+                <span className="text-[#d4d4d4] text-[14px] leading-5">
+                  The SOC II Certification 2026 Report is here
+                </span>
+              </div>
+              <h1 className="text-[48px] font-medium leading-none tracking-[-0.025em] max-md:text-[36px]">
+                Security that's{" "}
+                <span className="text-[#a684ff]">crystal clear</span>
+              </h1>
+            </div>
 
-        {/* OrbitControls from drei — drag to rotate, scroll to zoom */}
-        <OrbitControls enablePan={false} />
-      </Canvas>
+            {/* Bottom: subtext + CTA */}
+            <div className="flex flex-col gap-4 max-w-[423px] max-md:mt-14">
+              <p className="text-[#a1a1a1] text-[18px] leading-[1.4] max-md:text-base">
+                Enterprise-grade protection with complete transparency. Know
+                exactly what's defending your business, around the clock.
+              </p>
+              <button className="inline-flex w-fit items-center gap-2 bg-white px-[18px] py-[9px] text-[14px] font-semibold uppercase tracking-wide text-[#0d0b14] hover:bg-white/90 transition-colors duration-150">
+                Contact Sales <Arrow />
+              </button>
+            </div>
+          </div>
+
+          {/* Right — 3D canvas */}
+          <div className="flex-1 min-h-[400px] md:min-h-[650px]">
+            <Canvas
+              camera={{ position: [0, 0, 5], fov: 45 }}
+              gl={{ antialias: true }}
+              style={{ width: "100%", height: "100%" }}
+            >
+              <Environment preset="dawn" />
+              <Gem />
+            </Canvas>
+          </div>
+        </div>
+      </CageRow>
+
+      {/* ── Logo strip ───────────────────────────────────────────────────── */}
+      <CageRow borderBottom={false}>
+        <div className="overflow-hidden py-3 pt-6 flex flex-col gap-6">
+          <p className="px-6 text-center text-[#a1a1a1] text-[18px] leading-[1.4]">
+            Powering security for your favorite AI companies
+          </p>
+          <LogoMarquee />
+        </div>
+      </CageRow>
     </div>
   );
 }
