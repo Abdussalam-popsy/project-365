@@ -1,6 +1,10 @@
 import { useRef } from "react";
 import { Canvas, useFrame } from "@react-three/fiber";
-import { Environment, MeshTransmissionMaterial } from "@react-three/drei";
+import {
+  Environment,
+  MeshTransmissionMaterial,
+  OrbitControls,
+} from "@react-three/drei";
 import * as THREE from "three";
 
 // ── 3D Gem ──────────────────────────────────────────────────────────────────
@@ -10,8 +14,9 @@ function Gem() {
 
   useFrame((_, delta) => {
     if (!ref.current) return;
-    ref.current.rotation.y += delta * 0.22;
-    ref.current.rotation.z += delta * 0.08;
+    // ref.current.rotation.y += delta * 0.22; // control speed of rotate around y-axis
+    // ref.current.rotation.z += delta * 0.08; // control speed of rotate around z-axis
+    ref.current.rotation.x += delta * 0.22; // control speed of rotate around x-axis
   });
 
   return (
@@ -171,6 +176,12 @@ export default function App() {
             >
               <Environment preset="dawn" />
               <Gem />
+              <OrbitControls
+                enableZoom={false}
+                enablePan={false}
+                enableDamping={true}
+                dampingFactor={0.05}
+              />
             </Canvas>
           </div>
         </div>
