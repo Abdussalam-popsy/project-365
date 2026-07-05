@@ -6,19 +6,11 @@ Each interaction is a self-contained micro-project exploring a single concept â€
 
 ## Templates
 
-| Template     | Stack                                        | Use for                                               |
-| ------------ | -------------------------------------------- | ----------------------------------------------------- |
-| `vanilla`    | HTML + CSS + JS                              | Pure CSS animations, simple DOM interactions          |
-| `react-vite` | Vite + React + TS + Tailwind                 | Component-based interactions, state-driven animations |
-| `canvas`     | HTML Canvas + JS                             | Particle systems, generative art, physics simulations |
-| `threejs`    | Vite + React + TS + Tailwind + R3F + Drei    | 3D scenes, shaders, geometry explorations             |
-
-### Optional add-ons (per project)
-
-```bash
-npm i motion      # animation sequences
-npm i dialkit     # live parameter tweaking (sliders, knobs)
-```
+| Template     | Stack                        | Use for                                               |
+| ------------ | ---------------------------- | ----------------------------------------------------- |
+| `vanilla`    | HTML + CSS + JS              | Pure CSS animations, simple DOM interactions          |
+| `react-vite` | Vite + React + TS + Tailwind | Component-based interactions, state-driven animations |
+| `canvas`     | HTML Canvas + JS             | Particle systems, generative art, physics simulations |
 
 ## Usage
 
@@ -39,8 +31,8 @@ npm i dialkit     # live parameter tweaking (sliders, knobs)
 ./scripts/new.sh react-vite photo-journal
 ./scripts/new.sh react-vite magnetic-button
 ./scripts/new.sh canvas particle-field
-./scripts/new.sh threejs floating-particles
-./scripts/new.sh threejs cubic-shapes-wireframe
+  ./scripts/new.sh threejs your-exploration-name
+  ./scripts/new.sh threejs cubic-shapes-wireframe
 ```
 
 The script creates a dated folder, copies the template, and runs `npm install` if needed.
