@@ -185,11 +185,11 @@
     "date": "2026-09-19",
     "name": "svg-animation",
     "path": "2026/09/19-svg-animation",
-    "url": "",
+    "url": "https://abdussalam-popsy.github.io/project-365/2026/09/19-svg-animation/",
     "tags": ["react", "svg", "scroll", "animation", "isometric"],
     "template": "react-vite",
     "language": "typescript",
     "description": "Four isometric agent cards reveal on scroll with animated headings, drawn leader lines, and SVG labels.",
-    "status": "local"
+    "status": "live"
   }
 ]
