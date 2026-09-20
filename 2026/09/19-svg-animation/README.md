@@ -21,7 +21,9 @@ npm run preview -- --base=/project-365/2026/09/19-svg-animation/
 
 ## What I learned
 
-[Read the beginner-friendly lessons](./lessons.md): comparison with the original timed SVG animation, a file-by-file guide, scroll progress, card poses, line drawing, React's role, and small exercises.
+[Follow one card through the code](./lessons.md): how SVG paths become groups, what the movement columns mean, and how Scheduling and its callout react to scrolling. Includes small experiments and expandable syntax walkthroughs.
+
+[Open the original timed-box alternative](./timed-box.svg) directly in a browser, or paste its markup into a playground. It uses native SVG animation (SMIL), with no React, GSAP, or Motion.
 
 <!-- Notes, discoveries, techniques picked up -->
 

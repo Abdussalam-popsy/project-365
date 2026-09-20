@@ -1,79 +1,166 @@
-# Lessons Learned: SVG Animation
+# One card, one line, one scroll
 
-A beginner-friendly guide to the four-agent scroll animation, and how it relates to the original animated SVG box.
+A guided tour of the SVG experiment. Follow **Scheduling** from a drawing to a moving card, instead of trying to memorise the whole app.
 
-Start with sections 1–4. You do not need to understand the parser, React hooks, or the maths to begin experimenting. The later sections explain those details when you are ready. Keep this guide in sync if the animation changes.
+**Three answers before we start:**
 
-## 1. The simplest explanation
+- **Did we use groups like your original? Yes.** We create `<g>` elements in React.
+- **Did we use GSAP or Motion? Neither.** Native JavaScript calculates the movement; SVG displays it; CSS keeps the scene pinned.
+- **Is the animation in `App.tsx`? Partly.** `scene-motion.ts` decides the numbers. `App.tsx` applies them.
 
-**The original box animation runs on time. This animation runs on scrolling.**
+Read the short story below. **Tap the expandable sections only when you want the syntax or maths.** They work in GitHub's rendered Markdown, including on a phone.
 
-Both move groups of SVG shapes. The difference is what tells those shapes where to go.
+[The running scroll experiment](https://abdussalam-popsy.github.io/project-365/2026/09/19-svg-animation/) · [Your original timed box, as a runnable SVG](./timed-box.svg)
 
-There are four things to remember:
+---
 
-| File | Plain-English job |
-| --- | --- |
-| `src/assets/scene.svg` | The card drawing |
-| `src/scene-motion.ts` | Decides how far things should move |
-| `src/App.tsx` | Displays the drawing and applies those movements |
-| `src/index.css` | The background, font, sizing, and sticky layout |
+## 1. We did not cut your cards into columns
 
-So, is the animation written in `App.tsx`? **Partly.** The animation instructions are split between two files: `scene-motion.ts` calculates the values, and `App.tsx` puts them onto the actual elements in the browser.
+There are two different jobs here:
 
-React is not doing the animation automatically. There is no GSAP or Motion dependency. This implementation uses JavaScript, native SVG attributes, and CSS.
-
-## 2. Compare it with the original SVG box
-
-The original sample placed an instruction like this inside an SVG group:
-
-```xml
-<animateTransform
-  attributeName="transform"
-  type="translate"
-  values="0,0;0,0;0,-100;0,-100;0,0"
-  dur="4s"
-  repeatCount="indefinite"
-/>
+```text
+GROUPING: Which shapes belong to this card?
+MOVEMENT: How far should this card move?
 ```
 
-This is SVG's built-in animation system, called **SMIL**.
+Your original box already had groups. The newer Figma export arrived as a long list of paths without card-level groups.
 
-In plain English, it says:
+So we put the groups back **when building the page**:
 
-1. Start at the original position.
-2. Hold there.
-3. Move up 100 SVG units.
-4. Hold there.
-5. Move back.
-6. Repeat over a four-second cycle.
+```text
+33 paths → Payroll group
+33 paths → Retention group
+33 paths → Onboarding group
+33 paths → Scheduling group
+```
 
-The original sample also used `calcMode="spline"` and `keySplines` to control how the movements accelerate and slow down.
+A group is just a container. Move the container, and its white face, blue sides, building, and lettering move together.
 
-Because the instruction lives inside a `<g>`, it moves all the shapes in that group together. The original cards rose by different amounts, while the lid rose much farther. Drawing the front of the box after the inner cards made the front cover them without a mask.
-
-In this project, JavaScript changes the group's position instead:
+The browser ultimately gets a group tagged like this:
 
 ```xml
-<g transform="translate(0 -120)">
+<g class="agent-card" data-card="scheduling">
 </g>
 ```
 
-That means: move the group 0 units horizontally and 120 units upward.
+The real group contains Scheduling's 33 paths; the empty example above only shows its wrapper.
 
-| Original box | Four-agent scene |
-| --- | --- |
-| Time controls progress | Scrolling controls progress |
-| Instructions are inside the SVG | Instructions are in TypeScript |
-| Automatically repeats | Stays at the current scroll-derived pose |
-| Browser calculates intermediate positions | Our motion function calculates them |
-| Groups declare their own movement | One shared timeline coordinates the cards, headings, and labels |
+**Same idea as your `<g>`. Different place where the group is created.** Your original declared it in the SVG file. This version creates it in [App.tsx](./src/App.tsx).
 
-The underlying idea is the same: **change a group's position, rather than redraw every shape.**
+<details>
+<summary>Show me exactly how the code finds the four cards</summary>
 
-## 3. Start learning with the rows of numbers
+The export's path order is bottom-to-top:
 
-Open `src/scene-motion.ts` and find:
+| Paths, counted from 1 | Card       | Current SVG file lines |
+| --------------------- | ---------- | ---------------------- |
+| 1–33                  | Payroll    | 2–34                   |
+| 34–66                 | Retention  | 35–67                  |
+| 67–99                 | Onboarding | 68–100                 |
+| 100–132               | Scheduling | 101–133                |
+
+Those line numbers describe the current export, not a rule future exports must follow.
+
+At the start of each card is a white top-face path. All four of those paths begin their drawing commands with `M0.699585`.
+
+This is the identifying check in `App.tsx`:
+
+```ts
+if (path.fill === "white" && path.d?.startsWith("M0.699585")) layers.push([]);
+layers[layers.length - 1].push(path);
+```
+
+Read it as:
+
+1. Is this one of the white top faces?
+2. If yes, start a new empty collection.
+3. Put this path into the latest collection.
+4. Keep adding the following paths until another top face starts a new card.
+
+It does **not** blindly cut the file every 33 paths. The 33-path count is the result for this particular export.
+
+A few symbols decoded:
+
+| Syntax              | Meaning here                                |
+| ------------------- | ------------------------------------------- |
+| `===`               | Is exactly equal to                         |
+| `&&`                | Both conditions must be true                |
+| `path.d?.`          | Only call the next method if `d` exists     |
+| `.startsWith(...)`  | Does this text begin with these characters? |
+| `.push(...)`        | Add an item to an array                     |
+| `[]`                | An empty array, or list                     |
+| `layers.length - 1` | The index of the most recently added group  |
+
+The surrounding `.reduce(...)` walks through all the paths and builds that list of groups. It is collecting shapes, not shrinking the artwork.
+
+**Important limitation:** this recognition is tailored to your export. It is not an SVG feature that automatically understands cards. Changed coordinates, path order, or colour formatting could break it.
+
+For future artwork, explicit named groups are easier to maintain. Check the exported markup: Figma layer names do not always survive as SVG IDs.
+
+</details>
+
+<details>
+<summary>How does an array of paths become an actual SVG group?</summary>
+
+This is the rendering code in `App.tsx`:
+
+```tsx
+{
+  cardLayers.map((paths, index) => (
+    <g
+      className="agent-card"
+      data-card={agents[agents.length - 1 - index].id}
+      key={index}
+    >
+      {paths.map((path, pathIndex) => (
+        <path {...path} key={pathIndex} />
+      ))}
+    </g>
+  ));
+}
+```
+
+- `.map(...)`: make one rendered item for each item in the array.
+- `(paths, index) => ...`: a small function receiving this card's paths and its position in the list.
+- `{...path}`: put the saved attributes, such as `d`, `fill`, and `stroke`, on the new path element.
+- `className`: React's spelling of HTML/SVG `class`.
+- `data-card`: a label we attach so JavaScript can find a particular card later. It does not animate anything by itself.
+- `key`: helps React identify list items; it is not an SVG movement setting.
+
+The export order is Payroll → Retention → Onboarding → Scheduling. The `agents` array is Scheduling → Onboarding → Retention → Payroll.
+
+So `agents.length - 1 - index`, or `3 - index`, reverses the name lookup. The first rendered group gets Payroll's name; the last gets Scheduling's.
+
+We keep the rendering order because SVG draws later shapes over earlier shapes. Scheduling must sit on top when the cards overlap. This is the same reason your original box drew its front after the inner cards.
+
+</details>
+
+## 2. Now give each card a seat in the movement list
+
+The four **columns** you noticed are just four array entries:
+
+```text
+column/index       0           1          2         3
+card          Scheduling  Onboarding  Retention  Payroll
+movement         -120         0          0         0
+```
+
+JavaScript counts from zero. So `cards[0]` means Scheduling's movement.
+
+```ts
+[-120, 0, 0, 0];
+```
+
+means **move Scheduling up 120; leave the other three where they were drawn**.
+
+It does not mean four CSS columns or four slices of the image. The page's left/right columns are a separate CSS layout.
+
+> **Remember: a group holds the drawing. An array entry holds its movement number.**
+
+<details>
+<summary>Where do all six poses live?</summary>
+
+In [scene-motion.ts](./src/scene-motion.ts):
 
 ```ts
 const positions = [
@@ -86,177 +173,64 @@ const positions = [
 ];
 ```
 
-Each row is one important pose in the animation. Each column always refers to the same card:
+Read down the rows to follow the story:
+
+1. All four are in the original lower stack.
+2. Scheduling lifts.
+3. Scheduling goes higher; Onboarding lifts.
+4. The first two collect above; Retention is exposed.
+5. The first three collect above; Payroll is exposed.
+6. All four reunite in the upper stack.
+
+`positions[1][0]` means: second pose, first card. Its value is `-120`.
+
+Negative vertical movement goes up. Positive goes down. Zero means no offset from the original drawing.
+
+These are **SVG units**, not necessarily screen pixels. The illustration scales with the page. Its path coordinates do not need to be rewritten for each screen size.
+
+At the end, all offsets equal `-450`, so the original spacing between the cards is preserved.
+
+</details>
+
+**Predict before you edit:** if the second row becomes `[-200, 0, 0, 0]`, which card changes?
+
+<details>
+<summary>Reveal the answer</summary>
+
+Only Scheduling. It rises farther in its featured pose. The other entries are still zero. Try it locally, scroll, then restore `-120` before the next experiment.
+
+</details>
+
+---
+
+## 3. Follow Scheduling: your finger scrolls, a number changes
+
+Imagine scrolling down until you are **10% through the animation's scroll distance**.
+
+Here is the chain:
 
 ```text
-[Scheduling, Onboarding, Retention, Payroll]
+Your scroll
+    ↓
+App.tsx measures progress: 0.10
+    ↓
+scene-motion.ts calculates Scheduling: -60
+    ↓
+App.tsx applies: translate(0 -60)
+    ↓
+The entire Scheduling group moves up
 ```
 
-For example:
+There is no GSAP timeline hidden behind this. The browser tells us that scrolling happened, and our code calculates a new position.
 
-```ts
-[-120, 0, 0, 0]
-```
+At 20% progress, Scheduling reaches its featured pose at `-120`.
 
-means:
+**The SVG is still the same drawing. We changed one setting on its group.**
 
-```text
-Scheduling: move up 120
-Onboarding: do not move
-Retention:  do not move
-Payroll:    do not move
-```
+<details>
+<summary>How can you scroll while the scene stays still?</summary>
 
-These numbers are offsets from the original illustration, not absolute positions.
-
-- `0` means stay where the card was drawn.
-- A negative number moves it upward.
-- A positive number moves it downward.
-
-The numbers are **SVG units**, not necessarily screen pixels. The SVG scales with the layout.
-
-The sequence is:
-
-| Scroll progress | Card positions | What is happening |
-| --- | --- | --- |
-| 0% | `[0, 0, 0, 0]` | Original lower stack |
-| 20% | `[-120, 0, 0, 0]` | Scheduling lifts |
-| 40% | `[-450, -120, 0, 0]` | Scheduling is high; Onboarding lifts |
-| 60% | `[-450, -450, 0, 0]` | First two cards collect above; Retention is exposed |
-| 80% | `[-450, -450, -450, 0]` | First three collect above; Payroll is exposed |
-| 100% | `[-450, -450, -450, -450]` | All four reunite in the upper stack |
-
-At the end, every card has the same offset, so their original spacing is preserved.
-
-**First exercise:** change the first `-120` to `-200`. Scroll to Scheduling and see it lift farther. Then restore the number before trying something else.
-
-## 4. The line that actually moves a card
-
-In `App.tsx`:
-
-```tsx
-card.setAttribute("transform", `translate(0 ${frame.cards[index]})`);
-```
-
-Read it as:
-
-> Set this card's position to the number the motion function calculated.
-
-The unfamiliar parts mean:
-
-- `card`: the SVG group we want to move.
-- `setAttribute`: change a setting on that element.
-- `transform`: the setting that moves the group.
-- `translate`: move without changing the shape.
-- `frame.cards[index]`: the current movement value for this particular card.
-
-If that value is `-120`, the resulting attribute is:
-
-```xml
-transform="translate(0 -120)"
-```
-
-You do not need to understand every line in `App.tsx` to change the movement. The `positions` array is the easiest starting point.
-
-## 5. File map and startup sequence
-
-| File | What it does |
-| --- | --- |
-| `index.html` | The page shell, browser-tab title, and empty `root` element |
-| `src/main.tsx` | Loads the CSS and mounts React's `App` inside `root` |
-| `src/App.tsx` | Parses the artwork, renders the scene, measures scrolling, and updates elements |
-| `src/scene-motion.ts` | Agent names, key poses, easing, heading movement, and callout timing |
-| `src/index.css` | Inria Serif, colours, two-column layout, sticky section, mobile layout, and reduced motion |
-| `src/assets/scene.svg` | The original four-card artwork |
-| `src/assets/callouts.svg` | The separate outlined labels and leader lines |
-| `src/vite-env.d.ts` | Vite-specific TypeScript declarations, including asset-import support |
-| `package.json` | Dependencies and commands |
-| `package-lock.json` | Resolved dependency versions for reproducible installation |
-| `vite.config.ts` | React/Tailwind build plugins and the `@` source alias |
-| `tsconfig.json` | TypeScript checking and import-resolution options |
-| `dist/` | Generated production site; do not edit or commit it |
-
-The startup sequence is:
-
-```text
-index.html → main.tsx → App.tsx
-                       ├── SVG artwork
-                       ├── scene-motion.ts
-                       └── DOM elements that the animation updates
-```
-
-The temporary `/tmp/project365-*.mjs` files used during development were browser tests and debugging tools. They are not application code and are not required to run the experiment.
-
-## 6. Reading the SVG as code instead of displaying an image
-
-At the top of `App.tsx`:
-
-```tsx
-import sceneSource from "./assets/scene.svg?raw";
-```
-
-Vite's `?raw` means: give us the SVG file's contents as a string.
-
-If we only displayed the SVG with an `<img>`, we could move the whole image, but could not directly select its individual internal cards from the page.
-
-Instead, `readPaths()` uses the browser's `DOMParser` to read the SVG markup and extract its paths. React then renders those paths inline in the page's own `<svg>`.
-
-Useful SVG vocabulary:
-
-| Attribute/element | Meaning |
-| --- | --- |
-| `<path>` | A shape described by drawing commands |
-| `d` | The path's geometry: move, line, curve, close, etc. |
-| `fill` | Interior colour |
-| `stroke` | Outline colour |
-| `stroke-width` | Outline thickness |
-| `<g>` | A group of shapes that can be moved together |
-| `viewBox` | The SVG's internal coordinate window |
-
-SVG attributes such as `fill-rule` and `stroke-width` become `fillRule` and `strokeWidth` in React.
-
-### How the cards are separated
-
-This export contains 132 paths, arranged as four cards of 33 paths each. It does not contain named card groups.
-
-The parser recognises each card's beginning using the white top-face path whose `d` starts with `M0.699585`. It collects the following paths until the next card begins, then renders each collection in a `<g>`.
-
-**This is specific to this export.** It is not a general algorithm that understands any illustration. Re-exporting with a different path order, different coordinates, or differently formatted colours can break this detection.
-
-For a future version, explicit named card groups would be more robust. Check the actual export: Figma layer names do not always survive as SVG IDs, depending on export settings and optimisation.
-
-### Layering
-
-Later SVG elements are painted over earlier ones. We preserve the card drawing order so the stack looks correct. The callouts are drawn before the cards, allowing the card faces to cover their line endpoints.
-
-This is the same painter's-order principle used by the front of the original SVG box.
-
-## 7. One coordinate system for cards and callouts
-
-The card export uses `viewBox="0 0 413 981"`. The callout export uses `viewBox="0 0 421 980"`.
-
-Rather than scale those two images independently, the app renders their paths together in:
-
-```xml
-viewBox="-2 0 426 1000"
-```
-
-This keeps both sets of paths on the same coordinate grid, with a little room around the edges.
-
-It also means a card offset of `-120` and a callout offset of `-120` move by the same visual distance.
-
-Keep the exports' original coordinates when replacing artwork. Cropping and independently recentering each export would require recalculating alignment.
-
-## 8. How the scene stays on screen while scrolling
-
-The layout has two layers:
-
-```text
-.scroll-story — a tall outer section
-└── .scene    — a one-screen-high sticky scene
-```
-
-The important CSS is:
+[The CSS](./src/index.css) creates a tall section containing a sticky scene:
 
 ```css
 .scroll-story {
@@ -270,325 +244,619 @@ The important CSS is:
 }
 ```
 
-`100svh` means one small-viewport height. On mobile, it provides a stable reference size when browser controls appear or disappear.
+`100svh` is one small-viewport height, a stable reference when mobile browser controls appear or disappear.
 
-The tall section provides scrolling distance while the inner scene stays at the top. The page is really scrolling; we do not intercept the wheel or replace native scrolling.
+The outer section provides distance to scroll. The inner scene stays at the top while that distance is used. Native scrolling still works; we are not blocking wheel or touch input.
 
-The usable distance is:
-
-```text
-650svh outer height − 100svh scene height = 550svh
-```
-
-A bigger outer height makes the same animation take more scrolling. A smaller height compresses it.
-
-**Second exercise:** change `650svh` to `850svh`. The poses remain the same, but there is more scrolling between them. Restore it afterwards.
-
-## 9. Turning scrolling into progress
-
-`App.tsx` measures the section and calculates:
-
-```ts
-progress = clamp((window.scrollY - start) / distance);
-```
-
-- `window.scrollY`: how far down the page the browser has scrolled.
-- `start`: where this section begins in the document.
-- `distance`: the usable animation distance.
-- `clamp()`: keeps the result between `0` and `1`.
+Usable animation distance:
 
 ```text
-0   → beginning
-0.5 → halfway through the scrolling distance
-1   → end
+650svh outer section − 100svh scene = 550svh
 ```
 
-This value is passed into:
+In `App.tsx`:
 
 ```ts
-getSceneFrame(progress)
+const progress = clamp((window.scrollY - start) / distance);
 ```
 
-The function returns the positions and visibility values for the whole scene at that point.
+- `scrollY`: where the browser is vertically on the page.
+- `start`: the section's starting position in the document.
+- `distance`: the usable scrolling distance.
+- `clamp`: keep the answer between 0 and 1.
 
-**Important:** the variable named `time` in `scene-motion.ts` is a timeline coordinate derived from scrolling. It is not elapsed seconds. Its range is 0–5 because there are six key poses and five transitions.
+For an easy example, if usable distance were 5,000 pixels and you had travelled 500 pixels into it, progress would be `500 / 5000 = 0.10`.
 
-## 10. How movement happens between poses
+</details>
 
-We specify important poses, not every possible position. The code fills the gaps using interpolation:
+<details>
+<summary>Where did -60 come from? Walk through the calculation</summary>
+
+At 10% scroll progress:
 
 ```ts
-position = start + (end - start) * blend;
+time = 0.1 * 5;
 ```
 
-For a card moving from `0` to `-120`:
+This gives `0.5`. There are six poses and five transitions. Despite its name, `time` is **not seconds**; it is our position on the scroll timeline.
 
-| Blend | Position |
-| --- | --- |
-| 0 | 0 |
-| 0.5 | -60 |
-| 1 | -120 |
+We are halfway between pose 0 and pose 1. Scheduling's start and end offsets are 0 and -120.
 
-The `ease()` function shapes the blend so movement starts and ends gently. It uses a smooth polynomial curve, often called smootherstep. This is not a physics simulation or spring.
+The blend is eased using:
 
 ```ts
 const blend = ease(0.18, 0.82, time - stage);
 ```
 
-Within each transition, the first 18% holds the previous pose, the middle portion moves, and the last 18% holds the next pose. These pauses give each stage breathing room without snapping the scroll position.
+`stage` is the current transition's starting pose. At this point it is 0. The eased blend at the middle is 0.5.
 
-### A worked example
+Then:
 
-At 30% overall progress:
+```text
+position = start + (end − start) × blend
+         =     0 + (−120 − 0) × 0.5
+         = −60
+```
 
-1. The timeline coordinate is `0.3 × 5 = 1.5`.
-2. We are halfway between Scheduling's pose and Onboarding's pose.
-3. The eased blend is `0.5`.
-4. Scheduling is halfway from `-120` to `-450`, which is `-285`.
-5. Onboarding is halfway from `0` to `-120`, which is `-60`.
-6. Retention and Payroll remain at `0`.
+This filling-in-between-poses is called **interpolation**.
 
-The result is `[-285, -60, 0, 0]`.
+The `ease()` function gently starts and ends the motion. It uses a smooth polynomial curve, not a spring simulation. You do not need to memorise the polynomial to adjust the poses.
 
-## 11. What animates each element
+The `0.18` and `0.82` boundaries leave a short hold at both ends of each transition. There is no scroll snapping.
 
-### Cards
+Another checkpoint: at 30% progress, the result is approximately `[-285, -60, 0, 0]`. Scheduling is travelling higher, Onboarding is rising, and the other cards have not moved.
 
-We change the `transform` on each card's `<g>`. All its shapes move together. No path geometry is morphed.
+</details>
 
-### Main headings
+<details>
+<summary>Decode the exact JavaScript line that moves Scheduling</summary>
 
-All six heading spans exist in the same position. During a transition:
-
-- The outgoing heading moves upward and fades out.
-- The incoming heading rises from below and fades in.
-
-The heading movement uses `transform` and `opacity`. Its travel is currently 28 CSS pixels.
-
-These headings are real HTML text. They use Inria Serif, installed through `@fontsource/inria-serif` and bundled locally rather than fetched from a font service at runtime.
-
-### Leader lines: the trim-path effect
-
-Each callout line is configured with:
+`App.tsx` first finds the groups by their tags, in the same order as `agents`:
 
 ```tsx
-pathLength={1}
-strokeDasharray={1}
-strokeDashoffset={1}
+const cards = agents.map(
+  (agent) => scene.querySelector<SVGGElement>(`[data-card="${agent.id}"]`)!,
+);
 ```
 
-`pathLength={1}` normalises the length used for dashing, so we can work with 0–1 rather than measure the line's exact length.
+For Scheduling, the selector becomes `[data-card="scheduling"]`.
 
-| Dash offset | Appearance |
-| --- | --- |
-| 1 | Hidden |
-| 0.5 | Partly drawn |
-| 0 | Fully drawn |
+- `querySelector(...)`: find the matching element inside the scene.
+- `<SVGGElement>`: tells TypeScript we expect an SVG group.
+- The final `!`: tells TypeScript we expect a match, not `null`. It does not check that at runtime.
 
-The code applies:
+Then it applies the calculated values:
+
+```tsx
+cards.forEach((card, index) =>
+  card.setAttribute("transform", `translate(0 ${frame.cards[index]})`),
+);
+```
+
+Break that down:
+
+| Syntax                 | Plain English                               |
+| ---------------------- | ------------------------------------------- |
+| `forEach`              | Do this for every card                      |
+| `index`                | Which card are we on: 0, 1, 2, or 3?        |
+| `frame.cards[index]`   | Its movement value for this scroll position |
+| Backticks and `${...}` | Build text with a value inserted into it    |
+| `setAttribute`         | Change this element's setting               |
+| `transform`            | The setting that moves the group            |
+| `translate(0 -60)`     | Move 0 horizontally and -60 vertically      |
+
+For Scheduling, this produces:
+
+```xml
+<g class="agent-card" data-card="scheduling" transform="translate(0 -60)">
+</g>
+```
+
+Again, the real group contains the card's paths. Moving its wrapper moves all of them together.
+
+</details>
+
+## 4. Scheduling's callout: draw first, then speak
+
+Watch this sequence on the live scene:
+
+```text
+Card lifts → line draws → YOUR CARERS appears
+                 ↓
+Text leaves → line retracts → next agent takes over
+```
+
+The callout is **two separate paths**:
+
+1. A stroked path for the thin leader line.
+2. A filled path containing the outlined letters `YOUR CARERS`.
+
+That lets us draw the line and fade the words independently. We do not fade a single image containing both.
+
+Scheduling's actual line from [callouts.svg](./src/assets/callouts.svg) is:
+
+```xml
+<path d="M274 530V435L344 365" stroke="white" />
+```
+
+Read those drawing commands as:
+
+```text
+M274 530   Move the pen to (274, 530), by the card.
+V435       Draw vertically to y = 435.
+L344 365   Draw diagonally to (344, 365), near the label.
+```
+
+The line already exists. The animation progressively reveals its stroke.
+
+<details>
+<summary>How does Scheduling get YOUR CARERS instead of another label?</summary>
+
+`callouts.svg` contains four pairs, each with the lettering first and the leader line second. Like the card export, the pairs are ordered Payroll, Retention, Onboarding, Scheduling.
+
+`App.tsx` selects the right pair with:
 
 ```ts
-strokeDashoffset = 1 - lineProgress;
+const sourceIndex = (agents.length - 1 - index) * 2;
 ```
 
-This reveals the existing stroke; it does not extend the line's geometry. Its path direction starts at the card, so the line draws upward toward the label. Reversing the progress retracts it.
+For Scheduling, `index` is 0. There are four agents:
 
-### Callout lettering
+```text
+(4 − 1 − 0) × 2 = 6
+```
 
-The callout words are outlined SVG paths, not editable text elements. We preserve the exact lettering and move/fade each whole label:
+So `calloutPaths[6]` is YOUR CARERS and `calloutPaths[7]` is its line. These are zero-based array indexes, not file line numbers. Multiplying by 2 steps through pairs instead of individual paths.
 
-- Slight upward entrance and fade-in as the leader line finishes drawing.
-- A visible hold during the feature stage.
-- Upward fade-out as that stage ends.
+They are rendered inside a group tagged `data-callout="scheduling"`. The effect finds that group by its tag, then finds `.callout-line` and `.callout-label` inside it.
 
-This is not handwriting or a letter-by-letter animation.
+For each update, `const state = frame.callouts[index]` picks that agent's calculated line progress, opacity, and movement values. The same agent index connects the card, the callout, and their animation values.
 
-Changing `agents[index].label` changes the accessible/static summary, not the lettering inside `callouts.svg`. To change the visible lettering, replace its SVG paths or intentionally convert the label into a text element.
+This pairing assumes the current export order; it does not recognise the words by reading their outline shapes.
 
-### Callout timing
+</details>
 
-The line and label each have an entrance window and an exit window:
+<details>
+<summary>How trim-path works: a line, a dash, and an offset</summary>
+
+The rendered line receives these React properties:
+
+```tsx
+<path
+  d="M274 530V435L344 365"
+  stroke="white"
+  fill="none"
+  pathLength={1}
+  strokeDasharray={1}
+  strokeDashoffset={1}
+/>
+```
+
+Think of a dashed line with **one dash as long as the entire path**, followed by an equally long gap.
+
+- `pathLength={1}` normalises dash distances so the whole path counts as 1.
+- `strokeDasharray={1}` creates that one-path-long dash/gap pattern.
+- `strokeDashoffset` slides the pattern along the path.
+
+| Offset | What you see             |
+| ------ | ------------------------ |
+| 1      | The gap: line hidden     |
+| 0.5    | Half the stroke revealed |
+| 0      | The whole line           |
+
+`App.tsx` does this:
 
 ```ts
-visibility = entrance * (1 - exit);
+lines[index].setAttribute("stroke-dashoffset", String(1 - state.line));
 ```
 
-Before entrance, visibility is 0. During the feature stage, it reaches 1. After exit, it returns to 0. Only the current agent's callout is shown, and the initial and final states have no callouts.
+`state.line` grows from 0 to 1. The dash offset therefore decreases from 1 to 0.
 
-These windows are scroll-timeline values, not durations in seconds.
+For example, line progress 0.25 gives offset 0.75: roughly the first quarter is visible. The path starts at the card, so drawing proceeds from card to label.
 
-### Keeping lines attached
+`String(...)` turns a number into text for the SVG attribute. JSX uses `strokeDashoffset`, but `setAttribute` uses SVG's actual name, `stroke-dashoffset`.
 
-The callout group also receives a vertical transform. Its alignment uses the card's original top, the current card movement, and the 30-degree isometric edge:
+**We are not stretching the line or changing `d`. We are revealing an existing stroke.**
+
+</details>
+
+<details>
+<summary>Exactly when does Scheduling's line and text appear?</summary>
+
+These are percentages of the section's **usable scroll distance**, not seconds or the whole document.
+
+| Scroll progress | Scheduling's callout              |
+| --------------- | --------------------------------- |
+| Before 13.2%    | Hidden                            |
+| 13.2% → 17.6%   | Line draws                        |
+| 16.4% → 20%     | Text rises and fades in           |
+| 20% → 24%       | Line and text stay visible        |
+| 24% → 26.8%     | Text rises slightly and fades out |
+| 26% → 29.6%     | Line retracts                     |
+| After 29.6%     | Hidden                            |
+
+There is a deliberate overlap: text starts appearing as the line nears completion, rather than waiting for an unrelated timer.
+
+In `scene-motion.ts`:
 
 ```ts
-y = agent.top + (274 - 206.088) / Math.sqrt(3) + cards[index] - agent.lineStart;
+const local = time - (index + 1);
+const line = ease(-0.34, -0.12, local) * (1 - ease(0.3, 0.48, local));
+const text = ease(-0.18, 0, local) * (1 - ease(0.2, 0.34, local));
 ```
 
-Read this as: find the card edge at the line's horizontal position, then shift the original line endpoint to meet it.
+For Scheduling, `index` is 0, so `local = time - 1`. Its featured pose is at `time = 1`, making `local = 0` there.
 
-The numbers come from this artwork, so they may need updating if the illustration changes.
+Read each expression as:
 
-## 12. Why backward scrolling works
+```text
+visibility = entering × (1 − leaving)
+```
 
-There is no instruction saying, "Scheduling has finished; start Onboarding."
+- Before entering: `0 × 1 = 0`.
+- Fully visible: `1 × 1 = 1`.
+- After leaving: `1 × 0 = 0`.
 
-Instead, we always ask:
+The thresholds use the local timeline. For example, line entrance begins when `time - 1 = -0.34`. So `time = 0.66`, and overall progress is `0.66 / 5 = 0.132`, or 13.2%.
 
-> At this exact scroll position, where should everything be?
+Other agents reuse the same relative timing, centred around their own featured poses.
 
-The same progress gives the same result. Scrolling backward simply asks for earlier positions. There are no separate reverse animations to synchronise.
+</details>
 
-`getSceneFrame()` is a pure calculation: it does not read the DOM, start timers, or remember the previous stage. That also makes it easy to test without opening a browser.
+<details>
+<summary>How do the words move? Is it handwriting?</summary>
 
-## 13. What React and requestAnimationFrame do
+No. The entire `YOUR CARERS` label is one filled vector path. We fade and translate that whole path; we do not draw its letters one by one.
 
-React creates the elements. The DOM is the browser's live tree of those elements.
-
-- `useRef()` keeps references to the actual section and scene elements.
-- `useLayoutEffect()` sets up the animation after React creates those elements.
-- Scroll events request an update.
-- `requestAnimationFrame()` schedules that update before a browser paint.
+`scene-motion.ts` calculates:
 
 ```ts
-if (!request) request = window.requestAnimationFrame(render);
+textY: 8 * (1 - ease(-0.18, 0, local)) - 5 * ease(0.2, 0.34, local);
 ```
 
-If several scroll events arrive before the next frame, they share one pending update. The render function then uses the latest scroll position.
+- Entrance: start 8 SVG units lower, then rise to 0.
+- Hold: remain at 0.
+- Exit: rise another 5 units while fading away.
 
-This is not a continuously running loop. When scrolling and resizing stop, the scene stays still.
+`App.tsx` applies:
 
-We directly update the animation attributes rather than use a React state setter on every scroll event. That avoids rerendering all 132 card paths just to move four groups.
+```ts
+labels[index].setAttribute("opacity", String(state.opacity));
+labels[index].setAttribute("transform", `translate(0 ${state.textY})`);
+```
 
-`ResizeObserver` and resize events refresh measurements when the layout changes. The effect's cleanup removes listeners, disconnects the observer, and cancels pending work. Cleanup also matters because development Strict Mode intentionally exercises effect setup and cleanup.
+Opacity 0 is invisible; 1 is fully visible.
 
-## 14. Mobile and accessibility
+At 20% overall progress, Scheduling's label has opacity 1 and `textY = 0`. Its line has dash offset 0, meaning fully drawn.
 
-Below 640px, CSS changes the desktop two-column layout into a heading area above the illustration.
+The main left-hand heading is different: it is real HTML text using locally bundled **Inria Serif**. That heading moves 28 CSS pixels and crossfades with the next heading.
 
-When the operating system requests reduced motion:
+Changing the agent's `label` string only updates the accessible/static summary. The visible outlined words must be changed in `callouts.svg` or deliberately converted into real text.
 
-- The tall scroll track becomes one viewport high.
-- Cards stay in the original stack.
-- Animated callouts are hidden.
-- A static list names all four agents and their roles.
+</details>
 
-The illustration is decorative to screen readers. A real heading and the static summary communicate its meaning without requiring someone to interpret moving vector lettering.
+<details>
+<summary>Why does the line stay attached when the card moves?</summary>
 
-A keyboard-focusable "Skip animation" link also lets users jump to the end.
+The line and lettering share a callout `<g>`. We move that parent group to keep its lower endpoint on the card. The lettering also gets its own small entrance/exit movement inside the parent.
 
-## 15. The reload bug and why the empty root has a height
+```text
+Callout group: follows the card
+├── Line: dash offset changes
+└── Words: opacity + small vertical movement change
+```
 
-The production browser test found that reloading halfway through the sequence could return to the top.
+The parent alignment is calculated by:
 
-The browser tried restoring the previous scroll position before React had mounted the tall scene. At that moment, the document was too short to scroll to the saved position.
+```ts
+y: agent.top + (274 - 206.088) / Math.sqrt(3) + cards[index] - agent.lineStart;
+```
 
-This CSS reserves the space before mounting:
+For Scheduling at its featured pose:
 
-```css
-#root:empty,
-.scroll-story {
-  height: 650svh;
+```text
+top of original card                 600
+height along the slanted edge        +39.209...
+current card movement               -120
+original line starting y            -530
+                                    ──────────
+callout group offset                -10.791...
+```
+
+The line's original endpoint at y=530 therefore ends up near y=519.209, meeting the moved card edge at x=274.
+
+The division by `Math.sqrt(3)` comes from the artwork's 30-degree isometric edge. These are coordinates from this drawing, not universal animation constants.
+
+Both source SVGs are rendered into one `viewBox="-2 0 426 1000"`. We do not stretch the 413×981 card export and the 421×980 callout export independently. Shared coordinates keep their movement consistent.
+
+The callouts render before the cards, so a card face can cover the attached end of a line.
+
+</details>
+
+**Quick test:** to make the line reveal earlier, would you edit its `d` drawing commands or its reveal thresholds?
+
+<details>
+<summary>Reveal the answer</summary>
+
+The reveal thresholds in `scene-motion.ts`. `d` changes the line's shape. Timing values change when you see it. To move the entrance earlier while preserving its length, move both entrance thresholds earlier by the same amount.
+
+</details>
+
+---
+
+## 5. What actually makes it tick? Not a library
+
+There are three different jobs:
+
+| Job                          | What this project uses        |
+| ---------------------------- | ----------------------------- |
+| Build the page's elements    | React                         |
+| Keep the section on screen   | CSS `position: sticky`        |
+| Calculate and apply movement | Our TypeScript + browser APIs |
+
+The update chain is:
+
+```text
+scroll event
+    ↓
+schedule one requestAnimationFrame callback
+    ↓
+read the latest scroll position
+    ↓
+getSceneFrame(progress)
+    ↓
+update transforms, opacity, and dash offsets
+```
+
+**`requestAnimationFrame` does not invent the animation.** It asks the browser for a good moment to apply our updates before a paint.
+
+Stop scrolling, and the scene holds its pose. Scroll backward, and the same calculation gives earlier poses. There is no separate reverse animation.
+
+<details>
+<summary>The actual event code, without the mystery</summary>
+
+These excerpts live in `App.tsx`:
+
+```ts
+window.addEventListener("scroll", schedule, { passive: true });
+```
+
+This means: when the page scrolls, call `schedule`. `passive: true` tells the browser this listener will not cancel native scrolling.
+
+```ts
+function schedule() {
+  if (!request) request = window.requestAnimationFrame(render);
 }
 ```
 
-Once React mounts, the real section replaces the reserved space. Reduced-motion styles reserve only one viewport.
+`!request` means there is not already an update waiting. Several scroll events can share one pending callback. `render()` resets that pending ID and reads the newest scroll position.
 
-Lesson: a passing build is not enough. A production browser check can reveal timing problems that are less obvious in development.
+The local function named `render()` is our DOM-update function, not a call to React's rendering system.
 
-## 16. TypeScript and deployment lessons
+We change animation attributes directly rather than call a React state setter on every scroll event. React does not need to rebuild all the SVG paths just to move four groups.
 
-### The baseUrl warning
+</details>
 
-The editor reported that TypeScript's `baseUrl` option was deprecated. Rather than suppress the warning, we removed it and made the alias path explicitly relative:
+<details>
+<summary>Would GSAP or Motion have been another valid choice?</summary>
 
-```json
-"paths": {
-  "@/*": ["./src/*"]
-}
+Yes. Neither is required just because an animation is scroll-linked.
+
+| Approach                | What it would provide                                                    |
+| ----------------------- | ------------------------------------------------------------------------ |
+| Current native approach | We own the scroll calculation and interpolation; no animation dependency |
+| GSAP + ScrollTrigger    | Timeline orchestration, scroll-linked scrubbing, and pinning tools       |
+| Motion for React        | Scroll-linked motion values and declarative animated elements            |
+| SVG SMIL                | Self-contained timed SVG animations like your original box               |
+
+Libraries can reduce manual coordination for more complex timelines. This version uses a small shared calculation because there are only four moving cards and predictable poses.
+
+Trade-off: the native implementation needs its own timing maths, measurements, cleanup, and browser tests. "No library" does not mean "no animation code" or automatically better code.
+
+There are no hidden GSAP or Motion calls in this project. Tailwind is styling tooling, not the driver of the animation.
+
+</details>
+
+## 6. Your original approach is a complete alternative
+
+Your box animation did not need React at all. It used **SMIL**, SVG's built-in animation system.
+
+The full box, all three inner cards, and the lid are saved in **[timed-box.svg](./timed-box.svg)**. Open that file directly in a browser, or paste its contents into the HTML area of Tailwind Play/CodePen.
+
+This companion preserves your original drawing and four-second movements. It explicitly adds `keyTimes` and removes the trailing separator in `keySplines` to make the timing definition clear. It is a standalone learning example, not a replacement for the scroll scene or a file imported into its production build.
+
+<details>
+<summary>Try a tiny complete version first: copy, paste, watch</summary>
+
+This uses simple shapes so the animation instruction is easy to spot. The full original-style illustration is in `timed-box.svg`.
+
+Save this as an `.svg` file and open it in a browser, or paste it into a playground's HTML panel. No imports, installation, or JavaScript required.
+
+```xml
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 220" width="240">
+  <g>
+    <rect x="40" y="140" width="160" height="50" fill="#94BDFA" />
+    <text x="120" y="170" text-anchor="middle" fill="#050b24">One card</text>
+    <animateTransform
+      attributeName="transform"
+      type="translate"
+      values="0,0;0,0;0,-100;0,-100;0,0"
+      keyTimes="0;0.25;0.5;0.75;1"
+      calcMode="spline"
+      keySplines="0.25 0.1 0.25 1;0.25 0.1 0.25 1;0.25 0.1 0.25 1;0.25 0.1 0.25 1"
+      dur="4s"
+      repeatCount="indefinite"
+    />
+  </g>
+</svg>
 ```
 
-Vite keeps its corresponding alias configuration. TypeScript checking and the production build passed after the change.
+Because `animateTransform` is inside the `<g>`, the rectangle and its text move together. Put the instruction on an individual shape instead, and it would animate that element rather than the whole group.
 
-### GitHub Pages subpaths
+These timed learning examples loop continuously; they do not implement the scroll app's reduced-motion fallback. Add pause/reduced-motion behaviour before using a looping example as a production feature.
 
-The published experiment lives below `/project-365/2026/09/19-svg-animation/`, not at the domain root.
+</details>
 
-The existing GitHub Actions workflow builds experiments with the appropriate Vite base path. Imported SVG strings and bundled font assets work with that setup. Future runtime references to `public/` assets must use `import.meta.env.BASE_URL`, rather than a bare root path such as `/image.svg`.
+<details>
+<summary>Decode every animation attribute in your original method</summary>
 
-`catalog.json` at the repository root controls the gallery listing. A successful code push, a successful deployment, and a gallery entry are three separate things to check.
+| Attribute                   | Meaning                                                |
+| --------------------------- | ------------------------------------------------------ |
+| `attributeName="transform"` | Animate the group's transform                          |
+| `type="translate"`          | Move it, rather than rotate or scale it                |
+| `values`                    | The sequence of horizontal/vertical offsets            |
+| `keyTimes`                  | When each value is reached, as a fraction of the cycle |
+| `dur="4s"`                  | One full cycle takes four seconds                      |
+| `repeatCount="indefinite"`  | Repeat the cycle                                       |
+| `calcMode="spline"`         | Use easing curves between the values                   |
+| `keySplines`                | The cubic Bézier curves for those intervals            |
 
-Do not commit `node_modules/`, `dist/`, or TypeScript's generated `*.tsbuildinfo` cache.
+The full box also retains `attributeType="XML"`, which identifies an SVG/XML attribute as the target. It is not what makes the animation scroll-linked or timed.
 
-## 17. Run and verify
+Here is one card's cycle:
 
-From this experiment's directory:
+```text
+keyTimes    0      0.25      0.5      0.75      1
+seconds     0       1        2         3       4
+y offset    0       0      -100      -100      0
+            └ hold ┘└ lift ┘└ hold ┘└ return ┘
+```
+
+Repeated values create the holds. Five values create four intervals, so there are four easing-curve entries, separated by semicolons. Each `0.25 0.1 0.25 1` gives two control points for one interval's cubic Bézier easing curve; those numbers are not movement coordinates or seconds.
+
+The three cards use maximum lifts of `-100`, `-150`, and `-200`. The lid uses `-800`. They share the same cycle, so they move together but separate by different amounts.
+
+To slow the entire box while keeping it coordinated, change `dur` on **all four** animation elements, not just the lid.
+
+The box's drawing order is: interior → inner cards → front wall → lid. Later paths cover earlier ones, which creates the occlusion as the cards emerge.
+
+</details>
+
+**The comparison worth remembering:**
+
+```text
+Original: the clock chooses progress.
+New one:  your scroll chooses progress.
+Both:     a transform moves a group.
+```
+
+We replaced the controller, not the basic idea of moving SVG groups.
+
+---
+
+## 7. Try these three experiments, one at a time
+
+Run `npm run dev` inside this experiment. Restore each change before moving to the next so you can see which setting caused which effect.
+
+| Try this                            | Where                             | What to notice                                |
+| ----------------------------------- | --------------------------------- | --------------------------------------------- |
+| First `-120` → `-200`               | `positions`, in `scene-motion.ts` | Scheduling rises farther; its callout follows |
+| `650svh` → `850svh`                 | `index.css`                       | Same poses, more scroll distance between them |
+| `28` → `50` in both heading offsets | `scene-motion.ts`                 | Headings travel farther; cards are unchanged  |
+
+Then try changing **all four** `dur="4s"` values in `timed-box.svg` to `8s`. Notice how that slows the box without adding any scrolling code.
+
+**You do not have to memorise the implementation. Learn which knob changes which behaviour.**
+
+<details>
+<summary>A small navigation map: which file do I open?</summary>
+
+| File                                      | Why you would open it                                                 |
+| ----------------------------------------- | --------------------------------------------------------------------- |
+| [scene-motion.ts](./src/scene-motion.ts)  | Poses, movement distances, easing, callout timing, heading words      |
+| [App.tsx](./src/App.tsx)                  | SVG grouping, rendered elements, scroll measurements, applying values |
+| [index.css](./src/index.css)              | Navy background, divider, font, dimensions, sticky and mobile layout  |
+| [scene.svg](./src/assets/scene.svg)       | The original agent-card drawing                                       |
+| [callouts.svg](./src/assets/callouts.svg) | Leader-line shapes and outlined lettering                             |
+| [timed-box.svg](./timed-box.svg)          | The standalone SMIL alternative                                       |
+| [main.tsx](./src/main.tsx)                | Mounts the React app and imports the CSS                              |
+| [index.html](./index.html)                | The empty root element and browser-tab title                          |
+| [package.json](./package.json)            | Dependencies and dev/build commands                                   |
+| `package-lock.json`                       | Resolved dependency versions                                          |
+| `vite.config.ts`                          | Build plugins and `@` import alias                                    |
+| `tsconfig.json`                           | TypeScript checking and alias resolution                              |
+| `src/vite-env.d.ts`                       | Types for Vite features such as raw imports                           |
+
+Startup is `index.html → main.tsx → App.tsx`.
+
+`dist/` is generated output, not a place to edit. Temporary `/tmp/project365-*.mjs` files are development tests, not website code. Keep `node_modules/`, `dist/`, and generated `*.tsbuildinfo` caches out of commits.
+
+</details>
+
+<details>
+<summary>The setup details you can learn later</summary>
+
+**Why import with `?raw`?**
+
+```tsx
+import sceneSource from "./assets/scene.svg?raw";
+```
+
+Vite returns the markup as text. `DOMParser` reads it, and `readPaths()` extracts each shape's `d`, fill, stroke, and fill/clip rules. React then creates inline SVG elements we can control.
+
+An `<img>` can display the SVG but does not expose its internal groups as page elements we can select directly.
+
+`d` is the geometry; `fill` colours its interior; `stroke` colours its outline. SVG attributes such as `fill-rule` become `fillRule` in JSX. This parser handles the attributes used by this export, not every possible SVG feature.
+
+**What are the React hooks doing?**
+
+- `useRef`: keeps references to the actual section and scene elements.
+- `useLayoutEffect`: sets up measurements and listeners after React creates those elements.
+- The cleanup function removes listeners, disconnects `ResizeObserver`, and cancels pending animation work.
+- Development Strict Mode exercises setup and cleanup, so cleanup must be correct.
+
+`ResizeObserver` and resize events recalculate the scroll distance when the layout changes. The same `getSceneFrame(progress)` input always gives the same pose; the calculation does not remember previous stages or start timers.
+
+**Mobile and accessibility:** below 640px, the heading sits above the artwork. With reduced motion, the long track becomes one viewport, the stack stays still, and a visible text summary names all four agents. Decorative SVG lettering is hidden from screen readers; a real heading and summary provide the meaning. Keyboard users also get a focus-visible "Skip animation" link.
+
+**Font:** Inria Serif is bundled through `@fontsource/inria-serif`. The HTML headings use it. The exported lettering is already vector geometry, so it does not need a runtime font.
+
+</details>
+
+<details>
+<summary>The debugging and deployment lessons we should keep</summary>
+
+**Reloading halfway initially reset the scene to the top.** The browser restored scroll before React had mounted the tall section. The document was too short at that instant. Giving `#root:empty` the same height as `.scroll-story` reserves that space before mounting. Reduced-motion styles reserve just one viewport.
+
+**The editor flagged deprecated `baseUrl`.** We removed that option instead of suppressing the warning, then made TypeScript's path alias explicitly relative: `"@/*": ["./src/*"]`. Vite retains its corresponding alias.
+
+**GitHub Pages serves the app from a subpath**, `/project-365/2026/09/19-svg-animation/`. Imported SVG strings and font files are bundled appropriately. Future runtime references to `public/` assets need `import.meta.env.BASE_URL`, not a bare `/image.svg`.
+
+**A pushed commit, a successful deployment, and a gallery listing are separate checks.** Root `catalog.json` controls the gallery. The lesson's standalone `timed-box.svg` sits outside `public/` and is not imported by the app, so the production build does not publish it as another demo URL.
+
+Install and run locally:
 
 ```bash
 npm ci
 npm run dev
 ```
 
-Check types and make a production build:
+Typecheck and build:
 
 ```bash
 npm run build
 ```
 
-Check the actual deployment base path:
+Verify the deployment subpath:
 
 ```bash
 npm run build -- --base=/project-365/2026/09/19-svg-animation/
 npm run preview -- --base=/project-365/2026/09/19-svg-animation/
 ```
 
-Open the URL printed by Vite. Stop the development or preview server with Ctrl+C when finished.
+Check the actual browser too: all six poses, intermediate line drawing, one callout at a time, no endpoint callouts, reverse scroll, reload, font loading, mobile overflow, reduced motion, and failed assets or JavaScript errors.
 
-Browser verification should cover:
+</details>
 
-- All six poses and the transitions between them.
-- Only the active callout appearing, with no callouts at the endpoints.
-- Partial line drawing, not just fully visible/hidden states.
-- Reverse scrolling restoring the same positions.
-- Reloading in the middle of the section.
-- Font loading and no horizontal overflow.
-- Narrow/mobile layouts and reduced motion.
-- No JavaScript errors or failed application asset requests.
+## Close the file with just this in mind
 
-## 18. A practical editing guide
-
-| Change you want | Where to edit |
-| --- | --- |
-| Lift a card farther | `positions` in `scene-motion.ts` |
-| Require more/less scrolling | `650svh` in `index.css` |
-| Hold poses longer/shorter | The `0.18` and `0.82` transition boundaries |
-| Change main heading wording | `headings` and agent `title` values |
-| Change heading travel | The `28` values |
-| Change when a line draws/retracts | The callout `line` expression |
-| Change label entrance/exit | `text` and `textY` |
-| Change the visible callout words | Lettering paths in `callouts.svg` |
-| Change colours, divider, sizing | `index.css` |
-| Change card artwork | `scene.svg`, checking the grouping assumptions afterwards |
-
-Try one small change at a time, observe it, then restore it or deliberately keep it. Do not start by changing every timing value together.
-
-Suggested learning order:
-
-1. Change one card offset.
-2. Change the scroll distance.
-3. Change one heading.
-4. Change the heading's movement distance.
-5. Adjust a callout's reveal window.
-6. Only then study the parser and lifecycle code.
-
-## Final mental model
+**Your group is the thing being moved. The numbers say how far.**
 
 ```text
-Artwork supplies the shapes.
-CSS supplies the stage.
-Scrolling supplies progress.
-scene-motion.ts supplies movement values.
-App.tsx applies those values to the page.
+scene.svg        → the shapes
+scene-motion.ts  → the numbers
+App.tsx          → apply the numbers to the shapes
+index.css        → the stage they sit on
 ```
 
-The core concept is not complicated: **scrolling changes numbers, and those numbers move the drawing.**
+If you can explain what `[-120, 0, 0, 0]` does, you already understand the heart of the animation. The rest is how we connect that idea to a browser.
