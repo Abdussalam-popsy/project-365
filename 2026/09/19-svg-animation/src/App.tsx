@@ -1,15 +1,31 @@
 import { useLayoutEffect, useRef, type SVGProps } from "react";
-import sceneSource from "./assets/scene.svg?raw";
+import sceneSource from "./assets/scene-updated.svg?raw";
 import calloutSource from "./assets/callouts.svg?raw";
 import { agents, clamp, getSceneFrame, headings } from "./scene-motion";
 
 type Path = SVGProps<SVGPathElement>;
 
-function readPaths(source: string): Path[] {
+const cardPalette: Record<string, string> = {
+  white: "var(--card-face)",
+  black: "var(--card-ink)",
+  "#c0d8fb": "var(--card-light-side)",
+  "#94bdfa": "var(--card-blue-side)",
+  "#0d2872": "var(--card-recess)",
+};
+
+function cardPaint(paint?: string) {
+  return paint ? (cardPalette[paint.toLowerCase()] ?? paint) : undefined;
+}
+
+function readSvg(source: string) {
   const document = new DOMParser().parseFromString(source, "image/svg+xml");
   if (document.querySelector("parsererror"))
     throw new Error("Invalid scene SVG");
-  return Array.from(document.querySelectorAll("path"), (path) => ({
+  return document;
+}
+
+function readPaths(source: ParentNode): Path[] {
+  return Array.from(source.querySelectorAll("path"), (path) => ({
     d: path.getAttribute("d") ?? "",
     fill: path.getAttribute("fill") ?? "none",
     stroke: path.getAttribute("stroke") ?? undefined,
@@ -19,21 +35,20 @@ function readPaths(source: string): Path[] {
   }));
 }
 
-const cardLayers = readPaths(sceneSource).reduce<Path[][]>((layers, path) => {
-  if (path.fill === "white" && path.d?.startsWith("M0.699585")) layers.push([]);
-  if (!layers.length)
-    throw new Error("Expected a card face at the start of scene.svg");
-  layers[layers.length - 1].push(path);
-  return layers;
-}, []);
-const calloutPaths = readPaths(calloutSource);
+const sceneDocument = readSvg(sceneSource);
+const cardLayers = [...agents].reverse().map(({ id }) => {
+  const group = sceneDocument.getElementById(id);
+  if (!group) throw new Error(`Missing SVG card group: ${id}`);
+  return readPaths(group);
+});
+const calloutPaths = readPaths(readSvg(calloutSource));
 
 if (
-  cardLayers.length !== agents.length ||
+  cardLayers.some((paths) => paths.length === 0) ||
   calloutPaths.length !== agents.length * 2
 ) {
   throw new Error(
-    "Expected four cards and four label/line pairs in the scene assets",
+    "Expected four non-empty cards and four label/line pairs in the scene assets",
   );
 }
 
@@ -71,9 +86,10 @@ export default function App() {
         ? 0
         : clamp((window.scrollY - start) / distance);
       const frame = getSceneFrame(progress);
-      cards.forEach((card, index) =>
-        card.setAttribute("transform", `translate(0 ${frame.cards[index]})`),
-      );
+      cards.forEach((card, index) => {
+        card.setAttribute("transform", `translate(0 ${frame.cards[index]})`);
+        card.style.setProperty("--card-focus", `${frame.focus[index] * 100}%`);
+      });
       titles.forEach((title, index) => {
         title.style.opacity = String(frame.headings[index].opacity);
         title.style.transform = `translateY(${frame.headings[index].y}px)`;
@@ -193,7 +209,12 @@ export default function App() {
                   key={index}
                 >
                   {paths.map((path, pathIndex) => (
-                    <path {...path} key={pathIndex} />
+                    <path
+                      {...path}
+                      fill={cardPaint(path.fill)}
+                      stroke={cardPaint(path.stroke)}
+                      key={pathIndex}
+                    />
                   ))}
                 </g>
               ))}

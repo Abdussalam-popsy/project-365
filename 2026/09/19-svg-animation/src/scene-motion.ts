@@ -1,8 +1,32 @@
 export const agents = [
-  { id: "scheduling", title: "Scheduling", label: "Your carers", top: 600, lineStart: 530 },
-  { id: "onboarding", title: "Onboarding", label: "Your team", top: 640.5, lineStart: 582 },
-  { id: "retention", title: "Retention", label: "Keeping the team", top: 681, lineStart: 731 },
-  { id: "payroll", title: "Payroll", label: "Paying the team", top: 721.5, lineStart: 787 },
+  {
+    id: "scheduling",
+    title: "Scheduling",
+    label: "Your carers",
+    top: 600,
+    lineStart: 530,
+  },
+  {
+    id: "onboarding",
+    title: "Onboarding",
+    label: "Your team",
+    top: 640.5,
+    lineStart: 582,
+  },
+  {
+    id: "retention",
+    title: "Retention",
+    label: "Keeping the team",
+    top: 681,
+    lineStart: 731,
+  },
+  {
+    id: "payroll",
+    title: "Payroll",
+    label: "Paying the team",
+    top: 721.5,
+    lineStart: 787,
+  },
 ] as const;
 
 export const headings = [
@@ -33,16 +57,20 @@ export function getSceneFrame(progress: number) {
   const time = clamp(progress) * (positions.length - 1);
   const stage = Math.min(Math.floor(time), positions.length - 2);
   const blend = ease(0.18, 0.82, time - stage);
-  const cards = positions[stage].map((position, index) =>
-    position + (positions[stage + 1][index] - position) * blend,
+  const cards = positions[stage].map(
+    (position, index) =>
+      position + (positions[stage + 1][index] - position) * blend,
   );
+
+  const headingFrames = headings.map((_, index) => ({
+    opacity: index === stage ? 1 - blend : index === stage + 1 ? blend : 0,
+    y: index === stage ? -28 * blend : 28 * (1 - blend),
+  }));
 
   return {
     cards,
-    headings: headings.map((_, index) => ({
-      opacity: index === stage ? 1 - blend : index === stage + 1 ? blend : 0,
-      y: index === stage ? -28 * blend : 28 * (1 - blend),
-    })),
+    focus: headingFrames.slice(1, -1).map((heading) => heading.opacity),
+    headings: headingFrames,
     callouts: agents.map((agent, index) => {
       const local = time - (index + 1);
       const line = ease(-0.34, -0.12, local) * (1 - ease(0.3, 0.48, local));
@@ -51,7 +79,11 @@ export function getSceneFrame(progress: number) {
         line,
         opacity: text,
         textY: 8 * (1 - ease(-0.18, 0, local)) - 5 * ease(0.2, 0.34, local),
-        y: agent.top + (274 - 206.088) / Math.sqrt(3) + cards[index] - agent.lineStart,
+        y:
+          agent.top +
+          (274 - 206.088) / Math.sqrt(3) +
+          cards[index] -
+          agent.lineStart,
       };
     }),
   };

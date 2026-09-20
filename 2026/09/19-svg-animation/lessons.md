@@ -23,18 +23,18 @@ GROUPING: Which shapes belong to this card?
 MOVEMENT: How far should this card move?
 ```
 
-Your original box already had groups. The newer Figma export arrived as a long list of paths without card-level groups.
+Your original box already had groups. Both Figma card exports arrived as long lists of paths without card-level groups.
 
-So we put the groups back **when building the page**:
+The first implementation guessed the boundaries from a coordinate. With the updated icons, we now give each card an explicit name in [scene-updated.svg](./src/assets/scene-updated.svg):
 
 ```text
-33 paths → Payroll group
-33 paths → Retention group
-33 paths → Onboarding group
-33 paths → Scheduling group
+52 paths → <g id="payroll">
+42 paths → <g id="retention">
+24 paths → <g id="onboarding">
+33 paths → <g id="scheduling">
 ```
 
-A group is just a container. Move the container, and its white face, blue sides, building, and lettering move together.
+A group is just a container. Move the container, and its white face, blue sides, icon, and lettering move together. The groups do not need equal numbers of paths.
 
 The browser ultimately gets a group tagged like this:
 
@@ -45,57 +45,59 @@ The browser ultimately gets a group tagged like this:
 
 The real group contains Scheduling's 33 paths; the empty example above only shows its wrapper.
 
-**Same idea as your `<g>`. Different place where the group is created.** Your original declared it in the SVG file. This version creates it in [App.tsx](./src/App.tsx).
+**Same idea as your `<g>`.** The source SVG now names the groups explicitly. [App.tsx](./src/App.tsx) reads those named groups and creates their animated counterparts on the page.
 
 <details>
 <summary>Show me exactly how the code finds the four cards</summary>
 
-The export's path order is bottom-to-top:
-
-| Paths, counted from 1 | Card       | Current SVG file lines |
-| --------------------- | ---------- | ---------------------- |
-| 1–33                  | Payroll    | 2–34                   |
-| 34–66                 | Retention  | 35–67                  |
-| 67–99                 | Onboarding | 68–100                 |
-| 100–132               | Scheduling | 101–133                |
-
-Those line numbers describe the current export, not a rule future exports must follow.
-
-At the start of each card is a white top-face path. All four of those paths begin their drawing commands with `M0.699585`.
-
-This is the identifying check in `App.tsx`:
+This is the current code in `App.tsx`:
 
 ```ts
-if (path.fill === "white" && path.d?.startsWith("M0.699585")) layers.push([]);
-layers[layers.length - 1].push(path);
+const sceneDocument = readSvg(sceneSource);
+const cardLayers = [...agents].reverse().map(({ id }) => {
+  const group = sceneDocument.getElementById(id);
+  if (!group) throw new Error(`Missing SVG card group: ${id}`);
+  return readPaths(group);
+});
 ```
 
 Read it as:
 
-1. Is this one of the white top faces?
-2. If yes, start a new empty collection.
-3. Put this path into the latest collection.
-4. Keep adding the following paths until another top face starts a new card.
+1. Parse the SVG markup into a document.
+2. Visit the agent names in back-to-front drawing order.
+3. Find the group with that name, such as `id="payroll"`.
+4. Read the paths inside that group.
 
-It does **not** blindly cut the file every 33 paths. The 33-path count is the result for this particular export.
+| Syntax               | Meaning here                                         |
+| -------------------- | ---------------------------------------------------- |
+| `[...agents]`        | Make a copy of the agent list                        |
+| `.reverse()`         | Reverse that copy without changing the original list |
+| `.map(...)`          | Produce one path collection per agent                |
+| `({ id })`           | Take the `id` field from the current agent           |
+| `getElementById(id)` | Find the source SVG element with that exact ID       |
+| `if (!group)`        | If that group is missing                             |
+| `readPaths(group)`   | Extract the path attributes inside that group        |
 
-A few symbols decoded:
+There is no fixed path count and no geometry-prefix guessing now. You can add detail to an icon inside its existing group without changing which card it belongs to.
 
-| Syntax              | Meaning here                                |
-| ------------------- | ------------------------------------------- |
-| `===`               | Is exactly equal to                         |
-| `&&`                | Both conditions must be true                |
-| `path.d?.`          | Only call the next method if `d` exists     |
-| `.startsWith(...)`  | Does this text begin with these characters? |
-| `.push(...)`        | Add an item to an array                     |
-| `[]`                | An empty array, or list                     |
-| `layers.length - 1` | The index of the most recently added group  |
+The groups must contain the actual path coordinates, as this export does. The parser is not a general SVG renderer: it does not preserve arbitrary nested transforms, masks, or other element types. If a future export introduces those, inspect it before replacing this file.
 
-The surrounding `.reduce(...)` walks through all the paths and builds that list of groups. It is collecting shapes, not shrinking the artwork.
+</details>
 
-**Important limitation:** this recognition is tailored to your export. It is not an SVG feature that automatically understands cards. Changed coordinates, path order, or colour formatting could break it.
+<details>
+<summary>What happened to the coordinate detector from the first lesson?</summary>
 
-For future artwork, explicit named groups are easier to maintain. Check the exported markup: Figma layer names do not always survive as SVG IDs.
+The original [scene.svg](./src/assets/scene.svg) is kept for comparison. It contained four cards of 33 paths each, with no named groups.
+
+The old code started a new collection whenever it found a white top face beginning with `M0.699585`, then appended the following paths until the next top face. `.reduce(...)` collected those paths into four arrays.
+
+It did not cut the SVG every 33 paths. That happened to be each card's count.
+
+When the updated icon artwork was exported, Figma changed that starting coordinate to `M0.699707`. Visually the card barely moved, but an exact string comparison would fail.
+
+Instead of changing one fragile decimal check to another, we added the four named `<g>` wrappers without changing any path geometry. The app now reads names, not decimal prefixes.
+
+**The lesson:** give moving objects an identity rather than recognise them by an incidental coordinate. Preserve these group IDs on future exports, or add the wrappers back after exporting. Figma layer names do not always survive as SVG IDs.
 
 </details>
 
@@ -105,19 +107,24 @@ For future artwork, explicit named groups are easier to maintain. Check the expo
 This is the rendering code in `App.tsx`:
 
 ```tsx
-{
-  cardLayers.map((paths, index) => (
+<svg>
+  {cardLayers.map((paths, index) => (
     <g
       className="agent-card"
       data-card={agents[agents.length - 1 - index].id}
       key={index}
     >
       {paths.map((path, pathIndex) => (
-        <path {...path} key={pathIndex} />
+        <path
+          {...path}
+          fill={cardPaint(path.fill)}
+          stroke={cardPaint(path.stroke)}
+          key={pathIndex}
+        />
       ))}
     </g>
-  ));
-}
+  ))}
+</svg>
 ```
 
 - `.map(...)`: make one rendered item for each item in the array.
@@ -127,7 +134,7 @@ This is the rendering code in `App.tsx`:
 - `data-card`: a label we attach so JavaScript can find a particular card later. It does not animate anything by itself.
 - `key`: helps React identify list items; it is not an SVG movement setting.
 
-The export order is Payroll → Retention → Onboarding → Scheduling. The `agents` array is Scheduling → Onboarding → Retention → Payroll.
+We collect the named groups in Payroll → Retention → Onboarding → Scheduling order, regardless of where they appear in the export. The `agents` array is Scheduling → Onboarding → Retention → Payroll.
 
 So `agents.length - 1 - index`, or `3 - index`, reverses the name lookup. The first rendered group gets Payroll's name; the last gets Scheduling's.
 
@@ -328,9 +335,10 @@ For Scheduling, the selector becomes `[data-card="scheduling"]`.
 Then it applies the calculated values:
 
 ```tsx
-cards.forEach((card, index) =>
-  card.setAttribute("transform", `translate(0 ${frame.cards[index]})`),
-);
+cards.forEach((card, index) => {
+  card.setAttribute("transform", `translate(0 ${frame.cards[index]})`);
+  card.style.setProperty("--card-focus", `${frame.focus[index] * 100}%`);
+});
 ```
 
 Break that down:
@@ -353,6 +361,45 @@ For Scheduling, this produces:
 ```
 
 Again, the real group contains the card's paths. Moving its wrapper moves all of them together.
+
+</details>
+
+<details>
+<summary>How does the active card brighten without becoming see-through?</summary>
+
+All cards begin muted. During each agent's stage, its whole card and icon return to their original colours. As the next agent takes over, the previous card mutes again. All cards finish muted.
+
+We do **not** lower the card's opacity. That would reveal the icons and faces underneath it.
+
+Instead, `cardPaint()` maps each original fill and stroke to a named CSS colour variable. For example, `white` becomes `var(--card-face)`. The original SVG artwork stays unchanged.
+
+In `index.css`:
+
+```css
+.agent-card {
+  --card-face: color-mix(in srgb, #59637b, #fff var(--card-focus, 0%));
+}
+```
+
+- At `--card-focus: 0%`, the face is solid muted blue-grey.
+- At `50%`, it is halfway between that colour and white, still solid.
+- At `100%`, the original white is restored.
+
+Both input colours are opaque, and their weights add to 100%. Nothing becomes transparent. The blue sides, dark recess, and outlines have matching colour pairs so the entire illustration changes together.
+
+`scene-motion.ts` uses the same 0–1 blend as each agent's heading to calculate `frame.focus`. It excludes the first and last overview headings, so neither endpoint activates a card. During a handoff, one card dims while the next brightens.
+
+`App.tsx` updates the card group's CSS variable:
+
+```ts
+card.style.setProperty("--card-focus", `${frame.focus[index] * 100}%`);
+```
+
+`setProperty` changes a CSS custom property. Its children inherit the palette variables, so we update four groups rather than manually recolour every path on every frame.
+
+We reuse the heading's visibility number, **not** its opacity behaviour: text fades, but card colours blend. The active colour values match the source artwork exactly. Reverse scrolling reverses the colour blend too.
+
+To tune how muted the inactive cards look, change the first colour in each `.agent-card` palette pair in `index.css`. Leave the second colour alone to preserve the original active artwork. `fill="none"` remains `none` for paths that were already outline-only.
 
 </details>
 
@@ -761,21 +808,21 @@ Then try changing **all four** `dur="4s"` values in `timed-box.svg` to `8s`. Not
 <details>
 <summary>A small navigation map: which file do I open?</summary>
 
-| File                                      | Why you would open it                                                 |
-| ----------------------------------------- | --------------------------------------------------------------------- |
-| [scene-motion.ts](./src/scene-motion.ts)  | Poses, movement distances, easing, callout timing, heading words      |
-| [App.tsx](./src/App.tsx)                  | SVG grouping, rendered elements, scroll measurements, applying values |
-| [index.css](./src/index.css)              | Navy background, divider, font, dimensions, sticky and mobile layout  |
-| [scene.svg](./src/assets/scene.svg)       | The original agent-card drawing                                       |
-| [callouts.svg](./src/assets/callouts.svg) | Leader-line shapes and outlined lettering                             |
-| [timed-box.svg](./timed-box.svg)          | The standalone SMIL alternative                                       |
-| [main.tsx](./src/main.tsx)                | Mounts the React app and imports the CSS                              |
-| [index.html](./index.html)                | The empty root element and browser-tab title                          |
-| [package.json](./package.json)            | Dependencies and dev/build commands                                   |
-| `package-lock.json`                       | Resolved dependency versions                                          |
-| `vite.config.ts`                          | Build plugins and `@` import alias                                    |
-| `tsconfig.json`                           | TypeScript checking and alias resolution                              |
-| `src/vite-env.d.ts`                       | Types for Vite features such as raw imports                           |
+| File                                                | Why you would open it                                                 |
+| --------------------------------------------------- | --------------------------------------------------------------------- |
+| [scene-motion.ts](./src/scene-motion.ts)            | Poses, movement distances, easing, callout timing, heading words      |
+| [App.tsx](./src/App.tsx)                            | SVG grouping, rendered elements, scroll measurements, applying values |
+| [index.css](./src/index.css)                        | Navy background, divider, font, dimensions, sticky and mobile layout  |
+| [scene-updated.svg](./src/assets/scene-updated.svg) | Current card artwork, with four named groups                          |
+| [callouts.svg](./src/assets/callouts.svg)           | Leader-line shapes and outlined lettering                             |
+| [timed-box.svg](./timed-box.svg)                    | The standalone SMIL alternative                                       |
+| [main.tsx](./src/main.tsx)                          | Mounts the React app and imports the CSS                              |
+| [index.html](./index.html)                          | The empty root element and browser-tab title                          |
+| [package.json](./package.json)                      | Dependencies and dev/build commands                                   |
+| `package-lock.json`                                 | Resolved dependency versions                                          |
+| `vite.config.ts`                                    | Build plugins and `@` import alias                                    |
+| `tsconfig.json`                                     | TypeScript checking and alias resolution                              |
+| `src/vite-env.d.ts`                                 | Types for Vite features such as raw imports                           |
 
 Startup is `index.html → main.tsx → App.tsx`.
 
@@ -789,7 +836,7 @@ Startup is `index.html → main.tsx → App.tsx`.
 **Why import with `?raw`?**
 
 ```tsx
-import sceneSource from "./assets/scene.svg?raw";
+import sceneSource from "./assets/scene-updated.svg?raw";
 ```
 
 Vite returns the markup as text. `DOMParser` reads it, and `readPaths()` extracts each shape's `d`, fill, stroke, and fill/clip rules. React then creates inline SVG elements we can control.
@@ -853,10 +900,10 @@ Check the actual browser too: all six poses, intermediate line drawing, one call
 **Your group is the thing being moved. The numbers say how far.**
 
 ```text
-scene.svg        → the shapes
-scene-motion.ts  → the numbers
-App.tsx          → apply the numbers to the shapes
-index.css        → the stage they sit on
+scene-updated.svg → the shapes
+scene-motion.ts   → the numbers
+App.tsx           → apply the numbers to the shapes
+index.css         → the stage they sit on
 ```
 
 If you can explain what `[-120, 0, 0, 0]` does, you already understand the heart of the animation. The rest is how we connect that idea to a browser.

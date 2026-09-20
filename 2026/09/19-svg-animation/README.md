@@ -4,6 +4,8 @@ A scroll-linked SVG illustration of four AI agents: Scheduling, Onboarding, Rete
 
 Built with React, TypeScript, Vite, native SVG, and locally bundled Inria Serif. Includes mobile and reduced-motion layouts.
 
+The active artwork is `src/assets/scene-updated.svg`, with named `payroll`, `retention`, `onboarding`, and `scheduling` groups. Keep these IDs when updating the icons. The original `scene.svg` is preserved for comparison.
+
 ## Run
 
 ```bash
