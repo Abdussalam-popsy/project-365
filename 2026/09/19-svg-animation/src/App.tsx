@@ -1,4 +1,10 @@
-import { useLayoutEffect, useRef, type SVGProps } from "react";
+import {
+  useLayoutEffect,
+  useRef,
+  type CSSProperties,
+  type SVGProps,
+} from "react";
+import Lenis from "lenis";
 import sceneSource from "./assets/scene-updated.svg?raw";
 import calloutSource from "./assets/callouts.svg?raw";
 import { agents, clamp, getSceneFrame, headings } from "./scene-motion";
@@ -72,10 +78,22 @@ export default function App() {
     const labels = callouts.map(
       (node) => node.querySelector<SVGPathElement>(".callout-label")!,
     );
-    const titles = Array.from(
-      scene.querySelectorAll<HTMLSpanElement>(".scene-heading"),
+    const copyTrack = scene.querySelector<HTMLDivElement>(".copy-track")!;
+    const timeline = scene.querySelector<HTMLDivElement>(".step-timeline")!;
+    const featureSections = agents.map(
+      (agent) =>
+        scene.querySelector<HTMLElement>(`[data-feature="${agent.id}"]`)!,
     );
     const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
+    const lenis = new Lenis({
+      eventsTarget: scene,
+      autoRaf: true,
+      lerp: 0.1,
+      smoothWheel: true,
+      syncTouch: false,
+      respectReducedMotion: true,
+      anchors: { immediate: true },
+    });
     let start = 0;
     let distance = 1;
     let request = 0;
@@ -87,13 +105,26 @@ export default function App() {
         : clamp((window.scrollY - start) / distance);
       const frame = getSceneFrame(progress);
       cards.forEach((card, index) => {
+        const focus = `${frame.focus[index] * 100}%`;
         card.setAttribute("transform", `translate(0 ${frame.cards[index]})`);
-        card.style.setProperty("--card-focus", `${frame.focus[index] * 100}%`);
+        card.style.setProperty("--card-focus", focus);
+        featureSections[index].style.setProperty("--step-focus", focus);
       });
-      titles.forEach((title, index) => {
-        title.style.opacity = String(frame.headings[index].opacity);
-        title.style.transform = `translateY(${frame.headings[index].y}px)`;
-      });
+      timeline.style.setProperty(
+        "--marker-offset",
+        `${frame.marker.offset * 100}%`,
+      );
+      timeline.style.setProperty("--accent-from", frame.marker.from);
+      timeline.style.setProperty("--accent-to", frame.marker.to);
+      timeline.style.setProperty(
+        "--accent-blend",
+        `${frame.marker.blend * 100}%`,
+      );
+      timeline.style.setProperty(
+        "--timeline-progress",
+        String(frame.marker.draw),
+      );
+      copyTrack.style.transform = `translateY(${-progress * (headings.length - 1) * 100}%)`;
       callouts.forEach((callout, index) => {
         const state = frame.callouts[index];
         callout.setAttribute("transform", `translate(0 ${state.y})`);
@@ -117,24 +148,32 @@ export default function App() {
       schedule();
     }
 
+    function handleMotionChange() {
+      lenis.stop();
+      lenis.resize();
+      lenis.start();
+      measure();
+    }
+
     const observer = new ResizeObserver(measure);
     observer.observe(story);
     observer.observe(scene);
     window.addEventListener("scroll", schedule, { passive: true });
     window.addEventListener("resize", measure);
     window.addEventListener("pageshow", measure);
-    reducedMotion.addEventListener("change", measure);
+    reducedMotion.addEventListener("change", handleMotionChange);
     measure();
     window.cancelAnimationFrame(request);
     render();
 
     return () => {
+      lenis.destroy();
       window.cancelAnimationFrame(request);
       observer.disconnect();
       window.removeEventListener("scroll", schedule);
       window.removeEventListener("resize", measure);
       window.removeEventListener("pageshow", measure);
-      reducedMotion.removeEventListener("change", measure);
+      reducedMotion.removeEventListener("change", handleMotionChange);
     };
   }, []);
 
@@ -150,26 +189,58 @@ export default function App() {
       >
         <div className="scene" ref={sceneRef}>
           <div className="copy-panel">
-            <h1 className="heading-frame" id="scene-title">
-              <span className="sr-only">Four agents working side by side</span>
-              {headings.map((heading, index) => (
-                <span
-                  className="scene-heading"
-                  aria-hidden="true"
-                  key={`${heading}-${index}`}
-                  style={{ opacity: index === 0 ? 1 : 0 }}
-                >
-                  {heading}
-                </span>
-              ))}
-            </h1>
-            <ul className="static-summary">
-              {agents.map((agent) => (
-                <li key={agent.id}>
-                  {agent.title} <span>— {agent.label}</span>
-                </li>
-              ))}
-            </ul>
+            <div className="copy-track">
+              {headings.map((heading, index) => {
+                const Heading = index === 0 ? "h1" : "h2";
+                const agent =
+                  index > 0 && index <= agents.length
+                    ? agents[index - 1]
+                    : undefined;
+                return (
+                  <section
+                    className={`copy-section${agent ? " copy-section--feature" : ""}`}
+                    data-feature={agent?.id}
+                    style={
+                      agent
+                        ? ({ "--agent-accent": agent.accent } as CSSProperties)
+                        : undefined
+                    }
+                    key={`${heading}-${index}`}
+                  >
+                    {agent && (
+                      <p className="feature-eyebrow">
+                        <span className="step-number">
+                          {String(index).padStart(2, "0")}
+                        </span>
+                        <span>{agent.label}</span>
+                      </p>
+                    )}
+                    <Heading
+                      className="scene-heading"
+                      id={index === 0 ? "scene-title" : undefined}
+                    >
+                      {heading}
+                    </Heading>
+                    {index === 0 && (
+                      <ul className="static-summary">
+                        {agents.map((agent) => (
+                          <li key={agent.id}>
+                            {agent.title} <span>— {agent.label}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+                  </section>
+                );
+              })}
+            </div>
+            <div className="step-timeline" aria-hidden="true">
+              <span className="step-entry" />
+              <span className="step-rail" />
+              <span className="step-marker">
+                <span className="step-marker-core" />
+              </span>
+            </div>
           </div>
           <div className="illustration-panel">
             <svg

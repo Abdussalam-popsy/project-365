@@ -1,5 +1,6 @@
 @import "tailwindcss";
 @import "@fontsource/inria-serif/latin-400.css";
+@import "lenis/dist/lenis.css";
 
 :root {
   font-family: "Inria Serif", Georgia, serif;
@@ -41,28 +42,150 @@ body {
 }
 
 .copy-panel {
+  --copy-top: 33.5svh;
+  --rail-x: clamp(34px, 3.8vw, 60px);
+  --marker-size: 44px;
+  --rail-gap: 7px;
+  --eyebrow-height: 20px;
   position: relative;
   min-width: 0;
-  padding: 33.5svh 4vw 0 6.5vw;
+  min-height: 0;
+  overflow: clip;
   border-right: 1px solid rgb(255 255 255 / 24%);
 }
 
-.heading-frame {
+.copy-track {
+  height: 100%;
+  will-change: transform;
+}
+
+.copy-section {
   position: relative;
+  height: 100%;
+  padding: var(--copy-top) 4vw 0 6.5vw;
+}
+
+.copy-section--feature {
+  --step-color: color-mix(
+    in srgb,
+    #3b4864,
+    var(--agent-accent) var(--step-focus, 0%)
+  );
+  padding-left: calc(var(--rail-x) + 64px);
+}
+
+.step-timeline {
+  --step-color: color-mix(
+    in srgb,
+    var(--accent-from, #3b4864),
+    var(--accent-to, #00d3c3) var(--accent-blend, 0%)
+  );
+  --step-center: calc(var(--copy-top) + var(--eyebrow-height) / 2);
+  --step-start: calc(
+    var(--step-center) + var(--marker-size) / 2 + var(--rail-gap)
+  );
+  position: absolute;
+  inset: 0;
+  transform: translateY(var(--marker-offset, 100%));
+  will-change: transform;
+  pointer-events: none;
+}
+
+.feature-eyebrow {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  height: var(--eyebrow-height);
+  margin: 0 0 18px;
+  color: #c5cddc;
+  font:
+    500 clamp(12px, 1.1vw, 16px) / 1 ui-monospace,
+    "SFMono-Regular",
+    Consolas,
+    monospace;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.step-number {
+  color: var(--step-color);
+  font-variant-numeric: tabular-nums;
+}
+
+.step-entry,
+.step-rail {
+  position: absolute;
+  left: var(--rail-x);
+  width: 1px;
+  background: #2a354e;
+  pointer-events: none;
+}
+
+.step-entry {
+  top: 0;
+  height: calc(var(--step-center) - var(--marker-size) / 2 - var(--rail-gap));
+}
+
+.step-rail {
+  top: var(--step-start);
+  height: calc(100% - var(--step-start));
+}
+
+.step-rail::after {
+  position: absolute;
+  inset: 0;
+  background: var(--step-color);
+  transform: scaleY(var(--timeline-progress, 0));
+  transform-origin: top;
+  content: "";
+}
+
+.step-marker {
+  position: absolute;
+  top: calc(var(--step-center) - var(--marker-size) / 2);
+  left: calc(var(--rail-x) - var(--marker-size) / 2);
+  display: grid;
+  place-items: center;
+  width: var(--marker-size);
+  height: var(--marker-size);
+  border: 1px solid color-mix(in srgb, var(--step-color) 35%, transparent);
+  border-radius: 50%;
+  background: #050b24;
+  pointer-events: none;
+}
+
+.step-marker::before,
+.step-marker::after {
+  position: absolute;
+  border: 1px solid color-mix(in srgb, var(--step-color) 65%, transparent);
+  border-radius: 50%;
+  content: "";
+}
+
+.step-marker::before {
+  inset: 6px;
+}
+
+.step-marker::after {
+  inset: 12px;
+}
+
+.step-marker-core {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--step-color);
+  box-shadow: 0 0 14px color-mix(in srgb, var(--step-color) 18%, transparent);
+}
+
+.scene-heading {
   margin: 0;
-  min-height: 2.5em;
   font-size: clamp(32px, 4.3vw, 68px);
   font-weight: 400;
   line-height: 1.18;
   letter-spacing: -0.045em;
-}
-
-.scene-heading {
-  position: absolute;
-  inset: 0 0 auto;
-  display: block;
   white-space: pre-line;
-  will-change: transform, opacity;
 }
 
 .illustration-panel {
@@ -133,12 +256,43 @@ body {
   }
 
   .copy-panel {
-    padding: 5svh 7vw 0;
+    --copy-top: 5svh;
+    --rail-x: 24px;
+    --marker-size: 32px;
+    --rail-gap: 6px;
+    --eyebrow-height: 16px;
     border-right: 0;
     border-bottom: 1px solid rgb(255 255 255 / 18%);
   }
 
-  .heading-frame {
+  .copy-section {
+    padding: var(--copy-top) 7vw 0;
+  }
+
+  .copy-section--feature {
+    padding-left: calc(var(--rail-x) + 40px);
+  }
+
+  .feature-eyebrow {
+    gap: 10px;
+    margin-bottom: 12px;
+    font-size: 12px;
+  }
+
+  .step-marker::before {
+    inset: 5px;
+  }
+
+  .step-marker::after {
+    inset: 10px;
+  }
+
+  .step-marker-core {
+    width: 6px;
+    height: 6px;
+  }
+
+  .scene-heading {
     font-size: clamp(28px, 8.2vw, 44px);
   }
 
@@ -157,8 +311,13 @@ body {
     position: relative;
   }
 
-  .scene-heading {
+  .copy-track {
+    transform: none !important;
     will-change: auto;
+  }
+
+  .copy-section:not(:first-child) {
+    display: none;
   }
 
   .static-summary {
@@ -178,7 +337,8 @@ body {
   }
 
   .callout,
-  .skip-link {
+  .skip-link,
+  .step-timeline {
     display: none;
   }
 }

@@ -3,6 +3,7 @@ export const agents = [
     id: "scheduling",
     title: "Scheduling",
     label: "Your carers",
+    accent: "#00d3c3",
     top: 600,
     lineStart: 530,
   },
@@ -10,6 +11,7 @@ export const agents = [
     id: "onboarding",
     title: "Onboarding",
     label: "Your team",
+    accent: "#f5ce63",
     top: 640.5,
     lineStart: 582,
   },
@@ -17,6 +19,7 @@ export const agents = [
     id: "retention",
     title: "Retention",
     label: "Keeping the team",
+    accent: "#f28ebd",
     top: 681,
     lineStart: 731,
   },
@@ -24,6 +27,7 @@ export const agents = [
     id: "payroll",
     title: "Payroll",
     label: "Paying the team",
+    accent: "#ffbc8b",
     top: 721.5,
     lineStart: 787,
   },
@@ -33,6 +37,12 @@ export const headings = [
   "Four agents\nworking side by side",
   ...agents.map((agent) => agent.title),
   "Four agents\nworking side by side",
+];
+
+const markerAccents = [
+  "#3b4864",
+  ...agents.map((agent) => agent.accent),
+  "#3b4864",
 ];
 
 const positions = [
@@ -62,15 +72,18 @@ export function getSceneFrame(progress: number) {
       position + (positions[stage + 1][index] - position) * blend,
   );
 
-  const headingFrames = headings.map((_, index) => ({
-    opacity: index === stage ? 1 - blend : index === stage + 1 ? blend : 0,
-    y: index === stage ? -28 * blend : 28 * (1 - blend),
-  }));
-
   return {
     cards,
-    focus: headingFrames.slice(1, -1).map((heading) => heading.opacity),
-    headings: headingFrames,
+    focus: agents.map((_, index) =>
+      index + 1 === stage ? 1 - blend : index === stage ? blend : 0,
+    ),
+    marker: {
+      offset: Math.max(1 - time, 0) - Math.max(time - agents.length, 0),
+      from: markerAccents[stage],
+      to: markerAccents[stage + 1],
+      blend,
+      draw: clamp(time),
+    },
     callouts: agents.map((agent, index) => {
       const local = time - (index + 1);
       const line = ease(-0.34, -0.12, local) * (1 - ease(0.3, 0.48, local));

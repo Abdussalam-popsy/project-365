@@ -35,7 +35,42 @@ Each interaction is a self-contained micro-project exploring a single concept �
   ./scripts/new.sh threejs cubic-shapes-wireframe
 ```
 
-The script creates a dated folder, copies the template, and runs `npm install` if needed.
+The script creates a dated folder, copies the template, and runs `npm install` if needed. It also copies the portable learning rule from `templates/.devin/rules/learning.md` and creates `lessons.md` from a starter when the selected template does not already contain one.
+
+### Explain the code before committing
+
+This is a learning repo. The always-on rule in `.devin/rules/learning.md` and the reusable [code-lessons skill](./.devin/skills/code-lessons/SKILL.md) require a current, beginner-friendly `lessons.md` before delivery and requested commits. Each meaningful source file gets an expandable `@file: ... — explained` section covering syntax, nesting, indexes, data flow, maths, and small exercises. This is an agent workflow rule, not a Git hook, and does not grant permission to commit or push.
+
+The [Three.js starter walkthrough](./templates/threejs/lessons.md) is a complete example. New experiments inherit their own portable rule so the teaching instructions also travel with a scaffolded project.
+
+<details>
+<summary>@file: scripts/new.sh — how a starter gets its learning files</summary>
+
+[Open the script](./scripts/new.sh).
+
+The script receives a template name and experiment name. It checks the template exists, builds a `YYYY/MM/DD-name` path using the current date, and refuses to overwrite an existing experiment.
+
+`REPO_ROOT` is derived from the script's location, not whichever directory the terminal happened to start in. `TEMPLATE_DIR` and `TARGET_DIR` name the source and destination. Quoting `"$TARGET_DIR"` keeps paths containing spaces together as one shell argument.
+
+`cp -r "$TEMPLATE_DIR"/. "$TARGET_DIR"` copies the starter, including its hidden files. The script then creates `.devin/rules/` in the new directory and copies the portable learning rule into it.
+
+The lesson guard is:
+
+```bash
+if [[ ! -f "$TARGET_DIR/lessons.md" ]]; then
+  cp "$REPO_ROOT/templates/.devin/lesson-template.md" "$TARGET_DIR/lessons.md"
+fi
+```
+
+`-f` asks whether a regular file exists; `!` reverses the answer. This means “use the generic lesson starter only when the selected template did not already supply a lesson.” The Three.js template's full walkthrough therefore survives scaffolding.
+
+If the generated project has a `package.json`, the existing final step runs `npm install` inside it. `set -euo pipefail` makes failures and missing shell variables stop the script instead of silently continuing.
+
+The starter's lesson prompts must be replaced with real explanations as the experiment is built. Copying a file named `lessons.md` is not the same as finishing the teaching work.
+
+For script syntax checking, run `bash -n scripts/new.sh`; it checks syntax without creating an experiment or installing packages.
+
+</details>
 
 ### Add to catalog when done
 
@@ -67,7 +102,7 @@ cp -r templates/vanilla/. 2026/03/08-my-thing/
 cd 2026/03/08-my-thing && npm install
 ```
 
-That's all the script does — just keep the `DD-name` inside `YYYY/MM/` convention.
+Manual copying creates the code starter but does not add the shared learning rule or fallback lesson file. Prefer `new.sh` for that complete setup, while keeping the `DD-name` inside `YYYY/MM/` convention.
 
 ## Interactions
 

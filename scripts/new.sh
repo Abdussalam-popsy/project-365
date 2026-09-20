@@ -36,6 +36,11 @@ fi
 
 mkdir -p "$TARGET_DIR"
 cp -r "$TEMPLATE_DIR"/. "$TARGET_DIR"
+mkdir -p "$TARGET_DIR/.devin/rules"
+cp "$REPO_ROOT/templates/.devin/rules/learning.md" "$TARGET_DIR/.devin/rules/learning.md"
+if [[ ! -f "$TARGET_DIR/lessons.md" ]]; then
+  cp "$REPO_ROOT/templates/.devin/lesson-template.md" "$TARGET_DIR/lessons.md"
+fi
 
 echo "Created: $TARGET_DIR"
 
