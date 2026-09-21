@@ -1,6 +1,7 @@
 import {
   useLayoutEffect,
   useRef,
+  useSyncExternalStore,
   type CSSProperties,
   type SVGProps,
 } from "react";
@@ -8,6 +9,7 @@ import Lenis from "lenis";
 import sceneSource from "./assets/scene-updated.svg?raw";
 import calloutSource from "./assets/callouts.svg?raw";
 import { agents, clamp, getSceneFrame, headings } from "./scene-motion";
+import MobileExperience from "./MobileExperience";
 
 type Path = SVGProps<SVGPathElement>;
 
@@ -58,7 +60,29 @@ if (
   );
 }
 
+const mobileLayout = window.matchMedia(
+  "(max-width: 640px), (max-width: 1024px) and (pointer: coarse)",
+);
+
+function subscribeToLayout(onChange: () => void) {
+  mobileLayout.addEventListener("change", onChange);
+  return () => mobileLayout.removeEventListener("change", onChange);
+}
+
+function getMobileLayout() {
+  return mobileLayout.matches;
+}
+
 export default function App() {
+  const isMobile = useSyncExternalStore(subscribeToLayout, getMobileLayout);
+  return isMobile ? (
+    <MobileExperience cardLayers={cardLayers} />
+  ) : (
+    <DesktopExperience />
+  );
+}
+
+function DesktopExperience() {
   const storyRef = useRef<HTMLElement>(null);
   const sceneRef = useRef<HTMLDivElement>(null);
 

@@ -1,10 +1,12 @@
 # SVG Animation
 
-A scroll-linked SVG illustration of four AI agents: Scheduling, Onboarding, Retention, and Payroll. Cards lift into an upper stack while full-opacity text sections scroll past one shared ringed marker. The marker enters, pins at the reading point, then exits, blending through teal, yellow, pink, and light orange. SVG leader lines draw toward their labels.
+A responsive SVG exploration of four AI agents: Scheduling, Onboarding, Retention, and Payroll. On desktop, cards lift into an upper stack while full-opacity text sections scroll past one shared ringed marker. The marker enters, pins at the reading point, then exits, blending through teal, yellow, pink, and light orange. SVG leader lines draw toward their labels.
 
 Built with React, TypeScript, Vite, native SVG, Lenis smooth scrolling, and locally bundled Inria Serif. Includes mobile and reduced-motion layouts.
 
-Lenis smooths wheel input over the scene; touch remains native. The skip link jumps immediately, and Agentation's controls are outside Lenis's input target. The `lerp` setting in `src/App.tsx` tunes the smoothing without changing the card choreography.
+Phones and small touch screens use a separate text-first layout: an introduction, then four normally scrolling sections with a heading, short sentence, and compact card illustration. There is no pinned stage or long scroll runway. A small one-time image reveal is removed for reduced motion, while all content stays available.
+
+Lenis smooths wheel input over the desktop scene; the mobile experience uses native scrolling without initializing Lenis. The desktop skip link jumps immediately, and Agentation's controls are outside Lenis's input target. The `lerp` setting in `src/App.tsx` tunes desktop smoothing without changing the card choreography.
 
 The active artwork is `src/assets/scene-updated.svg`, with named `payroll`, `retention`, `onboarding`, and `scheduling` groups. Keep these IDs when updating the icons. The original `scene.svg` is preserved for comparison.
 

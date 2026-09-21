@@ -5,7 +5,7 @@ A guided tour of the SVG experiment. Follow **Scheduling** from a drawing to a m
 **Three answers before we start:**
 
 - **Did we use groups like your original? Yes.** We create `<g>` elements in React.
-- **Did we use GSAP or Motion? Neither.** Lenis smooths the scroll input. Our TypeScript calculates the poses; SVG displays them; CSS keeps the scene pinned.
+- **Did we use GSAP or Motion? Neither.** On desktop, Lenis smooths scroll input and our TypeScript calculates the pinned scene's poses. Mobile uses native page scrolling with compact illustrations.
 - **Is the animation in `App.tsx`? Partly.** `scene-motion.ts` decides the numbers. `App.tsx` applies them.
 
 Read the short story below. **Tap the expandable sections only when you want the syntax or maths.** They work in GitHub's rendered Markdown, including on a phone.
@@ -25,17 +25,19 @@ The Three.js starter is a different app: [read its own `App.tsx` walkthrough her
 
 ### The file's job
 
-This file connects artwork, layout, scrolling, and calculated poses. It does not invent the card geometry or contain all the movement maths. The SVG files supply geometry; `scene-motion.ts` supplies poses; CSS supplies the visual stage.
+This file prepares the shared artwork and chooses between two layouts. The exported `App` renders `MobileExperience` for phones/small touch screens, or `DesktopExperience` for the original pinned scene. The desktop helper contains the refs, Lenis setup, scroll calculations, and JSX described below.
 
-Read it in four passes: **imports → prepare the shapes → connect browser events → build the element tree**.
+The SVG files supply geometry; `scene-motion.ts` supplies agent data and desktop poses; CSS supplies the visual layout. Read this file in five passes: **imports → prepare the shapes → choose the layout → connect desktop events → build the element tree**.
 
 ### 1. Imports: what enters this file?
 
-The React import names `useLayoutEffect`, `useRef`, and two types. `Lenis` is imported separately. Then the SVG strings and our motion helpers are imported.
+The React import names `useLayoutEffect`, `useRef`, `useSyncExternalStore`, and two types. `Lenis` is imported separately. The file also imports the SVG strings, motion helpers, and `MobileExperience` component.
 
 | Import                         | What we use it for                                                 |
 | ------------------------------ | ------------------------------------------------------------------ |
 | `useRef`                       | Keep references to actual browser elements                         |
+| `useSyncExternalStore`         | Subscribe React to the browser's layout media query                |
+| `MobileExperience`             | Render the text-first, native-scrolling layout                     |
 | `useLayoutEffect`              | Set up measurements and event listeners after those elements exist |
 | `type CSSProperties`           | Tell TypeScript about an inline CSS style object                   |
 | `type SVGProps`                | Describe the attributes accepted by an SVG path                    |
@@ -143,7 +145,25 @@ For its SVG callout, the source pairs are in reverse order. `(4 - 1 - 1) * 2 = 4
 
 **Reusable pattern:** keep a stable identity (`id`) when you rearrange data, then look objects up by that identity. Do not assume every array uses the same index.
 
-### 5. Refs and effects: connect the description to real elements
+### 5. Choose the layout, then connect its elements
+
+`App` uses `useSyncExternalStore(subscribeToLayout, getMobileLayout)` to read the browser's media query and update when it changes. `subscribeToLayout` adds a `change` listener and returns a cleanup function; `getMobileLayout` returns the current Boolean `.matches` value.
+
+The query selects mobile at widths up to 640px, or up to 1024px when the primary pointer is coarse, such as a touchscreen. This also keeps common phone landscape orientations in the reading layout.
+
+```tsx
+return isMobile ? (
+  <MobileExperience cardLayers={cardLayers} />
+) : (
+  <DesktopExperience />
+);
+```
+
+The ternary selects **one mounted component**, not two trees hidden with CSS. `cardLayers={cardLayers}` passes the already parsed artwork into the mobile component. The prop name is on the left; the JavaScript variable being supplied is inside the braces on the right.
+
+This matters for behaviour, not just appearance. When leaving desktop, its effect cleanup destroys Lenis and removes its scroll listeners. Mobile uses native page scrolling and never mounts the desktop animation controller. Switching back mounts the original desktop experience again.
+
+The refs and effects below belong to `DesktopExperience`, in the same file.
 
 ```tsx
 const storyRef = useRef<HTMLElement>(null);
@@ -210,7 +230,7 @@ The effect returns another function. React calls it when cleaning up this setup:
 
 Without cleanup, a remount could leave multiple controllers responding to the same input. Setup and teardown are two halves of one responsibility.
 
-### 9. Read the JSX as a tree, not one huge expression
+### 9. Read the desktop JSX as a tree, not one huge expression
 
 ```text
 main
@@ -264,7 +284,120 @@ It changes the accent colour. Geometry comes from a different file; identity com
 </details>
 
 <details>
+<summary>@file: src/MobileExperience.tsx — a text-first layout, not a smaller desktop animation</summary>
+
+[Open the mobile component](./src/MobileExperience.tsx).
+
+### Why this is a different component
+
+The previous mobile layout reserved 25% of the screen for text and roughly 75% for the illustration. It fitted the available width, but the animation still controlled the reading experience.
+
+The new layout changes the structure, not just the percentages:
+
+```text
+mobile-experience
+├── introduction: heading + short paragraph
+├── Scheduling: eyebrow → heading → sentence → card
+├── Onboarding: eyebrow → heading → sentence → card
+├── Retention: eyebrow → heading → sentence → card
+├── Payroll: eyebrow → heading → sentence → card
+└── short closing line
+```
+
+All sections participate in ordinary page flow. There is no `.scroll-story`, fixed text window, shared sticky marker, or Lenis instance in this layout. The user scrolls the browser normally, and longer text naturally makes its section taller.
+
+### 1. Pass the existing artwork in, rather than copy it
+
+```ts
+type MobileExperienceProps = {
+  cardLayers: SVGProps<SVGPathElement>[][];
+};
+```
+
+The two `[]` pairs mean an array of arrays: the outside array holds cards, and each inside array holds that card's path props.
+
+```tsx
+function MobileExperience({ cardLayers }: MobileExperienceProps);
+```
+
+This is a signature excerpt. `{ cardLayers }` extracts the named prop supplied by `App`. The type after `:` tells TypeScript what that props object should contain. No SVG file is copied or reparsed here.
+
+`agents.map(...)` renders one section per agent. The title, label, accent, and new `description` field come from the shared data. Desktop does not render `description`, so adding it does not alter the desktop composition.
+
+The source groups remain in back-to-front order, while the reading sections use agent order:
+
+```tsx
+cardLayers[agents.length - 1 - index];
+```
+
+For Scheduling, `index = 0`, so `4 - 1 - 0 = 3`: take the fourth drawing group. For Payroll, `index = 3`, so take group 0. This reuses the same index relationship explained earlier, but each card now gets its own SVG viewport.
+
+### 2. Crop the empty space, not the artwork
+
+The full desktop SVG has a tall coordinate window because the cards need room to lift and stack. Shrinking that whole window on a phone wastes space and makes the artwork tiny.
+
+Each mobile SVG instead uses:
+
+```tsx
+viewBox={`-16 ${agent.top - 60} 444 340`}
+```
+
+A `viewBox` is `left, top, width, height`, measured in the drawing's coordinate units.
+
+For Retention, `agent.top` is 681, so the window is `-16 621 444 340`. Its vertical range is 621–961. The current artwork's bounds are approximately 633.46–939.5, leaving room for the icon and strokes.
+
+This changes the window through which we see the original paths; it does not rewrite their coordinates. The 60-unit allowance above the card accommodates raised icons. If a future icon extends farther, recheck this crop instead of assuming the same padding always fits.
+
+The CSS frame is also capped:
+
+```css
+height: min(62vw, 35svh, 240px);
+```
+
+At a 390×844 viewport, the candidates are 241.8px, 295.4px, and 240px, so the frame is 240px high. At 320×568, it is about 198.4px. It no longer reserves most of the screen for a tall animation stage.
+
+### 3. A small reveal, not a scroll timeline
+
+`useEffect` creates an `IntersectionObserver` for the illustration frames. The browser reports when each figure enters the viewport; we do not calculate a six-stage scroll pose on mobile.
+
+```ts
+if (entry.isIntersecting && entry.intersectionRatio >= 0.18) {
+  entry.target.setAttribute("data-revealed", "true");
+  observer.unobserve(entry.target);
+}
+```
+
+- `entry.target` is the actual figure being observed, not an index into the agent array.
+- `intersectionRatio` is the visible fraction of that figure. At 0.18, about 18% is visible.
+- `data-revealed="true"` activates a CSS selector.
+- `unobserve` makes the reveal happen only once for that mounted layout, rather than replaying every time the user scrolls back.
+
+The SVG rises by 10 CSS pixels and returns from a slightly muted brightness/saturation to its original colours. Text never fades or gets clipped into a fixed reading window. The filters change colour treatment, not the card's opacity.
+
+The effect returns `observer.disconnect()` for cleanup. When switching back to desktop, the mobile observer is removed before the desktop scroll controller takes over.
+
+### 4. Reduced motion should preserve the content
+
+Reduced-motion CSS removes the transform, filter, and transitions. It does **not** hide the four mobile sections. All headings, sentences, and cards remain available for ordinary scrolling.
+
+Each section has a real `h2`, a matching `aria-labelledby`, and readable text. Its decorative SVG is hidden from screen readers because the title and description already supply the meaning.
+
+### 5. The responsive boundary is behaviour, too
+
+`App.tsx` uses `useSyncExternalStore` with a media query. It chooses mobile for narrow screens, plus small touch screens up to 1024px so common landscape phone layouts stay native.
+
+Conditional rendering means the hidden desktop animation does not keep running on a phone. Merely applying `display: none` to it would not stop its React effect or Lenis loop.
+
+You may still see `650svh` on `#root:empty` in the CSS. That is temporary space reserved before React mounts, to help the browser restore a reading position on reload. Once the mobile content exists, the selector no longer matches; mobile's page height comes from its actual content, not that runway.
+
+**Try it:** lengthen one agent's `description`. The mobile section should grow and push its illustration down, with no clipped text. The desktop view should stay unchanged because it does not render that paragraph.
+
+</details>
+
+<details>
 <summary>@file: src/App.tsx — the Lenis setup and smoothing maths explained</summary>
+
+This setup belongs to `DesktopExperience`. The text-first mobile component uses native scrolling and does not initialize Lenis.
 
 The actual setup is:
 
@@ -418,7 +551,7 @@ Normalise an input, calculate a value, then let a different layer apply it. The 
 
 A class connects an element to a style rule. `className="copy-panel"` in React becomes `class="copy-panel"` in the browser, and `.copy-panel { ... }` selects it in CSS. Naming the class does not create its children; the JSX nesting does that.
 
-The page has a tall `.scroll-story`, a pinned `.scene`, and two panels. The text track moves inside a clipped panel; the timeline is a sibling overlay; the illustration stays in the other panel.
+The desktop layout has a tall `.scroll-story`, a pinned `.scene`, and two panels. Its text track moves inside a clipped panel; the timeline is a sibling overlay. Mobile renders a separate `.mobile-experience` containing ordinary flowing sections, with no pinned scene or scroll runway.
 
 CSS custom properties let those related elements share measurements:
 
@@ -429,13 +562,13 @@ CSS custom properties let those related elements share measurements:
 }
 ```
 
-Those are excerpts from the actual rule. Children can use `var(--copy-top)` without duplicating the number. Mobile rules change the variable at the panel, and the dependent heading/marker geometry adapts together.
+Those are excerpts from the actual desktop rule. Children can use `var(--copy-top)` without duplicating the number, so dependent headings and marker geometry stay aligned. Mobile does not reuse that fixed text window; it has its own `.mobile-*` layout rules.
 
 A style object such as `{ "--agent-accent": agent.accent }` passes a JavaScript value into that CSS system. The JS picks the colour; CSS decides where/how to draw it. The marker's rings are pseudo-elements: `::before` and `::after` add decorative shapes without additional semantic content.
 
 The card palette uses `color-mix()`, not lower opacity. Both colours are solid, so the card keeps hiding the artwork behind it. The dot grid is a repeating radial gradient on `.illustration-panel`, not hundreds of extra dot elements.
 
-The current layout uses ordinary CSS media queries for mobile. It does not use a `md:` prop or nested React condition for each size. For a Tailwind `md:` example, see the separate Three.js template walkthrough; do not confuse a utility string with the component tree.
+React's media-query subscription chooses the mobile or desktop component. CSS then sizes that layout and handles reduced motion. This is different from merely changing a few utility classes at a breakpoint: mobile also removes the desktop controller and presents the content in a different order. For a Tailwind `md:` example, see the separate Three.js template walkthrough.
 
 </details>
 
@@ -1130,7 +1263,7 @@ Between those points, movement is proportional to scroll progress, with no easin
 
 This is a scroll-driven track inside a pinned viewport, not six separate browser pages or a second independently scrollable area. Native page scrolling still supplies the progress. The right-hand illustration and its dot grid stay pinned.
 
-On desktop the text panel is a full viewport high. On mobile it is the shorter top panel, so the same percentage-based movement fits that smaller window. The card choreography and muted/active colour timing remain unchanged.
+This track is now desktop-only. Mobile no longer squeezes the same choreography into a short text window: it uses normal page scrolling, with a heading, sentence, and compact illustration for each agent. The desktop choreography and muted/active colour timing are unchanged.
 
 The text uses one real `h1` and five `h2` elements rather than invisible duplicate title spans. A supporting paragraph can be added beneath a heading inside its existing section later. Reduced motion shows just the static introduction and agent summary, without moving the track.
 
@@ -1194,7 +1327,7 @@ The lower line draws during entry with `--timeline-progress`, driven by `clamp(t
 
 The moving eyebrow numbers retain their individual agent colours and use `--step-focus` to follow their card's active/muted state. The main text remains fully opaque. There are no looping pulses or independent timers.
 
-`--rail-x`, `--marker-size`, `--eyebrow-height`, and `--copy-top` in `index.css` control alignment. Percentage-based travel adapts to the shorter mobile text panel. The indicator is decorative and hidden from screen readers. Reduced motion hides `.step-timeline` entirely and keeps the static overview.
+`--rail-x`, `--marker-size`, `--eyebrow-height`, and `--copy-top` in `index.css` control desktop alignment. Mobile keeps the agent numbers and accent colours but does not render this long rail or sticky marker. The desktop indicator is decorative and hidden from screen readers. Desktop reduced motion hides `.step-timeline` entirely and keeps the static overview.
 
 </details>
 
@@ -1363,7 +1496,7 @@ We replaced the controller, not the basic idea of moving SVG groups.
 
 ## 7. Try these three experiments, one at a time
 
-Run `npm run dev` inside this experiment. Restore each change before moving to the next so you can see which setting caused which effect.
+Run `npm run dev` inside this experiment at desktop width for the three timeline experiments below. Restore each change before moving to the next so you can see which setting caused which effect. For the mobile reading layout, try the description-length exercise in its file walkthrough instead.
 
 | Try this                                         | Where                             | What to notice                                   |
 | ------------------------------------------------ | --------------------------------- | ------------------------------------------------ |
@@ -1381,7 +1514,8 @@ Then try changing **all four** `dur="4s"` values in `timed-box.svg` to `8s`. Not
 | File                                                | Why you would open it                                                 |
 | --------------------------------------------------- | --------------------------------------------------------------------- |
 | [scene-motion.ts](./src/scene-motion.ts)            | Poses, movement distances, easing, callout timing, heading words      |
-| [App.tsx](./src/App.tsx)                            | SVG grouping, rendered elements, scroll measurements, applying values |
+| [App.tsx](./src/App.tsx)                            | Shared SVG data, responsive selection, and desktop scroll scene       |
+| [MobileExperience.tsx](./src/MobileExperience.tsx)  | Native scrolling sections, supporting copy, and compact illustrations |
 | [index.css](./src/index.css)                        | Navy background, divider, font, dimensions, sticky and mobile layout  |
 | [scene-updated.svg](./src/assets/scene-updated.svg) | Current card artwork, with four named groups                          |
 | [callouts.svg](./src/assets/callouts.svg)           | Leader-line shapes and outlined lettering                             |
@@ -1424,7 +1558,7 @@ An `<img>` can display the SVG but does not expose its internal groups as page e
 
 `ResizeObserver` and resize events recalculate the scroll distance when the layout changes. The same `getSceneFrame(progress)` input always gives the same pose; the calculation does not remember previous stages or start timers.
 
-**Mobile and accessibility:** below 640px, the heading sits above the artwork. With reduced motion, the long track becomes one viewport, the stack stays still, and a visible text summary names all four agents. Decorative SVG lettering is hidden from screen readers; a real heading and summary provide the meaning. Keyboard users also get a focus-visible "Skip animation" link.
+**Mobile and accessibility:** phones and small touch screens get native page scrolling with all four agent sections. Each section has a real heading and explanatory sentence before its illustration. Reduced motion removes the small image reveal without hiding any mobile content. On desktop, reduced motion still replaces the pinned sequence with a static overview and agent summary, and keyboard users retain the "Skip animation" link. Decorative SVG lettering is hidden from screen readers in both layouts.
 
 **Font:** Inria Serif is bundled through `@fontsource/inria-serif`. The HTML headings use it. The exported lettering is already vector geometry, so it does not need a runtime font.
 

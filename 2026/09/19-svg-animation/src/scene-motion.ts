@@ -3,6 +3,8 @@ export const agents = [
     id: "scheduling",
     title: "Scheduling",
     label: "Your carers",
+    description:
+      "A clearer view of every shift, so the right carers are in the right place.",
     accent: "#00d3c3",
     top: 600,
     lineStart: 530,
@@ -11,6 +13,8 @@ export const agents = [
     id: "onboarding",
     title: "Onboarding",
     label: "Your team",
+    description:
+      "A clear path from the first application to the first day on your team.",
     accent: "#f5ce63",
     top: 640.5,
     lineStart: 582,
@@ -19,6 +23,8 @@ export const agents = [
     id: "retention",
     title: "Retention",
     label: "Keeping the team",
+    description:
+      "Support the people behind the care, and give them more reasons to stay.",
     accent: "#f28ebd",
     top: 681,
     lineStart: 731,
@@ -27,6 +33,8 @@ export const agents = [
     id: "payroll",
     title: "Payroll",
     label: "Paying the team",
+    description:
+      "Keep hours and pay connected, so your team's work is recognised.",
     accent: "#ffbc8b",
     top: 721.5,
     lineStart: 787,
