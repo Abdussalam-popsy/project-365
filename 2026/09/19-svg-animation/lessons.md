@@ -1,5 +1,613 @@
 # One card, one line, one scroll
 
+You know JavaScript. You've never used React. This version is written for that: every new idea gets its own small section, starting with a fake toy example that has nothing to do with this project, then landing on the real code once the idea has clicked.
+
+**Three answers before we start:**
+
+- **Did we use groups like your original? Yes.** We create `<g>` elements in React.
+- **Did we use GSAP or Motion? Neither.** On desktop, Lenis smooths scroll input and our TypeScript calculates the pinned scene's poses. Mobile uses native page scrolling with compact illustrations.
+- **Is the animation in `App.tsx`? Partly.** `scene-motion.ts` decides the numbers. `App.tsx` applies them.
+
+[The running scroll experiment](https://abdussalam-popsy.github.io/project-365/2026/09/19-svg-animation/) · [Your original timed box, as a runnable SVG](./timed-box.svg)
+
+The old version of this file — denser, more complete, written for someone already comfortable with React — is kept below in a collapsed section. Nothing from it was deleted; it's just no longer the first thing you read.
+
+---
+
+## 1. A component is a function that returns a description of some HTML
+
+Forget this project entirely for a second. Here is the smallest possible piece of React:
+
+```jsx
+function Hello() {
+  return <h1>hi</h1>;
+}
+```
+
+That's it. That's a "component." The word sounds heavy; the thing itself is a plain JavaScript function with one rule: **it returns a description of what should appear on screen**, instead of a number or a string.
+
+The weird part is `<h1>hi</h1>` sitting inside a `.js`/`.tsx` file with no quotes around it. That's called **JSX**. It looks like HTML, but it is not HTML — it's syntax sugar that the build tool (Vite, in this project) converts into a plain JavaScript call, roughly:
+
+```js
+function Hello() {
+  return { type: "h1", props: { children: "hi" } };
+}
+```
+
+Compare that to an object you already write all the time:
+
+```js
+const user = { name: "bob" };
+```
+
+Same idea. `Hello()` doesn't paint anything on the screen — it just builds and returns a plain description object, the same way `{ name: "bob" }` just builds and returns data. Nothing appears until some *other* piece of code reads that object and turns it into real DOM elements. We'll meet that other piece of code in [main.tsx](#6-maintsx-the-one-line-that-puts-a-component-on-the-real-page).
+
+**Where this shows up for real:** every file in `src/` that starts with `function SomethingName()` or `export default function SomethingName()` is a component in exactly this sense. [App.tsx](./src/App.tsx) has three of them: `App`, `DesktopExperience`, and (in its own file) `MobileExperience`. None of them are special beyond "a function that returns JSX."
+
+---
+
+## 2. JSX nests, the same way objects nest
+
+Toy example, one level deeper:
+
+```jsx
+function Card() {
+  return (
+    <div>
+      <h1>hi</h1>
+      <p>bye</p>
+    </div>
+  );
+}
+```
+
+This is still just a description object, now with children:
+
+```js
+{
+  type: "div",
+  props: {
+    children: [
+      { type: "h1", props: { children: "hi" } },
+      { type: "p", props: { children: "bye" } },
+    ],
+  },
+}
+```
+
+Indentation in JSX mirrors nesting in the eventual page, exactly the way indenting a plain object mirrors nesting in that object. Wrapping the `return` in parentheses is only there so you can spread the JSX across multiple lines without JavaScript's automatic-semicolon-insertion silently ending the `return` early — it has no effect on the result.
+
+One more thing you'll use constantly: curly braces drop you back into plain JavaScript *inside* JSX.
+
+```jsx
+function Greeting() {
+  const name = "Bob";
+  return <h1>hi {name}</h1>;
+}
+```
+
+`{name}` is not a string — it's "evaluate this JavaScript expression and put the result here." You could put `{name.toUpperCase()}` or `{1 + 1}` in there just as validly.
+
+**Where this shows up for real:** open [App.tsx:204-322](./src/App.tsx). The `return` statement of `DesktopExperience` is one big nested JSX tree — `<main>` containing a `<section>` containing a `<div className="scene">` and so on. It looks big, but it's the exact same nesting rule as the two-line `Card` example above, just deeper. We'll walk that specific tree in [part 11](#11-put-the-two-together-grabbing-real-elements-and-wiring-up-scroll).
+
+---
+
+## 3. Props: how a function receives data
+
+A component is a function, and functions take arguments. In React those arguments are called **props**, and they arrive as one single object.
+
+```jsx
+function Hello({ name }) {
+  return <h1>hi {name}</h1>;
+}
+```
+
+`{ name }` here is plain JavaScript destructuring — the same thing as:
+
+```js
+function formatUser({ firstName }) {
+  return firstName;
+}
+```
+
+You're not learning a new syntax, just recognizing an old one in a new place. To use the component and supply that argument, JSX has its own way of writing "call this function with these props":
+
+```jsx
+<Hello name="Bob" />
+```
+
+This is equivalent to calling `Hello({ name: "Bob" })`. The attribute-looking syntax (`name="Bob"`) is just how JSX spells "pass this key and value into the props object."
+
+**Predict before you scroll:** if you wrote `<Hello name="Ada" />` instead, what would appear on the page?
+
+<details>
+<summary>Reveal the answer</summary>
+
+`hi Ada`. The prop is just a function argument — whatever string you pass becomes `name` inside the function body.
+
+</details>
+
+**Where this shows up for real:** [App.tsx:76-83](./src/App.tsx) has:
+
+```tsx
+export default function App() {
+  const isMobile = useSyncExternalStore(subscribeToLayout, getMobileLayout);
+  return isMobile ? (
+    <MobileExperience cardLayers={cardLayers} />
+  ) : (
+    <DesktopExperience />
+  );
+}
+```
+
+`<MobileExperience cardLayers={cardLayers} />` passes one prop, `cardLayers`, into `MobileExperience`. On the receiving end, [MobileExperience.tsx:8-10](./src/MobileExperience.tsx):
+
+```tsx
+export default function MobileExperience({
+  cardLayers,
+}: MobileExperienceProps) {
+```
+
+destructures that same prop out, exactly like the toy `Hello({ name })` above. `useSyncExternalStore` is a separate idea — we'll get to it in [part 8](#8-reading-a-value-that-lives-outside-react-usesyncexternalstore). For now, just notice the shape: prop goes in on the left of the JSX tag, comes out as a destructured function parameter on the other end.
+
+---
+
+## 4. Turning a list of data into a list of elements
+
+Plain JavaScript, nothing React-specific yet:
+
+```js
+const letters = ["a", "b", "c"];
+const upper = letters.map((letter) => letter.toUpperCase());
+// ["A", "B", "C"]
+```
+
+`.map()` takes an array and returns a new array, one output per input. You've used this before. JSX uses the exact same method to build a list of elements:
+
+```jsx
+function List() {
+  const letters = ["a", "b", "c"];
+  return (
+    <ul>
+      {letters.map((letter) => (
+        <li key={letter}>{letter}</li>
+      ))}
+    </ul>
+  );
+}
+```
+
+`{letters.map(...)}` drops back into JavaScript (same curly-brace rule from part 2), runs `.map()`, and gets back an array of `<li>` description objects instead of an array of strings. React is fine rendering an array of elements directly.
+
+The one new piece is `key={letter}`. React needs a way to tell "this exact list item" apart from the others when the list changes later, so it can update the right one instead of guessing. It isn't an HTML/SVG attribute you can inspect on screen — it never appears in the rendered page. For a list that never reorders, an index works as a key; for one that does, use a stable id like we did here.
+
+**Where this shows up for real:** [MobileExperience.tsx:41](./src/MobileExperience.tsx) does exactly this over real data:
+
+```tsx
+{agents.map((agent, index) => (
+  <section className="mobile-agent" key={agent.id} /* ... */>
+    {/* one section per agent: Scheduling, Onboarding, Retention, Payroll */}
+  </section>
+))}
+```
+
+`agents` is an array of four objects defined in [scene-motion.ts:1-42](./src/scene-motion.ts) — we'll meet that file properly in [part 12](#12-the-scroll-math-lives-in-plain-javascript-not-react-scene-motionts). For now: four data objects in, four `<section>` elements out, same `.map()` you already knew.
+
+---
+
+## 5. How many files does this actually need?
+
+Before going further into `App.tsx`, it's worth being explicit about something: **none of the ideas above require more than one file.** You could write this entire toy example in a single `.jsx` file:
+
+```jsx
+function Hello() {
+  return <h1>hi</h1>;
+}
+```
+
+and that would run. React does not demand that data live in one file, components in another, and styles in a third. Splitting things up is a choice this project's author made for readability, not a rule React enforces.
+
+This project happens to split things four ways:
+
+| Job | File in this project | Plain-JS equivalent you already know |
+| --- | --- | --- |
+| Put the component onto the real page | [main.tsx](./src/main.tsx) | `document.getElementById("root").append(realElement)` |
+| Describe what's on screen, wire up events | [App.tsx](./src/App.tsx) | A `<script>` tag full of DOM-building code |
+| Plain numbers and data the UI reads | [scene-motion.ts](./src/scene-motion.ts) | A separate `data.js` file you `import` |
+| Visual styling | [index.css](./src/index.css) | A `<link rel="stylesheet">` |
+
+Keep that table in your head as a map. Every file below fills exactly one of those four jobs and nothing more.
+
+---
+
+## 6. main.tsx: the one line that puts a component on the real page
+
+We said in part 1 that a component just returns a description object — nothing appears until something else reads it. That something else lives here, in [main.tsx](./src/main.tsx):
+
+```tsx
+createRoot(document.getElementById("root")!).render(
+  <StrictMode>
+    <App />
+    {/* ...dev-only tooling, see below */}
+  </StrictMode>,
+);
+```
+
+Read it in two pieces:
+
+- `document.getElementById("root")` — plain browser JavaScript you already know, finding the empty `<div id="root">` in [index.html](./index.html).
+- `createRoot(...).render(<App />)` — "build real DOM nodes from `<App />`'s description, and insert them into that element." This is the missing piece from part 1's toy example.
+
+`<StrictMode>` wraps things to make React double-check your components in development (it can call some functions twice on purpose, to surface mistakes early). It disappears in the production build and doesn't change what you see.
+
+The rest of the file is a dev-only annotation tool (`Agentation`) that only loads while you're running `npm run dev`, and is stripped out of the real build entirely — safe to ignore while you're learning the core pieces. Its lazy-loading mechanics are covered in the collapsed appendix at the bottom of this file if you want them later.
+
+**Predict before you scroll:** if `index.html` didn't have an element with `id="root"`, what would happen when this file ran?
+
+<details>
+<summary>Reveal the answer</summary>
+
+`document.getElementById("root")` would return `null`, and calling `createRoot(null)` would fail — the same way any plain JavaScript `null.something()` call would. React doesn't invent a container; it needs a real element to attach to, exactly like the toy `document.getElementById(...).append(...)` example in the table above.
+
+</details>
+
+---
+
+## 7. A component can return different JSX depending on a condition
+
+Another toy example, still nothing project-specific:
+
+```jsx
+function Greeting({ isFormal }) {
+  return isFormal ? <p>Good day.</p> : <p>Hey!</p>;
+}
+```
+
+This is a ternary — `condition ? a : b` — the same one you use in plain JavaScript to pick between two values. Here it picks between two *pieces of JSX* instead of two numbers or strings. React mounts whichever one the condition currently points to; the other one is never built.
+
+**Where this shows up for real:** [App.tsx:76-83](./src/App.tsx), the same lines from part 3:
+
+```tsx
+return isMobile ? (
+  <MobileExperience cardLayers={cardLayers} />
+) : (
+  <DesktopExperience />
+);
+```
+
+One condition, `isMobile`, picks between two entire experiences. This matters for more than looks: when `isMobile` flips from `false` to `true`, `DesktopExperience` isn't just hidden with CSS — it's actually removed, which (as we'll see once effects are covered) is what shuts off its scroll listeners and destroys its Lenis instance. Switching back mounts a fresh `DesktopExperience` from scratch.
+
+We still haven't covered where `isMobile` itself comes from — that's next.
+
+---
+
+## 8. Reading a value that lives outside React: `useSyncExternalStore`
+
+The browser already knows things React doesn't automatically track — like whether a media query currently matches. Toy example of reading one such value safely:
+
+```jsx
+function subscribe(callback) {
+  const query = window.matchMedia("(max-width: 800px)");
+  query.addEventListener("change", callback);
+  return () => query.removeEventListener("change", callback);
+}
+
+function getIsNarrow() {
+  return window.matchMedia("(max-width: 800px)").matches;
+}
+
+function Layout() {
+  const isNarrow = useSyncExternalStore(subscribe, getIsNarrow);
+  return isNarrow ? <NarrowView /> : <WideView />;
+}
+```
+
+`useSyncExternalStore` takes two plain functions:
+
+- `getIsNarrow` — "give me the current value, right now." Just reads `.matches`, nothing fancy.
+- `subscribe` — "call `callback` whenever that value might have changed, and tell me how to stop listening later." It returns a cleanup function, same shape as any event-listener cleanup you'd write by hand.
+
+React calls `getIsNarrow` to render, then uses `subscribe` to know when to re-render with a fresh value. You're not learning a new way to listen for change — `addEventListener`/`removeEventListener` is exactly what you already know — you're learning the two-function shape React wants so it can hook that existing pattern into a re-render.
+
+**Where this shows up for real:** [App.tsx:63-83](./src/App.tsx):
+
+```tsx
+const mobileLayout = window.matchMedia(
+  "(max-width: 640px), (max-width: 1024px) and (pointer: coarse)",
+);
+
+function subscribeToLayout(onChange: () => void) {
+  mobileLayout.addEventListener("change", onChange);
+  return () => mobileLayout.removeEventListener("change", onChange);
+}
+
+function getMobileLayout() {
+  return mobileLayout.matches;
+}
+
+export default function App() {
+  const isMobile = useSyncExternalStore(subscribeToLayout, getMobileLayout);
+  // ...
+}
+```
+
+Same two functions, same shape as the toy version. The query itself just adds a second condition (a coarse pointer up to 1024px wide) so tablets and landscape phones also get the reading layout. `isMobile` is exactly the condition from part 7's ternary.
+
+---
+
+## 9. Refs: a box that will hold a real DOM element later
+
+New idea, on its own, with no effects yet. Toy example:
+
+```jsx
+function Box() {
+  const divRef = useRef(null);
+  return <div ref={divRef}>hello</div>;
+}
+```
+
+`useRef(null)` does something almost boringly simple — it creates one plain object that looks like this:
+
+```js
+{ current: null }
+```
+
+That's genuinely it. `useRef` just hands you a box with one property, `current`, and React guarantees that same box survives across re-renders instead of getting rebuilt every time (unlike a normal `let` inside the function body, which resets).
+
+`ref={divRef}` on a JSX element is a special instruction, separate from every other prop: "once you build the *real* DOM node for this `<div>`, put it in `divRef.current`." Before that happens — while the component is still just returning a description object, as in part 1 — `divRef.current` is `null`. It only becomes the actual `<div>` element after React has built real DOM from the description.
+
+**Where this shows up for real:** [App.tsx:86-87](./src/App.tsx):
+
+```tsx
+const storyRef = useRef<HTMLElement>(null);
+const sceneRef = useRef<HTMLDivElement>(null);
+```
+
+and further down, on the JSX itself, [App.tsx:211](./src/App.tsx) and [App.tsx:214](./src/App.tsx):
+
+```tsx
+<section className="scroll-story" ref={storyRef} /* ... */>
+  <div className="scene" ref={sceneRef}>
+```
+
+`<HTMLElement>` and `<HTMLDivElement>` are TypeScript type arguments — they tell the type checker what kind of element to expect in `.current`, the same way `<SVGGElement>` did back in part 4's list example. They don't change what happens at runtime; they just give you autocomplete and catch mistakes while writing code.
+
+We still have `divRef.current === null` at first and a real element later — but nothing has read `.current` yet. That's the next piece.
+
+---
+
+## 10. Running code after the DOM exists: `useLayoutEffect`
+
+Keep this section only about the effect itself — refs come back in part 11. Toy example:
+
+```jsx
+function Box() {
+  useLayoutEffect(() => {
+    console.log("the div now exists in the real page");
+  }, []);
+  return <div>hello</div>;
+}
+```
+
+`useLayoutEffect(fn, [])` means: "after React has built real DOM for this render, run `fn` once." The empty array, `[]`, is a list of dependencies — values that, if they changed, would make React re-run `fn`. An empty list means "there's nothing to watch, so only run this the first time."
+
+Think of it as a scoped `window.onload`: instead of "run once the whole page has loaded," it's "run once *this particular* component's DOM exists." (There's a near-identical hook, `useEffect`, that runs very slightly later — after the browser has already painted the frame. `useLayoutEffect` runs first, which matters when you need to measure something before the user sees it. That distinction is the only new fact in this paragraph; everything else about the two is the same.)
+
+**Where this shows up for real:** the outer shape of [App.tsx:89-202](./src/App.tsx):
+
+```tsx
+useLayoutEffect(() => {
+  // ... setup ...
+
+  return () => {
+    // ... cleanup ...
+  };
+}, []);
+```
+
+Same `[]` as the toy example — this setup runs once when `DesktopExperience` mounts, not on every re-render. The `return () => { ... }` part is new: whatever function you return from inside the effect is a **cleanup function**, and React calls it right before the component is removed (for example, when `isMobile` flips to `true` and `DesktopExperience` unmounts, from part 7). It's where you undo whatever the setup did — remove listeners, stop timers — so nothing keeps running after the component is gone.
+
+**Predict before you scroll:** in the toy `Box` example, if you changed `[]` to `[]` but ran the component twice on the same page, would `console.log` run once or twice?
+
+<details>
+<summary>Reveal the answer</summary>
+
+Twice — once per mounted `Box`. `[]` means "don't re-run *this* component's effect on later renders," not "only ever run once across the whole app." Each separate `<Box />` gets its own independent effect.
+
+</details>
+
+---
+
+## 11. Put the two together: grabbing real elements and wiring up scroll
+
+Now combine part 9 (refs) and part 10 (effects), which is exactly what the real code does. Toy version first:
+
+```jsx
+function Box() {
+  const divRef = useRef(null);
+  useLayoutEffect(() => {
+    console.log(divRef.current); // the real <div>, not null anymore
+  }, []);
+  return <div ref={divRef}>hello</div>;
+}
+```
+
+Inside `useLayoutEffect`, the DOM has already been built (that's the whole point of "runs after"), so `divRef.current` is now the actual `<div>` element instead of `null`. This is the only moment in the component's life where you're guaranteed that.
+
+**Where this shows up for real**, [App.tsx:90-110](./src/App.tsx):
+
+```tsx
+useLayoutEffect(() => {
+  const story = storyRef.current!;
+  const scene = sceneRef.current!;
+  const cards = agents.map(
+    (agent) => scene.querySelector<SVGGElement>(`[data-card="${agent.id}"]`)!,
+  );
+  // ...more querySelector calls for callouts, lines, labels, the timeline...
+```
+
+`storyRef.current!` reads the real element from the box, exactly like the toy example — the trailing `!` is a TypeScript-only annotation meaning "I promise this isn't null," and it disappears at runtime; it doesn't add a safety check. Once we have the real `<div className="scene">` element (`scene`), we can call ordinary DOM methods on it — `querySelector`, the same method you'd call on `document` in any vanilla JS project.
+
+From there the rest of the effect is plain browser code you already know how to read:
+
+- `new Lenis({...})` — a normal `new` call constructing a library object (covered in the collapsed Lenis appendix below).
+- `window.addEventListener("scroll", schedule, { passive: true })`, `new ResizeObserver(measure)` — ordinary browser APIs.
+- The `render()` function reads `window.scrollY`, calls `getSceneFrame(progress)` (next section), and calls `setAttribute`/`style.setProperty` on the elements we grabbed above.
+- The `return () => { lenis.destroy(); observer.disconnect(); window.removeEventListener(...); }` cleanup undoes every one of those, per part 10's rule.
+
+Nothing here is a new React concept — it's the ref-plus-effect pattern from this section, applied to real elements instead of one toy `<div>`.
+
+---
+
+## 12. The scroll math lives in plain JavaScript, not React: scene-motion.ts
+
+Open [scene-motion.ts](./src/scene-motion.ts). It has no `import React`, no JSX, no hooks. It's an ordinary module: data in, a function that does arithmetic, numbers out. That's deliberate — this file doesn't need to know a browser exists.
+
+Toy version of the core idea, interpolation, using numbers with no relation to this project:
+
+```js
+function between(start, end, t) {
+  return start + (end - start) * t;
+}
+
+between(0, 100, 0.25); // 25 — a quarter of the way from 0 to 100
+between(0, 100, 0.5); // 50 — halfway
+```
+
+That one-line formula — "start, plus the gap to end, scaled by a fraction `t`" — is the entire idea behind every moving number in this animation. The real file just applies it to more numbers, more often, with some easing to soften the start and end of each move.
+
+**Where this shows up for real.** The four cards' vertical offsets live here, [scene-motion.ts:56-63](./src/scene-motion.ts):
+
+```ts
+const positions = [
+  [0, 0, 0, 0],
+  [-120, 0, 0, 0],
+  [-450, -120, 0, 0],
+  [-450, -450, 0, 0],
+  [-450, -450, -450, 0],
+  [-450, -450, -450, -450],
+];
+```
+
+Each row is one "pose," a snapshot of where all four cards sit. Each column is one card, in the same order as `agents`: Scheduling, Onboarding, Retention, Payroll. `positions[1][0]` is `-120` — pose 1, card 0 (Scheduling) — meaning "in this pose, Scheduling has moved up 120 units." Reading `[column]` off an array by number is the exact same indexing you used with `letters[0]` in part 4; there's nothing new here except that this array is two levels deep.
+
+`getSceneFrame(progress)`, [scene-motion.ts:74-111](./src/scene-motion.ts), takes a single number from 0 to 1 (how far the user has scrolled through this section) and returns an object with the current card offsets, colors, and callout positions — using `between(...)`-style math (the real function is called `ease`, and softens the start/end of each blend, but the core idea is the toy formula above) to blend between two neighboring rows of `positions`. The same `progress` always produces the same result — nothing is remembered between calls — which is exactly why scrolling back up smoothly reverses the animation instead of needing a separate "play in reverse" mode.
+
+`App.tsx` is the only file that calls `getSceneFrame` and only file that touches the DOM with the result — the split from part 5's table in action: this file is pure data and math, `App.tsx` is where that math meets real elements.
+
+**Predict before you scroll:** if you changed the second row of `positions` from `[-120, 0, 0, 0]` to `[-200, 0, 0, 0]`, which card's motion changes?
+
+<details>
+<summary>Reveal the answer</summary>
+
+Only Scheduling (column 0). Every other entry in that row is still `0`, so Onboarding, Retention, and Payroll are unaffected at that pose. Try it locally, scroll, then change it back before your next experiment.
+
+</details>
+
+---
+
+## 13. CSS variables: how a JS number becomes a color or position on screen
+
+Last new idea. Plain CSS you may already know:
+
+```css
+.box {
+  --side: 40px;
+  width: var(--side);
+}
+```
+
+A CSS custom property (`--side`) is a named value you can set once and read with `var(...)` anywhere inside that element or its children. JavaScript can set one of these directly on a real element:
+
+```js
+element.style.setProperty("--side", "80px");
+```
+
+That's the entire mechanism — no animation library, just "change a named CSS value, and let CSS decide what to do with it."
+
+**Where this shows up for real**, [App.tsx:134](./src/App.tsx):
+
+```ts
+card.style.setProperty("--card-focus", focus);
+```
+
+`focus` is a percentage string like `"40%"`, coming out of `getSceneFrame` from part 12. On the CSS side, [index.css:213-219](./src/index.css):
+
+```css
+.agent-card {
+  --card-face: color-mix(in srgb, #59637b, #fff var(--card-focus, 0%));
+}
+```
+
+`color-mix(in srgb, colorA, colorB percentage)` blends two solid colors by that percentage — at `0%` you get muted grey-blue, at `100%` you get the original white. Neither color is transparent, so the card never becomes see-through; it just shifts along a fixed blend. JavaScript never touches color directly here — it only ever changes the one number, `--card-focus`, and CSS owns turning that number into an actual color.
+
+**Predict before you scroll:** if `getSceneFrame` returned `focus = 1` (100%) for every card, all the time, what would change about how the animation looks?
+
+<details>
+<summary>Reveal the answer</summary>
+
+Every card would stay at full brightness/color the whole time — nothing would ever look muted, because `--card-focus` would always sit at `100%`. The cards would still move (that's driven by a completely separate value, `frame.cards`), but the "spotlight" effect that dims inactive cards would disappear.
+
+</details>
+
+---
+
+## 14. Rereading App.tsx, now that every piece is familiar
+
+Here's the same file from part 11, described in the language you now have, top to bottom:
+
+```text
+App.tsx
+├── read the SVG source once when the file loads (plain DOMParser code, part 1's "not React" idea)
+├── App(): reads isMobile with useSyncExternalStore (part 8)
+│   └── returns MobileExperience or DesktopExperience (part 7's conditional JSX)
+└── DesktopExperience():
+    ├── storyRef, sceneRef: two boxes, empty at first (part 9)
+    ├── useLayoutEffect(..., []): runs once the real DOM exists (part 10)
+    │   ├── reads storyRef.current / sceneRef.current (part 11)
+    │   ├── queries child elements with plain querySelector
+    │   ├── creates Lenis, adds scroll/resize listeners
+    │   ├── render(): scrollY → progress → getSceneFrame(progress) (part 12)
+    │   │   └── setAttribute / style.setProperty (part 13)
+    │   └── return cleanup: destroy Lenis, remove listeners (part 10's cleanup rule)
+    └── return (...): the JSX tree, nested exactly like part 2's toy Card
+```
+
+Every line in the real file maps to one of the ideas above. Nothing in `App.tsx` is a concept you haven't already seen in isolation — it's the same handful of ideas, combined.
+
+---
+
+## Try these three experiments, one at a time
+
+Run `npm run dev` inside this experiment at desktop width. Restore each change before moving to the next, so you can tell which setting caused which effect.
+
+| Try this | Where | What to notice |
+| --- | --- | --- |
+| First `-120` → `-200` | `positions`, in `scene-motion.ts` | Scheduling rises farther; its callout follows |
+| `650svh` → `850svh` | `index.css` | Same poses, more scroll distance between them |
+| `--copy-top: 33.5svh` → `25svh` in `.copy-panel` | `index.css` | Desktop headings sit higher; cards are unchanged |
+
+## Close the file with just this in mind
+
+**A component is a function. JSX is the object it returns. A ref is a box for a real element. An effect is "run this after that element exists." Everything past that is arithmetic and CSS.**
+
+```text
+scene-updated.svg → the shapes
+scene-motion.ts   → the numbers
+App.tsx           → apply the numbers to the shapes
+index.css         → the stage they sit on
+```
+
+If you can explain what `[-120, 0, 0, 0]` does, and why `divRef.current` is `null` until an effect runs, you already understand the heart of this project. Everything else in the collapsed section below is depth, not a different idea.
+
+
+---
+
+<details>
+<summary>Old / complex explanation (original)</summary>
+
+# One card, one line, one scroll
+
 A guided tour of the SVG experiment. Follow **Scheduling** from a drawing to a moving card, instead of trying to memorise the whole app.
 
 **Three answers before we start:**
@@ -1611,3 +2219,6 @@ index.css         → the stage they sit on
 ```
 
 If you can explain what `[-120, 0, 0, 0]` does, you already understand the heart of the animation. The rest is how we connect that idea to a browser.
+
+
+</details>
