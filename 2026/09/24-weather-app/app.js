@@ -7,9 +7,27 @@ search.addEventListener("click", function () {
   // reset the city value after the click
 
   if (cityValue) {
-    console.log(cityValue);
+    getLocation(cityValue);
     cityValue = "";
   } else {
-    console.log("City not found");
+    alert("City not found");
   }
 });
+
+async function getLocation(cityName) {
+  const url = `https://geocoding-api.open-meteo.com/v1/search?name=${cityName}&count=1&language=en&format=json`;
+
+  try {
+    if (cityName) {
+      const response = await fetch(url);
+      const result = await response.json();
+      let longitude = result.results[0].longitude;
+      let latitude = result.results[0].latitude;
+      console.log(longitude, latitude);
+    } else {
+      alert("City not found");
+    }
+  } catch (error) {
+    alert("City not found");
+  }
+}
