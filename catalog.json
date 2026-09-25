@@ -4,7 +4,12 @@
     "name": "signature-writer",
     "path": "2026/03/08-signature-writer",
     "url": "",
-    "tags": ["react", "canvas", "animation", "fonts"],
+    "tags": [
+      "react",
+      "canvas",
+      "animation",
+      "fonts"
+    ],
     "template": "react-vite",
     "language": "typescript",
     "description": "Signature writing animation with custom fonts",
@@ -15,7 +20,11 @@
     "name": "follow-draw",
     "path": "2026/03/10-follow-draw",
     "url": "",
-    "tags": ["react", "canvas", "mouse"],
+    "tags": [
+      "react",
+      "canvas",
+      "mouse"
+    ],
     "template": "react-vite",
     "language": "typescript",
     "description": "Drawing tool that follows cursor movement",
@@ -26,7 +35,11 @@
     "name": "envelope-animation",
     "path": "2026/03/13-envelope-animation",
     "url": "",
-    "tags": ["react", "animation", "ui"],
+    "tags": [
+      "react",
+      "animation",
+      "ui"
+    ],
     "template": "react-vite",
     "language": "typescript",
     "description": "Envelope open/close animation with letter composer",
@@ -37,7 +50,11 @@
     "name": "send-a-letter",
     "path": "2026/03/14-send-a-letter",
     "url": "",
-    "tags": ["react", "animation", "ui"],
+    "tags": [
+      "react",
+      "animation",
+      "ui"
+    ],
     "template": "react-vite",
     "language": "typescript",
     "description": "Send a letter interaction with envelope transition",
@@ -48,7 +65,13 @@
     "name": "cursor-intercation",
     "path": "2026/04/23-cursor-intercation",
     "url": "",
-    "tags": ["react", "canvas", "tweakpane", "dialkit", "isometric"],
+    "tags": [
+      "react",
+      "canvas",
+      "tweakpane",
+      "dialkit",
+      "isometric"
+    ],
     "template": "react-vite",
     "language": "typescript",
     "description": "Isometric shapes that react to cursor proximity",
@@ -59,7 +82,13 @@
     "name": "gray-boxing",
     "path": "2026/04/23-gray-boxing",
     "url": "",
-    "tags": ["react", "canvas", "tweakpane", "dialkit", "isometric"],
+    "tags": [
+      "react",
+      "canvas",
+      "tweakpane",
+      "dialkit",
+      "isometric"
+    ],
     "template": "react-vite",
     "language": "typescript",
     "description": "Gray boxing interaction",
@@ -70,7 +99,13 @@
     "name": "word-map",
     "path": "2026/04/24-word-map",
     "url": "",
-    "tags": ["next", "canvas", "tweakpane", "dialkit", "isometric"],
+    "tags": [
+      "next",
+      "canvas",
+      "tweakpane",
+      "dialkit",
+      "isometric"
+    ],
     "template": "next",
     "language": "typescript",
     "description": "Tooltip with flip behavior — appears above by default, flips below when near the top edge.",
@@ -81,7 +116,13 @@
     "name": "haven-hero",
     "path": "2026/05/04-haven-hero",
     "url": "",
-    "tags": ["react", "canvas", "tweakpane", "dialkit", "isometric"],
+    "tags": [
+      "react",
+      "canvas",
+      "tweakpane",
+      "dialkit",
+      "isometric"
+    ],
     "template": "react-vite",
     "language": "typescript",
     "description": "Haven Hero interaction",
@@ -92,7 +133,10 @@
     "name": "photo-journal",
     "path": "2026/05/12-photo-journal",
     "url": "",
-    "tags": ["react", "framer-motion"],
+    "tags": [
+      "react",
+      "framer-motion"
+    ],
     "template": "react-vite",
     "language": "typescript",
     "description": "Photo journal interaction",
@@ -103,7 +147,11 @@
     "name": "gsap-scroll",
     "path": "2026/05/12-gsap-scroll",
     "url": "",
-    "tags": ["vanilla", "gsap", "scroll"],
+    "tags": [
+      "vanilla",
+      "gsap",
+      "scroll"
+    ],
     "template": "vanilla",
     "language": "typescript",
     "description": "GSAP scroll interaction",
@@ -114,7 +162,13 @@
     "name": "3d-music-card",
     "path": "2026/05/15-3d-music-card",
     "url": "",
-    "tags": ["react", "canvas", "3d", "animation", "dialkit"],
+    "tags": [
+      "react",
+      "canvas",
+      "3d",
+      "animation",
+      "dialkit"
+    ],
     "template": "react-vite",
     "language": "typescript",
     "description": "3D music card with hold-to-play, tilt interaction, and colored accent lights",
@@ -143,7 +197,13 @@
     "name": "hologram-card",
     "path": "2026/05/20-hologram-card",
     "url": "",
-    "tags": ["react", "3d", "hologram", "animation", "interaction"],
+    "tags": [
+      "react",
+      "3d",
+      "hologram",
+      "animation",
+      "interaction"
+    ],
     "template": "react-vite",
     "language": "typescript",
     "description": "Interactive hologram card with tilt and depth effect",
@@ -154,7 +214,14 @@
     "name": "threejs-scroll",
     "path": "2026/05/29-threejs-scroll",
     "url": "https://abdussalam-popsy.github.io/project-365/2026/05/29-threejs-scroll/",
-    "tags": ["react", "three.js", "scroll", "3d", "dialkit", "r3f"],
+    "tags": [
+      "react",
+      "three.js",
+      "scroll",
+      "3d",
+      "dialkit",
+      "r3f"
+    ],
     "template": "react-vite",
     "language": "typescript",
     "description": "Vertical 3D card carousel on a cylinder — scroll rotates the ring, mouse reveals depth",
@@ -186,10 +253,33 @@
     "name": "svg-animation",
     "path": "2026/09/19-svg-animation",
     "url": "https://abdussalam-popsy.github.io/project-365/2026/09/19-svg-animation/",
-    "tags": ["react", "svg", "scroll", "animation", "isometric"],
+    "tags": [
+      "react",
+      "svg",
+      "scroll",
+      "animation",
+      "isometric"
+    ],
     "template": "react-vite",
     "language": "typescript",
     "description": "Four isometric agent cards reveal on scroll with animated headings, drawn leader lines, and SVG labels.",
     "status": "live"
+  },
+  {
+    "date": "2026-09-24",
+    "name": "weather-app",
+    "path": "2026/09/24-weather-app",
+    "url": "",
+    "tags": [
+      "weather",
+      "api",
+      "vanilla",
+      "js",
+      "geolocation"
+    ],
+    "template": "vanilla",
+    "language": "javascript",
+    "description": "Weather app with city search via geocoding and real-time conditions from Open-Meteo",
+    "status": "local"
   }
 ]

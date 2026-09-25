@@ -44,6 +44,24 @@ fi
 
 echo "Created: $TARGET_DIR"
 
+# Detect language from template
+LANGUAGE="typescript"
+if [[ "$TEMPLATE" == "vanilla" ]] || [[ "$TEMPLATE" == "canvas" ]]; then
+  LANGUAGE="javascript"
+fi
+
+# Write project.json so generate-catalog.js can pick it up automatically
+cat > "$TARGET_DIR/project.json" <<EOF
+{
+  "name": "$NAME",
+  "tags": [],
+  "template": "$TEMPLATE",
+  "language": "$LANGUAGE",
+  "description": "",
+  "status": "local"
+}
+EOF
+
 if [[ -f "$TARGET_DIR/package.json" ]]; then
   echo "Installing dependencies..."
   (cd "$TARGET_DIR" && npm install)
@@ -52,3 +70,5 @@ fi
 echo ""
 echo "Ready! cd into your new interaction:"
 echo "  cd $TARGET_DIR"
+echo ""
+echo "Fill in project.json (tags + description) before pushing."

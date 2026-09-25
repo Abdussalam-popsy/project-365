@@ -24,6 +24,9 @@ jobs:
         with:
           node-version: 24
 
+      - name: Generate catalog
+        run: node scripts/generate-catalog.js
+
       - name: Build gallery
         run: |
           mkdir -p _site
