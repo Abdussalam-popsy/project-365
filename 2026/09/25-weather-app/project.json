@@ -1,0 +1,8 @@
+{
+  "name": "weather-app",
+  "tags": [],
+  "template": "react-vite",
+  "language": "typescript",
+  "description": "",
+  "status": "local"
+}
