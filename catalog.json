@@ -269,7 +269,7 @@
     "date": "2026-09-24",
     "name": "weather-app",
     "path": "2026/09/24-weather-app",
-    "url": "",
+    "url": "https://abdussalam-popsy.github.io/project-365/2026/09/24-weather-app/",
     "tags": [
       "weather",
       "api",
@@ -280,6 +280,17 @@
     "template": "vanilla",
     "language": "javascript",
     "description": "Weather app with city search via geocoding and real-time conditions from Open-Meteo",
+    "status": "live"
+  },
+  {
+    "date": "2026-09-25",
+    "name": "weather-app",
+    "path": "2026/09/25-weather-app",
+    "url": "",
+    "tags": [],
+    "template": "react-vite",
+    "language": "typescript",
+    "description": "",
     "status": "local"
   }
 ]

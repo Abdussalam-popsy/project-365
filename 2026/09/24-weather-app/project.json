@@ -4,5 +4,5 @@
   "template": "vanilla",
   "language": "javascript",
   "description": "Weather app with city search via geocoding and real-time conditions from Open-Meteo",
-  "status": "local"
+  "status": "live"
 }

@@ -14,6 +14,7 @@ const path = require("path");
 const REPO_ROOT = path.join(__dirname, "..");
 const CATALOG_PATH = path.join(REPO_ROOT, "catalog.json");
 const EXPERIMENTS_ROOT = path.join(REPO_ROOT, "2026");
+const BASE_URL = "https://abdussalam-popsy.github.io/project-365";
 
 // ── helpers ──────────────────────────────────────────────────────────────────
 
@@ -56,16 +57,19 @@ for (const file of findProjectJsonFiles(EXPERIMENTS_ROOT)) {
   const relPath = path.relative(REPO_ROOT, projectDir); // "2026/09/24-weather-app"
   const meta = JSON.parse(fs.readFileSync(file, "utf8"));
 
+  const status = meta.status || "local";
+  const autoUrl = `${BASE_URL}/${relPath}/`;
+
   discovered[relPath] = {
     date: dateFromPath(relPath),
     name: meta.name,
     path: relPath,
-    url: meta.url || existingByPath[relPath]?.url || "",
+    url: meta.url || (status === "live" ? autoUrl : existingByPath[relPath]?.url || ""),
     tags: meta.tags || [],
     template: meta.template || "vanilla",
     language: meta.language || "javascript",
     description: meta.description || "",
-    status: meta.status || "local",
+    status,
   };
 }
 
