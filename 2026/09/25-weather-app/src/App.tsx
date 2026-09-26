@@ -2,8 +2,25 @@ import { useState } from "react";
 
 export default function App() {
   const [city, setCity] = useState("");
+
+  // create a function called getLocation that uses the fetch api to get the location data for the city
+  const getLocation = async (city: string) => {
+    const response = await fetch(
+      `https://geocoding-api.open-meteo.com/v1/search?name=${city}&count=1&language=en&format=json`,
+    );
+    const data = await response.json();
+    const latitude = data.results[0].latitude;
+    const longitude = data.results[0].longitude;
+    console.log(latitude, longitude);
+
+    const weatherResponse = await fetch(
+      `https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&hourly=temperature_2m,weather_code&forecast_days=1`,
+    );
+    const weatherData = await weatherResponse.json();
+    console.log(weatherData);
+  };
+
   return (
-    // change to light mode
     <div className="grid min-h-screen place-items-center bg-white text-black">
       {/* add a usestate for the city string and update it when the user submits the form */}
 
@@ -13,6 +30,7 @@ export default function App() {
           onSubmit={(e) => {
             e.preventDefault();
             console.log("form submitted: ", city.trim().toLowerCase());
+            getLocation(city);
           }}
         >
           <input
