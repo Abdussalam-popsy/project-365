@@ -24,13 +24,14 @@ export const hero = {
   sub: "Custom AI workers that handle the repetitive work eating into your team's time.",
 };
 
+/** Names map to placeholder SVG wordmarks in components/PartnerLogos.tsx; unknown names render as text. */
 export const customers = [
   "Rentor",
   "Real Capital Group",
-  "Partner logo",
-  "Partner logo",
-  "Partner logo",
-  "Partner logo",
+  "Northgate Living",
+  "Keystone Residential",
+  "Harbor & Main",
+  "Oakline Properties",
 ];
 
 export const problem =

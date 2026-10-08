@@ -161,6 +161,48 @@ Answer: every button, eyebrow label, bullet square, the announcement bar and the
 
 </details>
 
+<details>
+<summary>@file: src/components/LogoMarquee.tsx + PartnerLogos.tsx — explained</summary>
+
+Source: [LogoMarquee.tsx](src/components/LogoMarquee.tsx), [PartnerLogos.tsx](src/components/PartnerLogos.tsx), names in [site.ts](src/content/site.ts) (`customers`).
+
+### What these files are responsible for
+`LogoMarquee` is the "Trusted by" strip under every hero version. `PartnerLogos` maps each customer name to a placeholder SVG wordmark. A name with no mark falls back to plain text, so adding a real customer to `customers` never breaks the strip.
+
+### Read the code in small pieces
+Excerpt from `LogoMarquee.tsx`:
+```tsx
+<div className="animate-marquee flex w-max">
+  {[0, 1].map((copy) => (
+    <ul key={copy} aria-hidden={copy === 1 || undefined} className="flex shrink-0 gap-16 pr-16">…</ul>
+  ))}
+</div>
+```
+- `[0, 1].map(...)` renders two identical `<ul>` groups side by side.
+- `animate-marquee` (in `globals.css`) slides the track from `translateX(0)` to `translateX(-50%)`, then snaps back to 0 and repeats.
+- `aria-hidden={copy === 1 || undefined}` hides the duplicate group from screen readers, so each logo is announced only once. `|| undefined` leaves the attribute off the first group entirely instead of writing `aria-hidden="false"`.
+
+**Why `pr-16` matters:** `gap-16` only adds space *between* items, not after the last one. The earlier version put every logo in one flex row, so the two halves weren't exactly equal and `-50%` stopped half a gap short, which made a visible jump on every loop. Giving each group trailing padding equal to the gap makes the two groups exactly the same width, so `-50%` lands exactly where the second group began.
+
+**Why `REPEAT = 2`:** if one group is narrower than the screen, the right edge goes empty before the loop restarts (the "cutting off"). Repeating the six logos inside each group makes a group 2812px wide, wider than a 1869px viewport.
+
+Excerpt from `PartnerLogos.tsx`:
+```tsx
+<text … textLength="82" lengthAdjust="spacingAndGlyphs">rentor</text>
+```
+`textLength` forces the word to exactly 82 SVG units wide, whatever font actually loads. That's what lets each mark have a fixed `viewBox` width without the text spilling out.
+
+### Follow one value
+Group width is 2812px and the animation lasts 60s. One loop moves the track by 50% of 5624px = 2812px, so logos drift at about 47px per second. Each logo is `fill="currentColor"`, inheriting `text-white/50` from the track.
+
+### Predict, change, observe
+Remove `pr-16` from the `<ul>`. What do you see? <details><summary>Answer</summary>Once per minute the row jumps left by 32px (half of `gap-16`'s 64px) as the animation restarts.</details>
+
+### Swapping in real logos
+Add the real SVG as a new entry in `marks` (or as an `<img>` from `public/`) under the same name used in `customers`.
+
+</details>
+
 ## Run and check
 
 ```bash
@@ -173,10 +215,64 @@ In CI (`.github/workflows/deploy.yml`) Next projects are detected by `next.confi
 
 ## Hero signal field (canvas + Toolcraft)
 
-- The hero background is drawn by one pure function, `drawHavenField(ctx, width, height, params)` in `src/lib/havenField.ts`. It knows nothing about React, so the same file runs in the Toolcraft tuning app (`2026/10/08-haven-hero-tool`) and on the site.
+- The hero background is drawn by one pure function, `drawHavenField(ctx, width, height, params)` in `src/lib/havenField.ts`. It knows nothing about React. The Toolcraft tuning app (`2026/10/08-haven-hero-tool`) keeps its own copy (`src/app/haven-field.ts`), so tuning there and drawing here produce the same picture.
 - Everything is driven by a single `phase` value from 0 to 1. Each moving part uses `sin(2π·phase)` or `(index + phase) / rows`, so phase 1 lines up exactly with phase 0 and the loop is seamless without reversing direction.
 - `HavenField.tsx` runs a `requestAnimationFrame` loop. It caps devicePixelRatio at 2 to keep the fill cost down and pauses when the hero scrolls out of view (`IntersectionObserver`) or the tab is hidden (`visibilitychange`). With reduced motion on, it draws one still frame.
 - `ResizeObserver` keeps the canvas backing size equal to CSS size × DPR. Without that the lines blur on retina screens.
+
+<details>
+<summary>@file: src/components/HavenField.tsx + src/lib/havenField.ts — why v1 draws its glow small</summary>
+
+Source: [HavenField.tsx](src/components/HavenField.tsx), [havenField.ts](src/lib/havenField.ts)
+
+### What changed and why
+v1 has no hover logic, so its slowness (about 11fps on a real laptop) came from drawing. Every frame it painted three radial gradients over the **whole** canvas, plus a horizon band, using `"lighter"` (additive) blending. On a retina screen with DPR 2, a 1440×900 hero has a 2880×1800 backing canvas, about 5.2 million pixels, so that's roughly 16 million gradient pixels per frame before a single line is drawn.
+
+The drawing is now split in two:
+- `drawHavenGlow(ctx, width, height, params)` draws only the soft blobs and the horizon band.
+- `drawHavenLines(ctx, width, height, params)` draws the floor grid, signal rings and beams, and dust.
+
+`drawHavenField` still exists and calls both, so anything that wants the whole picture in one call still gets it.
+
+### Read the code in small pieces
+Excerpt from `HavenField.tsx`, created once when the effect runs:
+```ts
+const glow = document.createElement("canvas"); // never added to the page
+const glowCtx = glow.getContext("2d");
+```
+`document.createElement("canvas")` makes an **offscreen** canvas: it exists in memory and gets drawn into, but it's never shown on its own.
+
+Excerpt from `resize`:
+```ts
+glow.width = Math.max(1, Math.round(width / GLOW_SCALE)); // GLOW_SCALE = 8
+```
+`Math.max(1, …)` keeps the canvas at least 1px wide, because a 0-wide canvas can't be drawn.
+
+Excerpt from `render`, which runs every frame:
+```ts
+drawHavenGlow(glowCtx, glow.width, glow.height, params); // small canvas
+ctx.drawImage(glow, 0, 0, width, height);                // stretch it to full size
+drawHavenLines(ctx, width, height, params);              // crisp layer at full DPR
+```
+`drawImage(source, x, y, w, h)` copies a whole canvas onto another one and scales it to `w×h`. The browser smooths it while scaling (`imageSmoothingQuality = "high"`), so a blurry gradient stays a blurry gradient. This only works because the glow has no edges. Drawing the grid lines small and then stretching them would make them visibly soft.
+
+### Follow one value
+Take a 1440×900 hero (CSS pixels) on a DPR 2 screen:
+- main canvas: 2880×1800 = 5,184,000 pixels
+- glow canvas: `round(1440/8)` × `round(900/8)` = 180×113 = 20,340 pixels
+
+The radii in `drawHavenGlow` are fractions of `unit = Math.min(width, height)`. On the small canvas that's `min(180, 113) = 113`, so the big blob's radius is `0.75 × 113 ≈ 85` px. Stretched 8×, that's about 680 CSS px, the same as `0.75 × 900 = 675` at full size. The picture matches; the gradient work is about 250× smaller.
+
+### Measured
+The hero's JavaScript drawing time (perf meter, "hero JS") went from 2.9ms to 0.7ms per frame on the VM. The VM's FPS itself barely moved, because it has no GPU and composites any full-screen animated canvas in software. Hiding the canvas entirely only gets the VM to about 24fps. So check real smoothness on a real machine.
+
+### Predict, change, observe
+Set `GLOW_SCALE = 64`. What happens? <details><summary>Answer</summary>The glow canvas becomes about 23×14 px. It's still smooth, but the blobs' slow drift starts to step or shimmer, because each small pixel now covers 64 CSS px. 8 is a safe middle ground.</details>
+
+### Alternative
+Draw the glow once into a fixed image and only move it with CSS transforms. That's even cheaper, but the three blobs drift independently, so you'd need three layers. The small-canvas approach keeps the drawing code unchanged.
+
+</details>
 - Toolcraft (`npx @pixel-point/toolcraft create`) generates a standalone creative-tool app with schema controls and PNG export, not website components. Getting the visual into the site means copying the drawing code. Toolcraft's own delivery contract (an acceptance row per control, a performance envelope, a worklog) is a lot of overhead for a one-off visual.
 
 ## Hero versions and the v2 skyline (Three.js)
