@@ -161,6 +161,48 @@ Answer: every button, eyebrow label, bullet square, the announcement bar and the
 
 </details>
 
+<details>
+<summary>@file: src/components/LogoMarquee.tsx + PartnerLogos.tsx — explained</summary>
+
+Source: [LogoMarquee.tsx](src/components/LogoMarquee.tsx), [PartnerLogos.tsx](src/components/PartnerLogos.tsx), names in [site.ts](src/content/site.ts) (`customers`).
+
+### What these files are responsible for
+`LogoMarquee` is the "Trusted by" strip under every hero version. `PartnerLogos` maps each customer name to a placeholder SVG wordmark. A name with no mark falls back to plain text, so adding a real customer to `customers` never breaks the strip.
+
+### Read the code in small pieces
+Excerpt from `LogoMarquee.tsx`:
+```tsx
+<div className="animate-marquee flex w-max">
+  {[0, 1].map((copy) => (
+    <ul key={copy} aria-hidden={copy === 1 || undefined} className="flex shrink-0 gap-16 pr-16">…</ul>
+  ))}
+</div>
+```
+- `[0, 1].map(...)` renders two identical `<ul>` groups side by side.
+- `animate-marquee` (in `globals.css`) slides the track from `translateX(0)` to `translateX(-50%)`, then snaps back to 0 and repeats.
+- `aria-hidden={copy === 1 || undefined}` hides the duplicate group from screen readers, so each logo is announced only once. `|| undefined` leaves the attribute off the first group entirely instead of writing `aria-hidden="false"`.
+
+**Why `pr-16` matters:** `gap-16` only adds space *between* items, not after the last one. The earlier version put every logo in one flex row, so the two halves weren't exactly equal and `-50%` stopped half a gap short, which made a visible jump on every loop. Giving each group trailing padding equal to the gap makes the two groups exactly the same width, so `-50%` lands exactly where the second group began.
+
+**Why `REPEAT = 2`:** if one group is narrower than the screen, the right edge goes empty before the loop restarts (the "cutting off"). Repeating the six logos inside each group makes a group 2812px wide, wider than a 1869px viewport.
+
+Excerpt from `PartnerLogos.tsx`:
+```tsx
+<text … textLength="82" lengthAdjust="spacingAndGlyphs">rentor</text>
+```
+`textLength` forces the word to exactly 82 SVG units wide, whatever font actually loads. That's what lets each mark have a fixed `viewBox` width without the text spilling out.
+
+### Follow one value
+Group width is 2812px and the animation lasts 60s. One loop moves the track by 50% of 5624px = 2812px, so logos drift at about 47px per second. Each logo is `fill="currentColor"`, inheriting `text-white/50` from the track.
+
+### Predict, change, observe
+Remove `pr-16` from the `<ul>`. What do you see? <details><summary>Answer</summary>Once per minute the row jumps left by 32px (half of `gap-16`'s 64px) as the animation restarts.</details>
+
+### Swapping in real logos
+Add the real SVG as a new entry in `marks` (or as an `<img>` from `public/`) under the same name used in `customers`.
+
+</details>
+
 ## Run and check
 
 ```bash
