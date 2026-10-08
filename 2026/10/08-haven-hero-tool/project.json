@@ -1,0 +1,8 @@
+{
+  "name": "haven-hero-tool",
+  "tags": ["toolcraft", "canvas-2d", "generative", "client", "haven"],
+  "template": "toolcraft",
+  "language": "typescript",
+  "description": "Toolcraft tuning app for the Haven hero signal grid: purple perspective floor with pulsing request signals, schema controls and PNG export",
+  "status": "local"
+}
