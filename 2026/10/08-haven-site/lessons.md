@@ -178,3 +178,153 @@ In CI (`.github/workflows/deploy.yml`) Next projects are detected by `next.confi
 - `HavenField.tsx` runs a `requestAnimationFrame` loop. It caps devicePixelRatio at 2 to keep the fill cost down and pauses when the hero scrolls out of view (`IntersectionObserver`) or the tab is hidden (`visibilitychange`). With reduced motion on, it draws one still frame.
 - `ResizeObserver` keeps the canvas backing size equal to CSS size × DPR. Without that the lines blur on retina screens.
 - Toolcraft (`npx @pixel-point/toolcraft create`) generates a standalone creative-tool app with schema controls and PNG export, not website components. Getting the visual into the site means copying the drawing code. Toolcraft's own delivery contract (an acceptance row per control, a performance envelope, a worklog) is a lot of overhead for a one-off visual.
+
+## Hero versions and the v2 skyline (Three.js)
+
+The hero background can be swapped. Every design is kept as a numbered version in [`src/components/hero/versions.tsx`](src/components/hero/versions.tsx), so we can compare them:
+
+- `?hero=v1` shows the signal grid.
+- `?hero=v2` shows the 3D skyline (the current default).
+- A switcher pill in the corner appears in dev, or whenever a `?hero=` link is opened.
+
+Component tree (excerpt):
+
+```
+<Hero>
+  <div pointer-events-none -z-10>     ← sits behind all hero text
+    <Backdrop />                      ← version.Backdrop (SignalGridBackdrop or CityBackdrop)
+  </div>
+  <HeroVersionPicker />               ← only when comparing
+  …headline, CTA, sub copy…
+```
+
+<details>
+<summary>@file: src/components/hero/useHeroVersion.ts — explained</summary>
+
+Source: [`useHeroVersion.ts`](src/components/hero/useHeroVersion.ts)
+
+### What this file is responsible for
+It picks which hero version to show and keeps the URL shareable. It doesn't know what any version looks like; that lives in `versions.tsx`.
+
+### Read the code in small pieces
+```ts
+const [id, setId] = useState(defaultHeroVersion);
+```
+`useState` returns a pair: the current value and a setter. Destructuring (`[id, setId]`) names both of them. The first render always uses the default, `"v2"`.
+
+```ts
+useEffect(() => {
+  const requested = new URLSearchParams(window.location.search).get(PARAM);
+  ...
+}, []);
+```
+The site is a static export, so there's no server to read the query string. The effect runs once (`[]`), after the page loads in the browser, and then switches to the requested version.
+
+```ts
+window.history.replaceState(null, "", url);
+```
+This changes the address bar without reloading the page and without adding a back-button entry.
+
+### Follow one value
+1. You open `/?hero=v1`.
+2. The first render shows v2.
+3. The effect reads `"v1"`, finds it in `heroVersions`, and calls `setId("v1")`.
+4. React re-renders with `SignalGridBackdrop`.
+
+`comparing` becomes `true`, so the picker appears.
+
+### Predict, change, observe
+In `versions.tsx`, change `defaultHeroVersion` to `"v1"` and open `/` with no query. Which backdrop do you get? <details><summary>Answer</summary>The signal grid. The default only applies when the URL doesn't ask for a version.</details>
+</details>
+
+### How the skyline works (mental model)
+One function, `createHavenCity(canvas)`, builds a Three.js scene and returns `{ dispose }`. React (`CityBackdrop.tsx`) only creates it when the component mounts and disposes it when the component goes away. That's the same split as v1: pure drawing code plus a thin React wrapper, so Toolcraft can reuse the core.
+
+Each frame draws three things:
+1. **Sky**: a full-screen quad drawn first, with a violet glow at the horizon.
+2. **City**: one `InstancedMesh`, which draws 500+ boxes in a single draw call. Windows are not geometry; the fragment shader paints them.
+3. **Ground**: a plane whose shader draws the street grid and the ripple rings from flashes.
+
+Beacons (`Points`) blink on the tallest roofs.
+
+<details>
+<summary>@file: src/components/hero/city/createHavenCity.ts — explained</summary>
+
+Source: [`createHavenCity.ts`](src/components/hero/city/createHavenCity.ts)
+
+### What this file is responsible for
+- Lays out the buildings.
+- Owns the animation loop, pointer hover and flashes, and resize, pause and cleanup.
+
+The GLSL lives in `shaders.ts`.
+
+### Read the code in small pieces
+```ts
+const CELL = 1.7;
+const COLUMNS = 9;
+const ROWS = 34;
+const NEAR_Z = 14;
+const DEPTH = ROWS * CELL; // 57.8
+const FAR_Z = NEAR_Z - DEPTH; // -43.8
+```
+The city is a grid of 19 columns (−9…9) by 34 rows, with 1.7 world units between building centres. `layoutCity` skips columns −1, 0 and 1 to leave the avenue the camera looks down. It also randomly skips 14% of the remaining cells to make plazas.
+
+```ts
+const wrapZ = (z, scroll) => FAR_Z + ((((z - FAR_Z + scroll) % DEPTH) + DEPTH) % DEPTH);
+```
+This is how the city scrolls forever. Each building has a fixed home `z`. Adding `scroll` moves it toward the camera, and `% DEPTH` wraps it back to the far end once it passes behind the camera. The far end is hidden in fog, so you never see a building pop in.
+
+### Follow one value
+Take the building in row 0. Its home is `z = -43.8`.
+- With `scroll = 10`: `-43.8 + (10 % 57.8)` gives `-33.8`, so it has moved 10 units closer.
+- With `scroll = 60`: `60 % 57.8 = 2.2`, so it sits at `-41.6`. It went past the camera and came back around to the far end.
+
+At `speed = 0.55` units per second, one full lap takes 57.8 / 0.55 ≈ 105 s.
+
+### Hover → flash
+- Each frame, `Raycaster.setFromCamera(pointer, camera)` shoots a ray from the mouse position into the scene.
+- `intersectObject(city)` returns the `instanceId` of the building under the cursor.
+- When that id changes, `flash(id, 1)` sets `flashes[id]` and starts a ripple at the building's base.
+- Each frame after that, flashes fade at `dt * 1.4` per second, so a full flash takes about 0.7 s to die out.
+
+The listener is on `window`, not on the canvas, because the hero text sits above the canvas and would block the canvas's own events.
+
+### Lifecycle and accessibility
+- Like v1, the animation pauses when the hero is offscreen (`IntersectionObserver`) or the tab is hidden.
+- With reduced motion, time and scroll stay frozen. The loop runs only for 2.2 s after pointer input, so hover flashes still work without constant animation.
+- `dispose()` removes the listeners and frees GPU buffers. Without it, switching versions would leak WebGL contexts.
+
+### Predict, change, observe
+Set `towerHeight: 2` in `defaultHavenCityParams`. What happens to the beacons? <details><summary>Answer</summary>There are more of them, and they sit higher. A beacon goes on any building with `h > 4.6 * towerHeight`, but heights scale by the same factor, so the share of buildings with beacons stays about the same. The roofs are twice as high.</details>
+</details>
+
+<details>
+<summary>@file: src/components/hero/city/shaders.ts — explained</summary>
+
+Source: [`shaders.ts`](src/components/hero/city/shaders.ts)
+
+### What this file is responsible for
+It holds the GLSL strings Three.js compiles for the GPU. A vertex shader runs once per corner and places it on screen. A fragment shader runs once per pixel and picks its colour.
+
+### Windows without geometry
+```glsl
+vec2 g = vec2(u, vLocal.y) / vec2(0.12, 0.17);
+vec2 id = floor(g);
+vec2 f = fract(g);
+float pane = step(0.22, f.x) * step(f.x, 0.78) * step(0.28, f.y) * step(f.y, 0.72);
+```
+The wall is cut into cells 0.12 units wide by 0.17 tall. `id` says which cell a pixel is in, and `f` says where it sits inside that cell (0–1). Only the middle of each cell counts as glass. `step(a, x)` is 1 when `x >= a`, and multiplying several of them works like an AND.
+
+### Follow one value
+A pixel at `u = 0.30`, height `1.0`:
+- `g = (2.5, 5.88)`, so `id = (2, 5)` and `f = (0.5, 0.88)`.
+- `f.y = 0.88` is above `0.72`, so `pane = 0`. This pixel is the strip of wall between two floors.
+
+`hash(id…)` then gives each window a stable random number. The window is lit when that number is above `1 - uWindowDensity`, which is 0.78 at the default 0.22.
+
+### Fog and flashes
+`vDepth` is the distance from the camera. `smoothstep(16, 54, vDepth)` blends far buildings into the fog colour. Flashes add `uFlash` to every pane, and to the edges, scaled by `pow(vFlash, 1.4)` so they fade out softly.
+
+### Alternative
+You could model real window geometry or use textures. Thousands of windows would cost far more memory and draw calls; a shader pattern is basically free.
+</details>

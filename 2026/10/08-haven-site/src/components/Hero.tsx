@@ -4,13 +4,16 @@ import { useEffect, useState } from "react";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { hero } from "@/content/site";
 import { Button } from "./Button";
-import { HavenField } from "./HavenField";
+import { HeroVersionPicker } from "./hero/HeroVersionPicker";
+import { useHeroVersion } from "./hero/useHeroVersion";
 
 const ease = [0.16, 1, 0.3, 1] as const;
 
 export function Hero() {
   const [index, setIndex] = useState(0);
   const reduce = useReducedMotion();
+  const { version, select, comparing } = useHeroVersion();
+  const Backdrop = version.Backdrop;
 
   useEffect(() => {
     if (reduce) return;
@@ -20,7 +23,10 @@ export function Hero() {
 
   return (
     <section className="grain relative isolate flex min-h-[100svh] flex-col items-center justify-center overflow-hidden bg-ink px-6 pt-32 pb-20 text-center text-white">
-      <HeroBackdrop />
+      <div className="pointer-events-none absolute inset-0 -z-10" aria-hidden>
+        <Backdrop />
+      </div>
+      {comparing && <HeroVersionPicker current={version} onSelect={select} />}
 
       <motion.p
         className="mb-6 text-[15px] text-lilac/80"
@@ -85,16 +91,5 @@ export function Hero() {
         Backed by Y Combinator
       </p>
     </section>
-  );
-}
-
-function HeroBackdrop() {
-  return (
-    <div className="pointer-events-none absolute inset-0 -z-10" aria-hidden>
-      <div className="absolute inset-0 bg-[radial-gradient(120%_80%_at_50%_30%,#22145f_0%,#0f0833_55%,#0b062a_80%)]" />
-      <HavenField className="absolute inset-0 size-full" params={{ horizon: 0.66, lineOpacity: 0.3 }} />
-      <div className="absolute inset-x-0 top-0 h-40 bg-gradient-to-b from-ink/80 to-transparent" />
-      <div className="absolute inset-x-0 bottom-[8%] mx-auto h-[38%] max-w-[760px] bg-[radial-gradient(closest-side,rgba(11,6,42,0.75),transparent)]" />
-    </div>
   );
 }
