@@ -40,14 +40,23 @@ jobs:
           # Find every experiment with a package.json (Vite/Next projects)
           find 2026 -name "package.json" -not -path "*/node_modules/*" | while read pkg; do
             dir=$(dirname "$pkg")
+            # Local-only tools (e.g. Toolcraft tuning apps) opt out with a .skip-deploy marker
+            if [ -f "$dir/.skip-deploy" ]; then echo "↷ Skipping $dir"; continue; fi
             echo "→ Building $dir"
 
-            (cd "$dir" && npm install && npx vite build --base="/project-365/$dir/")
+            if ls "$dir"/next.config.* >/dev/null 2>&1; then
+              # Next.js projects use static export (output: "export") into out/
+              (cd "$dir" && npm install && NEXT_BASE_PATH="/project-365/$dir" npx next build)
+              out="$dir/out"
+            else
+              (cd "$dir" && npm install && npx vite build --base="/project-365/$dir/")
+              out="$dir/dist"
+            fi
 
-            # Copy dist/ output into _site mirroring the folder structure
-            if [ -d "$dir/dist" ]; then
+            # Copy build output into _site mirroring the folder structure
+            if [ -d "$out" ]; then
               mkdir -p "_site/$dir"
-              cp -r "$dir/dist/." "_site/$dir"
+              cp -r "$out/." "_site/$dir"
             fi
           done
 

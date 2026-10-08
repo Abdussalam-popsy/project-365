@@ -1,0 +1,8 @@
+{
+  "name": "haven-site",
+  "tags": ["nextjs", "tailwind", "motion", "client", "landing-page"],
+  "template": "next",
+  "language": "typescript",
+  "description": "Marketing site for Haven AI (AI workers for property management), Henry.ai-inspired editorial style in dark purple + Inter Tight",
+  "status": "local"
+}
