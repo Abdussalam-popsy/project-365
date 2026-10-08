@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Inter_Tight } from "next/font/google";
+import { DevAgentation } from "@/components/DevAgentation";
 import "./globals.css";
 
 const interTight = Inter_Tight({
@@ -21,7 +22,10 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" className={interTight.variable}>
-      <body className="bg-mist font-sans text-ink antialiased">{children}</body>
+      <body className="bg-mist font-sans text-ink antialiased">
+        {children}
+        <DevAgentation />
+      </body>
     </html>
   );
 }

@@ -46,7 +46,7 @@ export function HeroPerfMeter() {
   const heroShare = hero ? Math.round((hero.renderMs / BUDGET_MS) * 100) : null;
 
   return (
-    <div className="fixed right-4 bottom-16 z-50 rounded-2xl border border-white/15 bg-ink/85 px-3 py-2 font-mono text-[11px] leading-relaxed text-white/60 backdrop-blur-md">
+    <div className="fixed right-20 bottom-16 z-50 rounded-2xl border border-white/15 bg-ink/85 px-3 py-2 font-mono text-[11px] leading-relaxed text-white/60 backdrop-blur-md">
       <div>
         <span className={`text-[13px] font-semibold ${tone(fps)}`}>{Math.round(fps)} fps</span>
         <span className="ml-2">
