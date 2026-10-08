@@ -338,3 +338,37 @@ When comparing versions (in dev, or with `?hero=` / `?perf` in the URL), a small
 - **draws / tris:** Three.js counts draw calls and triangles in `renderer.info`. `autoReset` is off because we render twice per frame (sky, then city), so we reset the counters once before both renders.
 
 `perfStats.ts` is a plain module variable rather than React state. The backdrop writes to it 60 times a second, and the meter reads it only twice a second, so React re-renders twice a second instead of 60 times.
+
+## v3 split grid (LocalCan-style) and v3-alt
+
+A version can now replace the whole hero instead of only its backdrop. In `versions.tsx`, a version sets either `Backdrop` (drawn behind the shared centred copy) or `Layout` (a whole section). `Hero.tsx` returns early when `Layout` is set. All hooks are called before that early return, because React needs the same hooks in the same order on every render.
+
+- **v3, Split grid** ([`split/SplitHero.tsx`](src/components/hero/split/SplitHero.tsx)): left-aligned copy in a framed card, with a 2×4 grid of animated cells on the right. Below `lg`, the grid stacks under the copy and shows only the first four cells. The `B` and `H` keys trigger the two buttons.
+- **v3-alt, Centred grid** ([`GridBackdrop.tsx`](src/components/hero/GridBackdrop.tsx) + [`lib/havenGrid.ts`](src/lib/havenGrid.ts)): the Istos-inspired draft. Cells around the centred copy hold icons that send request "packets" along the grid lines into the copy panel.
+
+<details>
+<summary>@file: src/components/hero/split/PixelIcon.tsx — explained</summary>
+
+### What this file is responsible for
+It draws one cell's icon. The icon builds up out of chunky blocks, holds, then dissolves back out before the next icon appears. Hovering the cell skips ahead to the next icon.
+
+### The trick
+1. Each icon is stroked once onto an offscreen canvas (`sprite`), then that is drawn down to an `n×n` canvas.
+2. Downscaling averages the pixels. Any cell whose alpha is above 34 becomes a solid block (`mask`).
+3. Materialising plays `IN_STEPS`: 4×4 blocks half revealed, 4×4 full, then 8×8, then 16×16, then the crisp sprite. Each step lasts `STEP_MS` (110 ms), so the motion looks stepped, like pixel art. Dissolving plays the same steps backwards.
+
+### Follow one value
+- At 4×4, each block is 52 / 4 = 13 CSS px.
+- In the first step, a block shows only if `hash(i, cycle, 5) <= 0.5`, so about half the inked blocks appear.
+- `cycle` changes for each new icon, so every reveal uses a different random pattern.
+
+### Why it's cheap
+- `draw` exits early when the step key (`icon:n:reveal`) hasn't changed. Each cell repaints about 9 times per transition, not 60 times a second.
+- Masks are cached per icon and size.
+</details>
+
+<details>
+<summary>@file: src/components/hero/split/FacadeMosaic.tsx — explained</summary>
+
+This cell stands in for LocalCan's photo. It draws a procedural, lit apartment facade with solid lilac blocks blinking over it. The blocks are `h / 4` square. A `Set` of block indices keeps about 3–8 of them lit, toggling one every 380 ms, and `pointermove` lights the block under the cursor. To use a real property photo instead, draw it with `drawImage` in place of the window loop.
+</details>

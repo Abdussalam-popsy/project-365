@@ -3,11 +3,16 @@
 import type { ComponentType } from "react";
 import dynamic from "next/dynamic";
 import { HavenField } from "../HavenField";
+import GridBackdrop from "./GridBackdrop";
+import SplitHero from "./split/SplitHero";
 
 export type HeroVersion = {
   id: string;
   label: string;
-  Backdrop: ComponentType;
+  /** Swaps only what sits behind the shared centred hero copy. */
+  Backdrop?: ComponentType;
+  /** Replaces the whole hero section (its own layout and copy placement). */
+  Layout?: ComponentType;
 };
 
 const CityBackdrop = dynamic(() => import("./CityBackdrop"), { ssr: false });
@@ -27,6 +32,8 @@ function SignalGridBackdrop() {
 export const heroVersions: HeroVersion[] = [
   { id: "v1", label: "Signal grid", Backdrop: SignalGridBackdrop },
   { id: "v2", label: "Skyline", Backdrop: CityBackdrop },
+  { id: "v3", label: "Split grid", Layout: SplitHero },
+  { id: "v3-alt", label: "Centred grid", Backdrop: GridBackdrop },
 ];
 
 /** The version real visitors see. */

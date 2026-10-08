@@ -14,7 +14,6 @@ export function Hero() {
   const [index, setIndex] = useState(0);
   const reduce = useReducedMotion();
   const { version, select, comparing } = useHeroVersion();
-  const Backdrop = version.Backdrop;
 
   useEffect(() => {
     if (reduce) return;
@@ -22,19 +21,32 @@ export function Hero() {
     return () => clearInterval(id);
   }, [reduce]);
 
+  const Backdrop = version.Backdrop;
+  const Layout = version.Layout;
+  const tools = comparing && (
+    <>
+      <HeroVersionPicker current={version} onSelect={select} />
+      <HeroPerfMeter />
+    </>
+  );
+
+  if (Layout)
+    return (
+      <>
+        <Layout />
+        {tools}
+      </>
+    );
+
   return (
     <section className="grain relative isolate flex min-h-[100svh] flex-col items-center justify-center overflow-hidden bg-ink px-6 pt-32 pb-20 text-center text-white">
       <div className="pointer-events-none absolute inset-0 -z-10" aria-hidden>
-        <Backdrop />
+        {Backdrop && <Backdrop />}
       </div>
-      {comparing && (
-        <>
-          <HeroVersionPicker current={version} onSelect={select} />
-          <HeroPerfMeter />
-        </>
-      )}
+      {tools}
 
       <motion.p
+        data-hero-copy
         className="mb-6 text-[15px] text-lilac/80"
         initial={{ opacity: 0, y: 12 }}
         animate={{ opacity: 1, y: 0 }}
@@ -44,6 +56,7 @@ export function Hero() {
       </motion.p>
 
       <motion.h1
+        data-hero-copy
         className="max-w-[900px] text-[38px] leading-[1.05] font-light tracking-[-0.035em] sm:text-[64px] lg:text-[80px]"
         initial={{ opacity: 0, y: 24, filter: "blur(8px)" }}
         animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
@@ -92,7 +105,7 @@ export function Hero() {
         {hero.sub}
       </motion.p>
 
-      <p className="mt-6 inline-flex items-center gap-2 text-[13px] text-white/55">
+      <p data-hero-copy className="mt-6 inline-flex items-center gap-2 text-[13px] text-white/55">
         <span className="grid size-4 place-items-center bg-[#f26522] text-[10px] font-semibold text-white">Y</span>
         Backed by Y Combinator
       </p>
