@@ -173,10 +173,64 @@ In CI (`.github/workflows/deploy.yml`) Next projects are detected by `next.confi
 
 ## Hero signal field (canvas + Toolcraft)
 
-- The hero background is drawn by one pure function, `drawHavenField(ctx, width, height, params)` in `src/lib/havenField.ts`. It knows nothing about React, so the same file runs in the Toolcraft tuning app (`2026/10/08-haven-hero-tool`) and on the site.
+- The hero background is drawn by one pure function, `drawHavenField(ctx, width, height, params)` in `src/lib/havenField.ts`. It knows nothing about React. The Toolcraft tuning app (`2026/10/08-haven-hero-tool`) keeps its own copy (`src/app/haven-field.ts`), so tuning there and drawing here produce the same picture.
 - Everything is driven by a single `phase` value from 0 to 1. Each moving part uses `sin(2π·phase)` or `(index + phase) / rows`, so phase 1 lines up exactly with phase 0 and the loop is seamless without reversing direction.
 - `HavenField.tsx` runs a `requestAnimationFrame` loop. It caps devicePixelRatio at 2 to keep the fill cost down and pauses when the hero scrolls out of view (`IntersectionObserver`) or the tab is hidden (`visibilitychange`). With reduced motion on, it draws one still frame.
 - `ResizeObserver` keeps the canvas backing size equal to CSS size × DPR. Without that the lines blur on retina screens.
+
+<details>
+<summary>@file: src/components/HavenField.tsx + src/lib/havenField.ts — why v1 draws its glow small</summary>
+
+Source: [HavenField.tsx](src/components/HavenField.tsx), [havenField.ts](src/lib/havenField.ts)
+
+### What changed and why
+v1 has no hover logic, so its slowness (about 11fps on a real laptop) came from drawing. Every frame it painted three radial gradients over the **whole** canvas, plus a horizon band, using `"lighter"` (additive) blending. On a retina screen with DPR 2, a 1440×900 hero has a 2880×1800 backing canvas, about 5.2 million pixels, so that's roughly 16 million gradient pixels per frame before a single line is drawn.
+
+The drawing is now split in two:
+- `drawHavenGlow(ctx, width, height, params)` draws only the soft blobs and the horizon band.
+- `drawHavenLines(ctx, width, height, params)` draws the floor grid, signal rings and beams, and dust.
+
+`drawHavenField` still exists and calls both, so anything that wants the whole picture in one call still gets it.
+
+### Read the code in small pieces
+Excerpt from `HavenField.tsx`, created once when the effect runs:
+```ts
+const glow = document.createElement("canvas"); // never added to the page
+const glowCtx = glow.getContext("2d");
+```
+`document.createElement("canvas")` makes an **offscreen** canvas: it exists in memory and gets drawn into, but it's never shown on its own.
+
+Excerpt from `resize`:
+```ts
+glow.width = Math.max(1, Math.round(width / GLOW_SCALE)); // GLOW_SCALE = 8
+```
+`Math.max(1, …)` keeps the canvas at least 1px wide, because a 0-wide canvas can't be drawn.
+
+Excerpt from `render`, which runs every frame:
+```ts
+drawHavenGlow(glowCtx, glow.width, glow.height, params); // small canvas
+ctx.drawImage(glow, 0, 0, width, height);                // stretch it to full size
+drawHavenLines(ctx, width, height, params);              // crisp layer at full DPR
+```
+`drawImage(source, x, y, w, h)` copies a whole canvas onto another one and scales it to `w×h`. The browser smooths it while scaling (`imageSmoothingQuality = "high"`), so a blurry gradient stays a blurry gradient. This only works because the glow has no edges. Drawing the grid lines small and then stretching them would make them visibly soft.
+
+### Follow one value
+Take a 1440×900 hero (CSS pixels) on a DPR 2 screen:
+- main canvas: 2880×1800 = 5,184,000 pixels
+- glow canvas: `round(1440/8)` × `round(900/8)` = 180×113 = 20,340 pixels
+
+The radii in `drawHavenGlow` are fractions of `unit = Math.min(width, height)`. On the small canvas that's `min(180, 113) = 113`, so the big blob's radius is `0.75 × 113 ≈ 85` px. Stretched 8×, that's about 680 CSS px, the same as `0.75 × 900 = 675` at full size. The picture matches; the gradient work is about 250× smaller.
+
+### Measured
+The hero's JavaScript drawing time (perf meter, "hero JS") went from 2.9ms to 0.7ms per frame on the VM. The VM's FPS itself barely moved, because it has no GPU and composites any full-screen animated canvas in software. Hiding the canvas entirely only gets the VM to about 24fps. So check real smoothness on a real machine.
+
+### Predict, change, observe
+Set `GLOW_SCALE = 64`. What happens? <details><summary>Answer</summary>The glow canvas becomes about 23×14 px. It's still smooth, but the blobs' slow drift starts to step or shimmer, because each small pixel now covers 64 CSS px. 8 is a safe middle ground.</details>
+
+### Alternative
+Draw the glow once into a fixed image and only move it with CSS transforms. That's even cheaper, but the three blobs drift independently, so you'd need three layers. The small-canvas approach keeps the drawing code unchanged.
+
+</details>
 - Toolcraft (`npx @pixel-point/toolcraft create`) generates a standalone creative-tool app with schema controls and PNG export, not website components. Getting the visual into the site means copying the drawing code. Toolcraft's own delivery contract (an acceptance row per control, a performance envelope, a worklog) is a lot of overhead for a one-off visual.
 
 ## Hero versions and the v2 skyline (Three.js)
@@ -372,8 +426,3 @@ It draws one cell's icon. The icon builds up out of chunky blocks, holds, then d
 
 This cell stands in for LocalCan's photo. It draws a procedural, lit apartment facade with solid lilac blocks blinking over it. The blocks are `h / 4` square. A `Set` of block indices keeps about 3–8 of them lit, toggling one every 380 ms, and `pointermove` lights the block under the cursor. To use a real property photo instead, draw it with `drawImage` in place of the window loop.
 </details>
-
-## v1 perf: split the glow from the lines
-- v1's full-screen radial-gradient fills (additive, at up to 2× DPR) were the main raster cost, not interaction (v1 has none).
-- `drawHavenGlow` now renders into a 1/8-size offscreen canvas that is upscaled with one `drawImage`; `drawHavenLines` stays full-res. Hero JS went from 2.9 to 0.7 ms per frame; the look is unchanged because the glow has no edges.
-- VM FPS stays low regardless (software compositing of any full-screen animated canvas), so judge real smoothness on real hardware.
