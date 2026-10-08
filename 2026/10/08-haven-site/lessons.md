@@ -372,3 +372,8 @@ It draws one cell's icon. The icon builds up out of chunky blocks, holds, then d
 
 This cell stands in for LocalCan's photo. It draws a procedural, lit apartment facade with solid lilac blocks blinking over it. The blocks are `h / 4` square. A `Set` of block indices keeps about 3–8 of them lit, toggling one every 380 ms, and `pointermove` lights the block under the cursor. To use a real property photo instead, draw it with `drawImage` in place of the window loop.
 </details>
+
+## v1 perf: split the glow from the lines
+- v1's full-screen radial-gradient fills (additive, at up to 2× DPR) were the main raster cost, not interaction (v1 has none).
+- `drawHavenGlow` now renders into a 1/8-size offscreen canvas that is upscaled with one `drawImage`; `drawHavenLines` stays full-res. Hero JS went from 2.9 to 0.7 ms per frame; the look is unchanged because the glow has no edges.
+- VM FPS stays low regardless (software compositing of any full-screen animated canvas), so judge real smoothness on real hardware.

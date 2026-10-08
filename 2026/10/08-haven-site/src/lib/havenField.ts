@@ -49,9 +49,22 @@ export function drawHavenField(
   height: number,
   params: HavenFieldParams,
 ): void {
+  drawHavenGlow(ctx, width, height, params);
+  drawHavenLines(ctx, width, height, params);
+}
+
+/**
+ * Soft background glow only. It has no hard edges, so callers can render it into a
+ * small offscreen canvas and scale it up: full-screen gradient fills are the bulk of the raster cost.
+ */
+export function drawHavenGlow(
+  ctx: CanvasRenderingContext2D,
+  width: number,
+  height: number,
+  params: HavenFieldParams,
+): void {
   const t = ((params.phase % 1) + 1) % 1;
   const horizonY = height * params.horizon;
-  const cx = width / 2;
   const unit = Math.min(width, height);
 
   ctx.save();
@@ -83,9 +96,22 @@ export function drawHavenField(
   horizonGlow.addColorStop(1, rgba(params.accentColor, 0));
   ctx.fillStyle = horizonGlow;
   ctx.fillRect(0, glowTop, width, glowSpan);
+  ctx.restore();
+}
 
-  ctx.globalCompositeOperation = "source-over";
+/** Grid, signals and dust: the crisp layer that needs full resolution. */
+export function drawHavenLines(
+  ctx: CanvasRenderingContext2D,
+  width: number,
+  height: number,
+  params: HavenFieldParams,
+): void {
+  const t = ((params.phase % 1) + 1) % 1;
+  const horizonY = height * params.horizon;
+  const cx = width / 2;
+  const unit = Math.min(width, height);
 
+  ctx.save();
   const floorHeight = height - horizonY;
   const lanes = Math.max(4, Math.round(params.gridDensity));
   const spread = width * 1.6;
