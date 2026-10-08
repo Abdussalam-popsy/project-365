@@ -13,7 +13,7 @@ export function useHeroVersion() {
   useEffect(() => {
     const requested = new URLSearchParams(window.location.search).get(PARAM);
     if (requested && heroVersions.some((v) => v.id === requested)) setId(requested);
-    if (requested) setComparing(true);
+    if (requested || new URLSearchParams(window.location.search).has("perf")) setComparing(true);
   }, []);
 
   const select = useCallback((next: string) => {

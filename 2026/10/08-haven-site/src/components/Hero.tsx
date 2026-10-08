@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { hero } from "@/content/site";
 import { Button } from "./Button";
+import { HeroPerfMeter } from "./hero/HeroPerfMeter";
 import { HeroVersionPicker } from "./hero/HeroVersionPicker";
 import { useHeroVersion } from "./hero/useHeroVersion";
 
@@ -26,7 +27,12 @@ export function Hero() {
       <div className="pointer-events-none absolute inset-0 -z-10" aria-hidden>
         <Backdrop />
       </div>
-      {comparing && <HeroVersionPicker current={version} onSelect={select} />}
+      {comparing && (
+        <>
+          <HeroVersionPicker current={version} onSelect={select} />
+          <HeroPerfMeter />
+        </>
+      )}
 
       <motion.p
         className="mb-6 text-[15px] text-lilac/80"

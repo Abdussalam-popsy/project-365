@@ -2,6 +2,7 @@
 
 import { useEffect, useRef } from "react";
 import { useReducedMotion } from "motion/react";
+import { reportHeroFrame } from "./hero/perfStats";
 import { defaultHavenFieldParams, drawHavenField, type HavenFieldParams } from "@/lib/havenField";
 
 const LOOP_SECONDS = 14;
@@ -32,10 +33,12 @@ export function HavenField({
     const startPhase = paramsRef.current.phase;
 
     const render = (phase: number) => {
+      const started = performance.now();
       const dpr = Math.min(window.devicePixelRatio || 1, MAX_DPR);
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
       ctx.clearRect(0, 0, width, height);
       drawHavenField(ctx, width, height, { ...paramsRef.current, phase });
+      reportHeroFrame({ renderMs: performance.now() - started, width: canvas.width, height: canvas.height });
     };
 
     const resize = () => {
@@ -80,6 +83,7 @@ export function HavenField({
 
     return () => {
       pause();
+      reportHeroFrame(null);
       resizeObserver.disconnect();
       intersection.disconnect();
       document.removeEventListener("visibilitychange", onVisibility);

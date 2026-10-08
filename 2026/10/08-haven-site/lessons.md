@@ -328,3 +328,13 @@ A pixel at `u = 0.30`, height `1.0`:
 ### Alternative
 You could model real window geometry or use textures. Thousands of windows would cost far more memory and draw calls; a shader pattern is basically free.
 </details>
+
+## Performance readout
+
+When comparing versions (in dev, or with `?hero=` / `?perf` in the URL), a small meter sits above the version pill. See [`HeroPerfMeter.tsx`](src/components/hero/HeroPerfMeter.tsx) and [`perfStats.ts`](src/components/hero/perfStats.ts).
+
+- **fps / ms avg / ms worst:** measured by a separate `requestAnimationFrame` loop that times the gap between frames. That gap includes everything (JavaScript, layout, and the GPU when it is the bottleneck), so it's the honest "does it feel smooth" number. At 60fps each frame has a budget of 1000 / 60 ≈ 16.7 ms. Green means 55fps or more, amber 40–54, red below 40.
+- **hero JS:** each backdrop wraps its own render in `performance.now()` and passes the result to `reportHeroFrame()`. That's the backdrop's share of the budget on the main thread. For example, 1.2 ms is 7% of 16.7 ms. GPU time isn't included because GPU work runs asynchronously.
+- **draws / tris:** Three.js counts draw calls and triangles in `renderer.info`. `autoReset` is off because we render twice per frame (sky, then city), so we reset the counters once before both renders.
+
+`perfStats.ts` is a plain module variable rather than React state. The backdrop writes to it 60 times a second, and the meter reads it only twice a second, so React re-renders twice a second instead of 60 times.

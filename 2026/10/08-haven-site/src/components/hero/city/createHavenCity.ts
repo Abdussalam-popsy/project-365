@@ -29,6 +29,7 @@ import {
   skyFragment,
   skyVertex,
 } from "./shaders";
+import { reportHeroFrame } from "../perfStats";
 
 export type HavenCityParams = {
   /** World units per second the city drifts toward the camera. */
@@ -128,6 +129,7 @@ export function createHavenCity(
 
   const renderer = new WebGLRenderer({ canvas, antialias: true, powerPreference: "high-performance" });
   renderer.autoClear = false;
+  renderer.info.autoReset = false;
 
   const camera = new PerspectiveCamera(50, 1, 0.1, 120);
   const lookTarget = new Vector3(0, 4.6, -10);
@@ -298,6 +300,7 @@ export function createHavenCity(
   };
 
   const render = (dt: number) => {
+    const started = performance.now();
     if (!reduce) {
       time += dt;
       scroll += dt * params.speed;
@@ -343,9 +346,17 @@ export function createHavenCity(
     beaconMaterial.uniforms.uTime.value = time;
     groundMaterial.uniforms.uScroll.value = scroll % CELL;
 
+    renderer.info.reset();
     renderer.clear();
     renderer.render(skyScene, skyCamera);
     renderer.render(scene, camera);
+    reportHeroFrame({
+      renderMs: performance.now() - started,
+      drawCalls: renderer.info.render.calls,
+      triangles: renderer.info.render.triangles,
+      width: canvas.width,
+      height: canvas.height,
+    });
   };
 
   const tick = (now: number) => {
@@ -402,6 +413,7 @@ export function createHavenCity(
   return {
     dispose() {
       pause();
+      reportHeroFrame(null);
       resizeObserver.disconnect();
       intersection.disconnect();
       window.removeEventListener("pointermove", onPointerMove);
