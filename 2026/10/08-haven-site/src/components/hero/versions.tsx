@@ -16,14 +16,17 @@ export type HeroVersion = {
 };
 
 const CityBackdrop = dynamic(() => import("./CityBackdrop"), { ssr: false });
+const ResidentialBackdrop = dynamic(() => import("./CityBackdrop").then((m) => m.ResidentialBackdrop), {
+  ssr: false,
+});
 
 function SignalGridBackdrop() {
   return (
     <>
-      <div className="absolute inset-0 bg-[radial-gradient(120%_80%_at_50%_30%,#22145f_0%,#0f0833_55%,#0b062a_80%)]" />
+      <div className="absolute inset-0 bg-[radial-gradient(120%_80%_at_50%_30%,#43234f_0%,#26132f_55%,#1e0f26_80%)]" />
       <HavenField className="absolute inset-0 size-full" params={{ horizon: 0.66, lineOpacity: 0.3 }} />
       <div className="absolute inset-x-0 top-0 h-40 bg-gradient-to-b from-ink/80 to-transparent" />
-      <div className="absolute inset-x-0 bottom-[8%] mx-auto h-[38%] max-w-[760px] bg-[radial-gradient(closest-side,rgba(11,6,42,0.75),transparent)]" />
+      <div className="absolute inset-x-0 bottom-[8%] mx-auto h-[38%] max-w-[760px] bg-[radial-gradient(closest-side,rgba(30,15,38,0.75),transparent)]" />
     </>
   );
 }
@@ -34,6 +37,7 @@ export const heroVersions: HeroVersion[] = [
   { id: "v2", label: "Skyline", Backdrop: CityBackdrop },
   { id: "v3", label: "Split grid", Layout: SplitHero },
   { id: "v3-alt", label: "Centred grid", Backdrop: GridBackdrop },
+  { id: "v4", label: "Residential", Backdrop: ResidentialBackdrop },
 ];
 
 /** The version real visitors see. */

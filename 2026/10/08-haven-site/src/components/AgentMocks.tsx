@@ -8,7 +8,7 @@ function Frame({ title, meta, children }: { title: string; meta: string; childre
   return (
     <div className="relative">
       <div className="absolute -inset-6 -z-10 bg-[radial-gradient(60%_60%_at_50%_50%,rgba(87,64,239,0.18),transparent)]" />
-      <div className="border border-ink/10 bg-white shadow-[0_30px_80px_-30px_rgba(11,6,42,0.35)]">
+      <div className="border border-ink/10 bg-white shadow-[0_30px_80px_-30px_rgba(30,15,38,0.35)]">
         <div className="flex items-center justify-between border-b border-ink/10 px-5 py-3.5">
           <span className="text-[14px] font-medium">{title}</span>
           <span className="text-[12px] text-ink/45">{meta}</span>

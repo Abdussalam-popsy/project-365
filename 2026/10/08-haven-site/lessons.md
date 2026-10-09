@@ -282,6 +282,7 @@ The hero background can be swapped. Every design is kept as a numbered version i
 
 - `?hero=v1` shows the signal grid.
 - `?hero=v2` shows the 3D skyline (the current default).
+- `?hero=v4` shows the low-rise residential version of the skyline (see "v4 residential skyline" below).
 - A switcher pill in the corner appears in dev, or whenever a `?hero=` link is opened.
 
 Component tree (excerpt):
@@ -344,6 +345,8 @@ Each frame draws three things:
 
 Beacons (`Points`) blink on the tallest roofs.
 
+v4 reuses this same file with `variant: "residential"`; the walkthrough for that is further down.
+
 <details>
 <summary>@file: src/components/hero/city/createHavenCity.ts — explained</summary>
 
@@ -405,7 +408,7 @@ It holds the GLSL strings Three.js compiles for the GPU. A vertex shader runs on
 
 ### Windows without geometry
 ```glsl
-vec2 g = vec2(u, vLocal.y) / vec2(0.12, 0.17);
+vec2 g = vec2(u, vLocal.y) / uWinCell; // uWinCell = (0.12, 0.17) in v2
 vec2 id = floor(g);
 vec2 f = fract(g);
 float pane = step(0.22, f.x) * step(f.x, 0.78) * step(0.28, f.y) * step(f.y, 0.72);
@@ -481,14 +484,14 @@ After the hero and the "Trusted by" strip, the screen holds on dark purple with 
 
 ### What this file is responsible for
 
-It renders one tall section (`h-[280svh]`, 2.8 screen heights) with a `sticky` box inside it that is exactly one screen tall. While you scroll through the tall section, the sticky box stays pinned. That gives us 1.8 screens of scrolling (2.8 − 1) during which nothing moves on the page except what we animate. The page colours themselves live elsewhere: the next section ([`ProblemStatement.tsx`](./src/components/ProblemStatement.tsx)) is already `bg-mist`.
+It renders one tall section (`runway` × 100svh, so 280svh = 2.8 screen heights by default) with a `sticky` box inside it that is exactly one screen tall. While you scroll through the tall section, the sticky box stays pinned. That gives 1.8 screens of scrolling (2.8 − 1) where only the animated pieces move. The H also starts moving *before* the section reaches the top of the screen, so it is already visible as it scrolls in under the "Trusted by" strip. The page colours live elsewhere: the next section ([`ProblemStatement.tsx`](./src/components/ProblemStatement.tsx)) is already `bg-mist`.
 
 ```
-section  relative h-[280svh] bg-ink        ← the scroll "runway"
-└── div  sticky top-0 h-[100svh]           ← pinned stage
-    ├── motion.div  radial violet glow     (opacity: glowOpacity)
-    ├── motion.div  the H                  (scale + opacity, origin = door)
-    │   └── HomeMark <svg>                 two paths copied from Logo.tsx
+section  relative bg-ink, height = runway × 100svh   ← the scroll "runway"
+└── div  sticky top-0 h-[100svh]                     ← pinned stage
+    ├── motion.div  radial lilac glow     (opacity: glowOpacity)
+    ├── motion.div  the H                 (y + scale, origin = door)
+    │   └── HomeMark <svg>                two paths copied from Logo.tsx
     └── motion.div  absolute inset-0 bg-mist (opacity: fill) ← the white takeover
 ```
 
@@ -508,80 +511,98 @@ const ORIGIN_Y = ((DOOR.y + DOOR.size / 2) / MARK_H) * 100;
 
 The door is the path `M18.0294 47.1738H27.0444…` in [`Logo.tsx`](./src/components/Logo.tsx): a 9.015-unit square. Its centre is at x = 18.0294 + 4.5075 = 22.537 and y = 47.1738 + 4.5075 = 51.681. Divided by the H's size, that is **49.83% across, 91.89% down**. Those percentages become the CSS `transformOrigin`, so `scale` grows the H *around the door* instead of around its middle.
 
-**2. Scroll progress, 0 → 1, measured by us.**
+**2. Every number lives in one object you can tune.**
 
 ```tsx
-const { scrollY } = useScroll();            // page scroll in px
-const sectionTop = useMotionValue(0);       // where the section starts, in px
-const scrollRange = useMotionValue(1);      // how far you can scroll inside it
-
-const progress = useTransform(
-  [scrollY, sectionTop, scrollRange],
-  ([y, top, range]: number[]) => clamp01((y - top) / range),
-);
+export const homeZoomTuning = {
+  lift: { label: "Entry lift (H shows up sooner)", min: 0, max: 0.6, step: 0.01, value: 0.4 },
+  enterScale: { …, value: 0.8 },
+  size: { …, value: 180 },
+  offsetY: { …, value: 0 },
+  runway: { …, value: 2.8 },
+  zoomStart: { …, value: 0.06 },
+  zoomEnd: { …, value: 0.8 },
+  curve: { …, value: 2 },
+  fill: { …, value: 0.1 },
+  glow: { …, value: 0.45 },
+};
+const t = useTuning("homeZoom", "H zoom", homeZoomTuning);
 ```
 
-- `useScroll()` with no argument gives the window's scroll position as a *motion value*: a number that updates without re-rendering React.
-- `useTransform([a, b, c], fn)` builds a new motion value from several others. `([y, top, range]: number[])` is *array destructuring*: the three current numbers arrive in an array and get names.
-- `clamp01` keeps the result between 0 and 1, so before the section `progress` is 0 and after it `progress` is 1.
+(Excerpt; the real file has a label, min, max and step on every line.) `value` is the default. `useTuning` (see the tuning walkthrough below) returns `{ lift: 0.4, enterScale: 0.8, … }`: the defaults for visitors, or the slider values while you tune.
 
-`sectionTop` and `scrollRange` are measured in a `useEffect` (it runs after the page is on screen) and re-measured by a `ResizeObserver` on `<body>`, because the hero above can change height (fonts loading, window resize).
-
-**3. Turning progress into poses.**
+**3. "How far past the top are we?", in pixels.**
 
 ```tsx
-const SETTLE = 0.12;
-const ZOOM_END = 0.8;
-const ramp = (p, from, to) => clamp01((p - from) / (to - from));
+const { scrollY } = useScroll();
+const scrolled = useTransform([scrollY, sectionTop], ([y, top]: number[]) => y - top);
+```
 
-const scale = useTransform([progress, maxScale], ([p, m]: number[]) => {
-  if (p <= SETTLE) return 0.82 + 0.18 * (p / SETTLE);
-  const t = ramp(p, SETTLE, ZOOM_END);
-  return Math.pow(m, t * t);
+- `useScroll()` gives the window's scroll position as a *motion value*: a number that updates without re-rendering React.
+- `useTransform([a, b], fn)` builds a new motion value from others. `([y, top]: number[])` is *array destructuring*: the current numbers arrive in an array and get names.
+- `scrolled` is **negative while the section is still coming up from below**, 0 when its top touches the top of the screen, and `scrollRange` (section height − one screen) when the pinned part ends.
+
+`sectionTop`, `scrollRange`, `viewport` and `maxScale` are measured in a `useEffect` and re-measured by a `ResizeObserver` on `<body>`, because the hero above can change height.
+
+**4. Showing up early: `y` and the entry part of `scale`.**
+
+```tsx
+const y = useTransform([scrolled, viewport, tuneTick], ([s, vh]: number[]) => {
+  const entry = Math.max(-1, Math.min(0, s / vh));
+  return entry * tRef.current.lift * vh + tRef.current.offsetY;
 });
-const markOpacity = useTransform(progress, (p) => ramp(p, 0, SETTLE * 0.8));
-const fill = useTransform(progress, (p) => ramp(p, ZOOM_END - 0.06, ZOOM_END + 0.04));
+// inside scale:
+if (s < 0) return enterScale + (1 - enterScale) * (1 + Math.max(-1, s / vh));
 ```
 
-`ramp(p, from, to)` reads as: "how far has `p` got between `from` and `to`, as 0 to 1?" So the timeline is:
+`entry` runs from −1 (section top at the bottom of the screen) to 0 (section top at the top). Before the stage pins, it scrolls up with the page, and its centre (where the H sits) is half a screen below the section top. `y` pulls the H up by `lift` screens at the start, and that pull shrinks to 0 as the stage pins, so there is no jump. `offsetY` is a fixed nudge for the pinned position. Meanwhile the H grows from `enterScale` (80%) to 100%.
 
-| progress | what happens |
+**5. The zoom and the white.**
+
+```tsx
+const ramp = (p, from, to) => clamp01((p - from) / (to - from));
+const z = ramp(s / range, zoomStart, zoomEnd);
+return Math.pow(m, Math.pow(z, curve));                   // scale once pinned
+const fill = ramp(s / range, zoomEnd - fill * 0.6, zoomEnd + fill * 0.4);
+```
+
+`ramp(p, from, to)` reads as: "how far has `p` got between `from` and `to`, as 0 to 1?" With the defaults:
+
+| `scrolled / scrollRange` | what happens |
 |---|---|
-| 0 → 0.096 | the H fades in (`markOpacity`) |
-| 0 → 0.12 | the H settles from 82% to 100% size |
-| 0.12 → 0.80 | the zoom: scale goes from 1 to `maxScale` |
-| 0.74 → 0.84 | the white layer fades in (`fill`) |
-| 0.84 → 1 | solid white, held, then the page carries on |
+| below 0 (entering) | H lifts into place and grows 80% → 100%; glow fades in |
+| 0 → 0.06 | H holds still, full size |
+| 0.06 → 0.80 | the zoom: scale goes from 1 to `maxScale` |
+| 0.74 → 0.84 | the white layer fades in |
+| 0.84 → 1 | solid white, then the page carries on |
 
-Why `Math.pow(m, t * t)` and not a straight line? Zooming feels even when each bit of scroll *multiplies* the size by the same amount. `m ** t` does exactly that (it is 1 at t = 0 and `m` at t = 1). Squaring `t` makes the start gentle and the end fast, like rushing through a doorway.
+Why `Math.pow(m, z ** curve)` and not a straight line? Zooming feels even when each bit of scroll *multiplies* the size by the same amount; `m ** z` does that (1 at z = 0, `m` at z = 1). Raising `z` to `curve` = 2 makes the start gentle and the end fast, like rushing through a doorway.
 
-**4. How big is "big enough"?**
+**6. Why `tuneTick`?** The transform functions read the tuning through `tRef.current`, not as inputs. Motion only re-runs a transform when one of its input motion values changes. When you drag a slider without scrolling, nothing would change, so the effect bumps `tuneTick` by 1, which is an input of every transform, and they all re-run.
+
+**7. How big is "big enough"?**
 
 ```tsx
 const doorPx = (h * DOOR.size) / MARK_H;
-const doorOffsetY = (ORIGIN_Y / 100 - 0.5) * h;
+const doorOffsetY = (ORIGIN_Y / 100 - 0.5) * h + tRef.current.offsetY;
 const halfCover = Math.max(window.innerWidth / 2, window.innerHeight / 2 + Math.abs(doorOffsetY));
 maxScale.set(((2 * halfCover) / doorPx) * 1.15);
 ```
 
-The door has to end up wider than the screen. The door sits below the H's centre, and the flex layout centres the H, not the door. So the door also has to reach the top edge from slightly lower down; that is what `+ Math.abs(doorOffsetY)` handles. `* 1.15` adds 15% spare.
+The door has to end up bigger than the screen. It sits below the H's centre (and `offsetY` can move it further), so it also has to reach the far edge from off-centre. That is what `+ Math.abs(doorOffsetY)` handles. `* 1.15` adds 15% spare.
 
 ### Follow one value all the way through
 
-Desktop window, 1440 × 900:
+Desktop window, 1440 × 900, all defaults:
 
-1. The H's height class is `h-[clamp(96px,16vw,180px)]`. 16vw = 230px, which is more than the 180px max, so **h = 180px**.
-2. `doorPx` = 180 × 9.015 / 56.2437 = **28.85px**. `doorOffsetY` = (0.9189 − 0.5) × 180 = **75.4px**.
-3. `halfCover` = max(1440 / 2, 900 / 2 + 75.4) = max(720, 525.4) = **720**. Width wins on a wide screen.
-4. `maxScale` = 2 × 720 / 28.85 × 1.15 ≈ **57.4**, so the door ends up about 1656px wide.
-5. The section is 2.8 × 900 = 2520px tall, so `scrollRange` = 2520 − 900 = **1620px**. Scroll 810px into it and `progress` = 0.5.
-6. `t` = (0.5 − 0.12) / 0.68 = 0.559, `t²` = 0.312, `scale` = 57.4^0.312 ≈ **3.54**. Halfway through the scroll, the H is only 3.5× bigger; the big growth is saved for the end.
-
-On a 390 × 844 phone, the H is 96px tall (the clamp minimum), the door is 15.39px, height wins (422 + 40.2 = 462px), and `maxScale` ≈ 69.1.
+1. Height is `clamp(96px, 16vw, 180px)`. 16vw = 230px, more than the 180px max, so **h = 180px**.
+2. **Entering:** scroll until the section top is 450px from the top of the screen, so `scrolled` = −450. Then `entry` = −0.5, `y` = −0.5 × 0.4 × 900 = **−180px**, and scale = 0.8 + 0.2 × 0.5 = **0.9**. The stage's centre is at 450 + 450 = 900px, the bottom edge, but the lift draws the H at 720px, fully on screen. Without the lift you'd only see its top half here. That gap was the "plain purple" stretch.
+3. `doorPx` = 180 × 9.015 / 56.2437 = **28.85px**. `doorOffsetY` = (0.9189 − 0.5) × 180 = 75.4px. `halfCover` = max(720, 450 + 75.4) = 720. `maxScale` = 2 × 720 / 28.85 × 1.15 ≈ **57.4**.
+4. **Pinned:** the section is 2.8 × 900 = 2520px, so `scrollRange` = 1620px. At `scrolled` = 810, the ratio is 0.5, so `z` = (0.5 − 0.06) / 0.74 = 0.595 and `z²` = 0.354. Scale = 57.4^0.354 ≈ **4.2**. Halfway through, the H is only about 4× bigger; the big growth is saved for the end.
 
 ### Why we measure progress ourselves
 
-Motion also offers `useScroll({ target, offset })`, which hands you a ready-made `scrollYProgress`. The first version of this file used it. Scale (a function transform) worked, but the opacity transforms were handed to the browser's hardware-accelerated scroll timeline and ended up out of sync: at 90% through, the H showed at 76% opacity and the white layer at 0, so the "white" looked grey. Driving every value through function transforms of our own `progress` keeps all four poses on the same number.
+Motion also offers `useScroll({ target, offset })`, which hands you a ready-made `scrollYProgress`. The first version of this file used it. Scale (a function transform) worked, but the opacity transforms were handed to the browser's hardware-accelerated scroll timeline and ended up out of sync: at 90% through, the H showed at 76% opacity and the white layer at 0, so the "white" looked grey. Driving every value through function transforms of our own `scrolled` number keeps all the poses in step.
 
 ### Reduced motion
 
@@ -597,9 +618,164 @@ Why not just `if (prefersReduced)`? The page HTML is built ahead of time (static
 
 ### Predict, change, observe
 
-Change `ZOOM_END` from `0.8` to `0.6` and scroll through slowly. What changes?
+Open the dev preview, click **Tune**, and drag *Entry lift* from 0.40 to 0. Scroll slowly up to the end of the "Trusted by" strip. What do you see?
 
-<details><summary>Answer</summary>The zoom finishes sooner (it now runs over 0.12 → 0.6 of the runway) and the white layer fades in over 0.54 → 0.64. You then scroll through a longer stretch of plain white before the next section arrives. Change it back to 0.8 afterwards.</details>
+<details><summary>Answer</summary>The H shows up later: when the section top is halfway up the screen, only the top half of the H peeks above the bottom edge. That's the old "plain purple" stretch. Click **Reset** to go back to 0.40.</details>
 
 </details>
 
+
+## Live tuning panel (`Tune` button)
+
+In dev, or on any build with `?tune` in the URL, a **Tune** button sits at the top right. It opens sliders for whatever is on screen: the H zoom, the v2 skyline or the v4 neighbourhood. Moved sliders turn lilac. **Copy values** copies only what you changed, e.g. `{ "homeZoom": { "lift": 0.3 } }`. Paste that into chat and the numbers become the new defaults in code. Values persist in `localStorage` under `haven-tuning`, so a reload keeps them. **Reset** puts one group back to its defaults.
+
+```
+layout.tsx
+├── {children}  ← HomeZoom, CityBackdrop…  each calls useTuning(id, title, specs)
+├── <DevTuner/> ← reads the same store, draws one <input type="range"> per spec
+└── <DevAgentation/>
+```
+
+<details>
+<summary>@file: src/lib/tuning.ts — explained</summary>
+
+[Open the file](./src/lib/tuning.ts).
+
+### What this file is responsible for
+A tiny shared store with no library. Components *register* a group of sliders, and the panel *reads* them. It isn't React state, because two unrelated components (the panel and, say, `HomeZoom`) need the same numbers.
+
+### Read the code in small pieces
+
+```ts
+export type TuningSpec = { label: string; min: number; max: number; step: number; value: number };
+export type TuningValues<T extends TuningSpecs> = { [K in keyof T]: number };
+```
+`TuningValues<T>` is a *mapped type*: "the same keys as `T`, each holding a number". So `useTuning(…, homeZoomTuning)` is typed as `{ lift: number; enterScale: number; … }`, and a typo like `t.lfit` fails the type check.
+
+```ts
+const groups = new Map<string, Group>();   // "homeZoom" → { title, specs, values, mounted }
+const listeners = new Set<() => void>();   // who to tell when anything changes
+```
+These live at module level, outside any component, so every importer shares the same `Map`. `mounted` counts how many on-screen components use a group. The panel only lists groups with `mounted > 0`, so after you switch from v2 to v4 the skyline sliders go away.
+
+`setTuning(id, key, value)` clamps the value to `[min, max]`, replaces `group.values` with a new object (`{ ...group.values, [key]: v }`, so React sees a change), then `emit()` saves `changedTuning()` to `localStorage` and calls every listener.
+
+### Lifecycle of `useTuning`
+1. **First render:** `useState(() => defaultsOf(specs))` returns the plain defaults. The server-built HTML used those too, so hydration matches.
+2. **After mount (effect):** if `tuningEnabled()` is false (a normal visitor), stop here. Visitors only ever get the defaults. Otherwise, create the group (merging saved values from `localStorage`), add 1 to `mounted`, and subscribe `sync`, which copies the group's values into state.
+3. **Cleanup:** unsubscribe and take 1 off `mounted`, so the panel forgets the group.
+
+### Follow one value
+You drag *Entry lift* to 0.3. `<input>` fires `onChange`, then `setTuning("homeZoom", "lift", 0.3)`. `0.3` is inside `[0, 0.6]`, so it's kept. `emit()` writes `{"homeZoom":{"lift":0.3}}` to `localStorage`. `HomeZoom`'s `sync` runs `setValues`, it re-renders with `t.lift = 0.3`, its effect updates `tRef` and bumps `tuneTick`, and the H moves.
+
+### Predict, change, observe
+Run `localStorage.removeItem("haven-tuning")` in the browser console and reload. <details><summary>Answer</summary>Every slider is back at its default: saved values are the only thing that survives a reload.</details>
+</details>
+
+<details>
+<summary>@file: src/components/DevTuner.tsx — explained</summary>
+
+[Open the file](./src/components/DevTuner.tsx).
+
+- `useEffect(() => { setEnabled(tuningEnabled()); return subscribeTuning(…) }, [])` decides on the client only (the server has no URL or `NODE_ENV` check to make), then re-renders whenever the store emits. `rerender((n) => n + 1)` is a common trick: the number itself is unused, but changing state forces a render.
+- `{groups.map(([id, group]) => …)}` takes each `[key, value]` pair from `visibleTuningGroups()` and destructures it in the arrow's parameter.
+- `decimals(step)` turns `0.01` into 2 and `1` into 0, so the readout shows `0.40` but `180`.
+- `className={moved ? "text-lilac" : undefined}`: `undefined` means "no class at all", which is cleaner than an empty string.
+- `navigator.clipboard.writeText(text)` returns a Promise, which is why `copy` is `async`. "Copied" shows for 1400 ms.
+
+It is in production builds too, but renders `null` unless the URL has `?tune`. That lets you tune on the live GitHub Pages site and copy values from there.
+</details>
+
+## v4 residential skyline
+
+The client liked v2's skyline but wanted homes, not towers. v4 is the same Three.js scene, the same file and the same hover flash, with a different layout:
+
+- **Plots:** 60% are two-floor houses with pitched roofs. The rest are flat-roofed apartment blocks of 3–5 floors. v2's towers are up to about 10 units tall; here the tallest block is 1.9.
+- **Windows:** fewer, larger panes, and about 35% of lit windows glow warm cream instead of lilac.
+- **Lights:** steady street lamps line the avenue instead of blinking roof beacons.
+- **Camera:** lower (2.4 instead of 3.1) and tilted down, so you see the roofs.
+
+v2 is unchanged: its new options all default to its old values.
+
+<details>
+<summary>@file: src/components/hero/city/createHavenCity.ts (v4 parts) — explained</summary>
+
+[Open the file](./src/components/hero/city/createHavenCity.ts).
+
+### One function, two variants
+```ts
+const variants = {
+  towers: { look: new Vector3(0, 4.6, -10), winCell: new Vector2(0.12, 0.17), shadeHeight: 9 },
+  residential: { look: new Vector3(0, 1.1, -10), winCell: new Vector2(0.3, 0.36), shadeHeight: 3 },
+};
+const params = { ...(residential ? residentialCityParams : defaultHavenCityParams), ...options.params };
+```
+The spread `{ ...a, ...b }` copies `a`, then overwrites with `b`, so slider values win over the variant's defaults. `residentialCityParams` is itself `{ ...defaultHavenCityParams, speed: 0.4, … }`: v2's defaults with a few changes.
+
+### `layoutResidential`
+```ts
+const house = seeded(i, 2) < p.houseShare;
+const floors = house ? 2 : 3 + Math.floor(seeded(i, 3) * (maxFloors - 2));
+h: floors * STOREY + 0.1,                        // STOREY = 0.36
+roof: house ? (0.35 + seeded(i, 8) * 0.2) * w * p.roofPitch : 0,
+```
+It walks the same 19 × 34 grid as `layoutCity` and keeps the avenue. `seeded(i, salt)` is a fixed pseudo-random number, so the same plot always gets the same building. With `storeys = 5`, `maxFloors − 2 = 3`, so `floors` is 3, 4 or 5.
+- A house is 2 × 0.36 + 0.1 = **0.82** tall.
+- A 1.0-wide house with `seeded(i, 8) = 0.5` gets a roof of (0.35 + 0.1) × 1.0 × 1 = **0.45**.
+- A block with `seeded(i, 3) = 0.7` gets 3 + ⌊2.1⌋ = **5 floors**, 1.9 tall.
+
+### Roofs: a second instanced mesh
+`roofGeometry()` builds one triangular prism by hand: 6 triangles (two slopes and two gable ends), base 1 × 1 at y = 0, ridge at y = 1. `computeVertexNormals()` works out which way each face points. Each pitched building gets one instance, scaled to `(w × 1.06, roof, d × 1.06)` and placed on top of its box at `y = h`. The 6% overhang makes eaves.
+
+```ts
+const roofOwners = buildings.flatMap((b, i) => (b.roof > 0 ? [i] : []));
+```
+`flatMap` returning `[i]` or `[]` is "map and filter in one go". If buildings 0 and 2 are houses and 1 is a block, `roofOwners = [0, 2]`. Roof instance **1** sits on building **2**. The same array is used twice:
+- **Hover:** `intersectObjects([city, roofs])` can hit a roof; `roofOwners[instance]` converts it to the building index, so hovering a roof flashes the whole house.
+- **Flash:** each frame, `roofFlashes[k] = flashes[roofOwners[k]]` copies the building's flash level to its roof.
+
+### Street lamps
+```ts
+x: (k % 2 ? 1 : -1) * (1.5 * CELL - 0.2),
+z: FAR_Z + Math.floor(k / 2) * CELL + CELL / 2,
+```
+Lamps alternate sides: even `k` on the left, odd on the right, two per row. Lamp `k = 5` is on the right at x = 2.55 − 0.2 = **2.35**, in row ⌊5/2⌋ = 2, at z = −43.8 + 3.4 + 0.85 = **−39.55**. They are the same `Points` object as v2's beacons, with `uSteady = 1` (a gentle glow instead of a blink) and `uSize = 6` instead of 9.
+
+### Predict, change, observe
+Open `?hero=v4`, click **Tune** and drag *Roof pitch* to 0. <details><summary>Answer</summary>Every roof height becomes 0, so `roofOwners` is empty and no roof mesh is made at all (`roofs` is `null`). The houses become flat two-floor boxes. Drag it to 1.6 for steep A-frames.</details>
+</details>
+
+<details>
+<summary>@file: src/components/hero/city/shaders.ts (v4 parts) — explained</summary>
+
+[Open the file](./src/components/hero/city/shaders.ts).
+
+- `uWinCell` replaces the old fixed `vec2(0.12, 0.17)`. In v4 it is `(0.3, 0.36)`, so one window row per 0.36-unit floor. A pixel on a front wall at `u = 0.45`, height 0.6: `g = (1.5, 1.67)`, so `f = (0.5, 0.67)`. Both are inside the pane box (0.22–0.78, 0.28–0.72), so it's glass.
+- `winColor = mix(winColor, uWarm, step(1.0 - uWarmth, hash(…)))`: with warmth 0.35, a window turns warm when its random number is above 0.65, about 35% of them. v2 passes 0, so `step(1.0, …)` is always 0 and nothing changes there.
+- `uShadeHeight` is the height over which walls brighten toward `uGlassTop`. That's 9 units in v2; in v4 it's 3, so a 0.82-tall house still reaches 27% of the way and doesn't look black.
+- `roofFragment`: slopes (`n.y > 0.2`) mix between `uRoof` and `uRoofLit` by `n.x`, so the right slope is lighter. Gable ends use `uGable`. Eaves and ridge (`vY` near 0 or 1) get a faint violet rim, and the flash adds to the whole roof.
+- `beaconVertex`: `vAlpha = mix(blink, steady, uSteady)`. 0 gives v2's sharp blink; 1 gives v4's steady lamp.
+</details>
+
+<details>
+<summary>@file: src/components/hero/CityBackdrop.tsx — explained</summary>
+
+[Open the file](./src/components/hero/CityBackdrop.tsx).
+
+One `CityScene` component, two exports: the default `CityBackdrop` (v2, `variant="towers"`) and `ResidentialBackdrop` (v4). `versions.tsx` loads the named one with `dynamic(() => import("./CityBackdrop").then((m) => m.ResidentialBackdrop), { ssr: false })`. `.then` picks the named export out of the loaded module, because `dynamic` expects a component.
+
+The slider specs use `satisfies TuningSpecs`. That checks their shape without widening the type, so the exact keys still come through `useTuning`. Every `value` is read from `defaultHavenCityParams` or `residentialCityParams`, so the defaults have one source of truth.
+
+```tsx
+const [params, setParams] = useState(tuned);
+useEffect(() => {
+  const timer = setTimeout(() => setParams((prev) => (JSON.stringify(prev) === JSON.stringify(tuned) ? prev : tuned)), 150);
+  return () => clearTimeout(timer);
+}, [tuned]);
+```
+Changing a layout slider means rebuilding the whole scene, which disposes it and calls `createHavenCity` again. A drag fires dozens of `onChange` events, and each one cancels the previous timer, so the rebuild only happens 150 ms after the slider stops (a *debounce*). Comparing as JSON keeps the same object when nothing really changed, so the scene isn't rebuilt for nothing.
+</details>
+
+## Brand: Geist and the two hex codes
+
+[`layout.tsx`](./src/app/layout.tsx) loads Geist with `next/font/google`. That downloads it at build time and serves it from our own site, then exposes it as the CSS variable `--font-geist`. [`globals.css`](./src/app/globals.css) puts that first in `--font-sans`. The client's colours are tokens there: `--color-ink: #1e0f26` (dark background, so `bg-ink` everywhere) and `--color-lilac: #c9b5da` (light accent, `text-lilac`). The plum shades are mixed from those two. The 3D scenes can't read CSS variables, so `createHavenCity.ts`'s `palette` repeats the hex codes. The bright violet `#5740ef` stays for buttons, as the client approved.

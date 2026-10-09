@@ -16,8 +16,8 @@ export function Nav() {
     <motion.header
       className="fixed inset-x-0 top-10 z-20 border-b transition-colors duration-300"
       animate={{
-        backgroundColor: solid ? "rgba(11,6,42,0.92)" : "rgba(11,6,42,0)",
-        borderColor: solid ? "rgba(201,193,255,0.12)" : "rgba(201,193,255,0.18)",
+        backgroundColor: solid ? "rgba(30,15,38,0.92)" : "rgba(30,15,38,0)",
+        borderColor: solid ? "rgba(201,181,218,0.12)" : "rgba(201,181,218,0.18)",
       }}
       style={{ backdropFilter: solid ? "blur(14px)" : "none" }}
     >

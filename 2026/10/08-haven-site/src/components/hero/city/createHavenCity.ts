@@ -23,6 +23,8 @@ import {
   beaconFragment,
   beaconVertex,
   buildingFragment,
+  roofFragment,
+  roofVertex,
   buildingVertex,
   groundFragment,
   groundVertex,
@@ -44,7 +46,20 @@ export type HavenCityParams = {
   ambientFlashEvery: number;
   /** Strength of horizon glow and flash ripples. */
   glow: number;
+  /** Share of lit windows that glow warm instead of lilac, 0–1. */
+  warmth: number;
+  /** Camera height in world units (buildings are ~0.8–10 tall). */
+  cameraHeight: number;
+  /** Residential only: tallest apartment block, in floors (3 or more). */
+  storeys: number;
+  /** Residential only: share of plots that are pitched-roof houses, 0–1. */
+  houseShare: number;
+  /** Residential only: multiplier on roof height; 0 flattens every roof. */
+  roofPitch: number;
 };
+
+/** "towers" is the v2 skyline; "residential" is v4's low-rise neighbourhood. */
+export type HavenCityVariant = "towers" | "residential";
 
 export const defaultHavenCityParams: HavenCityParams = {
   speed: 0.55,
@@ -53,21 +68,47 @@ export const defaultHavenCityParams: HavenCityParams = {
   flicker: 0.08,
   ambientFlashEvery: 2.4,
   glow: 1,
+  warmth: 0,
+  cameraHeight: 3.1,
+  storeys: 5,
+  houseShare: 0.6,
+  roofPitch: 1,
+};
+
+export const residentialCityParams: HavenCityParams = {
+  ...defaultHavenCityParams,
+  speed: 0.4,
+  windowDensity: 0.38,
+  flicker: 0.05,
+  warmth: 0.35,
+  cameraHeight: 2.4,
+  glow: 0.9,
+};
+
+/** Per-variant look: where the camera aims, window grid size, and how tall the facade shading spans. */
+const variants = {
+  towers: { look: new Vector3(0, 4.6, -10), winCell: new Vector2(0.12, 0.17), shadeHeight: 9 },
+  residential: { look: new Vector3(0, 1.1, -10), winCell: new Vector2(0.3, 0.36), shadeHeight: 3 },
 };
 
 const palette = {
-  top: "#0b062a",
-  mid: "#160c45",
-  fog: "#24166f",
+  top: "#1e0f26",
+  mid: "#2f1839",
+  fog: "#3a2047",
   horizon: "#5740ef",
-  glass: "#0a0526",
-  glassTop: "#221560",
-  window: "#c9c1ff",
+  glass: "#170b1d",
+  glassTop: "#3a2148",
+  window: "#c9b5da",
   windowAlt: "#8b7bff",
-  flash: "#b9abff",
-  ground: "#0c0629",
+  flash: "#dccbea",
+  ground: "#160a1c",
   grid: "#8b7bff",
-  beacon: "#e9e4ff",
+  beacon: "#f1e8f7",
+  warm: "#f2d4b4",
+  lamp: "#f6dcc0",
+  roof: "#24112d",
+  roofLit: "#43234f",
+  gable: "#1c0d23",
 };
 
 const CELL = 1.7;
@@ -78,8 +119,11 @@ const DEPTH = ROWS * CELL;
 const FAR_Z = NEAR_Z - DEPTH;
 const MAX_RIPPLES = 6;
 const FOG_RANGE = new Vector2(16, 54);
+const STOREY = 0.36;
 
-type Building = { x: number; z: number; w: number; d: number; h: number; seed: number };
+/** `roof` is the pitched roof's height above `h`; 0 means a flat roof. */
+type Building = { x: number; z: number; w: number; d: number; h: number; roof: number; seed: number };
+type Light = { x: number; y: number; z: number; seed: number };
 
 function seeded(index: number, salt: number) {
   const x = Math.sin(index * 127.1 + salt * 311.7) * 43758.5453;
@@ -107,11 +151,49 @@ export function layoutCity(towerHeight: number): Building[] {
         w: 0.85 + seeded(i, 5) * 0.5,
         d: 0.85 + seeded(i, 6) * 0.5,
         h,
+        roof: 0,
         seed: seeded(i, 7),
       });
     }
   }
   return buildings;
+}
+
+/** Same grid as `layoutCity`, filled with 2-floor houses and short apartment blocks. */
+export function layoutResidential(p: HavenCityParams): Building[] {
+  const buildings: Building[] = [];
+  const maxFloors = Math.max(3, Math.round(p.storeys));
+  let i = 0;
+  for (let col = -COLUMNS; col <= COLUMNS; col++) {
+    for (let row = 0; row < ROWS; row++) {
+      i++;
+      if (Math.abs(col) <= 1 || seeded(i, 1) < 0.18) continue;
+      const house = seeded(i, 2) < p.houseShare;
+      const floors = house ? 2 : 3 + Math.floor(seeded(i, 3) * (maxFloors - 2));
+      const w = house ? 0.9 + seeded(i, 5) * 0.35 : 1.15 + seeded(i, 5) * 0.35;
+      buildings.push({
+        x: col * CELL + (seeded(i, 4) - 0.5) * 0.2,
+        z: FAR_Z + row * CELL,
+        w,
+        d: house ? 0.95 + seeded(i, 6) * 0.3 : 1.1 + seeded(i, 6) * 0.35,
+        h: floors * STOREY + 0.1,
+        roof: house ? (0.35 + seeded(i, 8) * 0.2) * w * p.roofPitch : 0,
+        seed: seeded(i, 7),
+      });
+    }
+  }
+  return buildings;
+}
+
+/** Unit gable prism: base 1×1 at y = 0, ridge along z at y = 1, gable ends facing the camera. */
+function roofGeometry() {
+  const A = [-0.5, 0, 0.5], B = [0, 1, 0.5], C = [0, 1, -0.5], D = [-0.5, 0, -0.5];
+  const E = [0.5, 0, -0.5], H = [0.5, 0, 0.5];
+  const triangles = [A, B, C, A, C, D, E, C, B, E, B, H, A, H, B, E, D, C];
+  const geometry = new BufferGeometry();
+  geometry.setAttribute("position", new BufferAttribute(new Float32Array(triangles.flat()), 3));
+  geometry.computeVertexNormals();
+  return geometry;
 }
 
 const wrapZ = (z: number, scroll: number) => FAR_Z + ((((z - FAR_Z + scroll) % DEPTH) + DEPTH) % DEPTH);
@@ -122,9 +204,12 @@ export type HavenCity = {
 
 export function createHavenCity(
   canvas: HTMLCanvasElement,
-  options: { params?: Partial<HavenCityParams>; reducedMotion?: boolean } = {},
+  options: { variant?: HavenCityVariant; params?: Partial<HavenCityParams>; reducedMotion?: boolean } = {},
 ): HavenCity {
-  const params = { ...defaultHavenCityParams, ...options.params };
+  const variant = options.variant ?? "towers";
+  const residential = variant === "residential";
+  const look = variants[variant];
+  const params = { ...(residential ? residentialCityParams : defaultHavenCityParams), ...options.params };
   const reduce = options.reducedMotion ?? false;
 
   const renderer = new WebGLRenderer({ canvas, antialias: true, powerPreference: "high-performance" });
@@ -132,7 +217,7 @@ export function createHavenCity(
   renderer.info.autoReset = false;
 
   const camera = new PerspectiveCamera(50, 1, 0.1, 120);
-  const lookTarget = new Vector3(0, 4.6, -10);
+  const lookTarget = look.look;
   const scene = new Scene();
 
   // Sky: a full-screen quad drawn before the city.
@@ -157,7 +242,7 @@ export function createHavenCity(
   skyScene.add(new Mesh(new PlaneGeometry(2, 2), skyMaterial));
 
   // Buildings: one instanced box, base at y = 0.
-  const buildings = layoutCity(params.towerHeight);
+  const buildings = residential ? layoutResidential(params) : layoutCity(params.towerHeight);
   const count = buildings.length;
   const box = new BoxGeometry(1, 1, 1).translate(0, 0.5, 0);
   const sizes = new Float32Array(count * 3);
@@ -185,6 +270,10 @@ export function createHavenCity(
       uWindow: { value: srgb(palette.window) },
       uWindowAlt: { value: srgb(palette.windowAlt) },
       uFlash: { value: srgb(palette.flash) },
+      uWarm: { value: srgb(palette.warm) },
+      uWarmth: { value: params.warmth },
+      uWinCell: { value: look.winCell },
+      uShadeHeight: { value: look.shadeHeight },
       uFog: { value: srgb(palette.fog) },
       uFogRange: { value: FOG_RANGE },
     },
@@ -193,6 +282,34 @@ export function createHavenCity(
   city.instanceMatrix.setUsage(DynamicDrawUsage);
   city.frustumCulled = false;
   scene.add(city);
+
+  // Roofs: one prism per pitched building. roofOwners[k] is the building index roof k sits on.
+  const roofOwners = buildings.flatMap((b, i) => (b.roof > 0 ? [i] : []));
+  const roofGeo = roofGeometry();
+  const roofFlashes = new Float32Array(roofOwners.length);
+  const roofFlashAttribute = new InstancedBufferAttribute(roofFlashes, 1);
+  roofFlashAttribute.setUsage(DynamicDrawUsage);
+  roofGeo.setAttribute("aFlash", roofFlashAttribute);
+  const roofMaterial = new ShaderMaterial({
+    vertexShader: roofVertex,
+    fragmentShader: roofFragment,
+    uniforms: {
+      uRoof: { value: srgb(palette.roof) },
+      uRoofLit: { value: srgb(palette.roofLit) },
+      uGable: { value: srgb(palette.gable) },
+      uRim: { value: srgb(palette.windowAlt) },
+      uFlash: { value: srgb(palette.flash) },
+      uFog: { value: srgb(palette.fog) },
+      uFogRange: { value: FOG_RANGE },
+    },
+  });
+  const roofs = roofOwners.length ? new InstancedMesh(roofGeo, roofMaterial, roofOwners.length) : null;
+  if (roofs) {
+    roofs.instanceMatrix.setUsage(DynamicDrawUsage);
+    roofs.frustumCulled = false;
+    scene.add(roofs);
+  }
+  const hoverTargets = roofs ? [city, roofs] : [city];
 
   // Ground: street grid that scrolls with the city, plus flash ripples.
   const ripples = Array.from({ length: MAX_RIPPLES }, () => new Vector3(0, 0, -1));
@@ -217,14 +334,23 @@ export function createHavenCity(
   ground.position.z = FAR_Z + DEPTH / 2;
   scene.add(ground);
 
-  // Beacons: blinking lights on the tallest roofs.
-  const tall = buildings.map((b, i) => ({ b, i })).filter(({ b }) => b.h > 4.6 * params.towerHeight);
-  const beaconPositions = new Float32Array(tall.length * 3);
+  // Lights: blinking beacons on the tallest towers, or steady street lamps along the avenue.
+  const lights: Light[] = residential
+    ? Array.from({ length: ROWS * 2 }, (_, k) => ({
+        x: (k % 2 ? 1 : -1) * (1.5 * CELL - 0.2),
+        y: 0.55,
+        z: FAR_Z + Math.floor(k / 2) * CELL + CELL / 2,
+        seed: seeded(k, 9),
+      }))
+    : buildings
+        .filter((b) => b.h > 4.6 * params.towerHeight)
+        .map((b) => ({ x: b.x, y: b.h + 0.12, z: b.z, seed: b.seed }));
+  const beaconPositions = new Float32Array(lights.length * 3);
   const beaconGeometry = new BufferGeometry();
   const beaconPositionAttribute = new BufferAttribute(beaconPositions, 3);
   beaconPositionAttribute.setUsage(DynamicDrawUsage);
   beaconGeometry.setAttribute("position", beaconPositionAttribute);
-  beaconGeometry.setAttribute("aSeed", new BufferAttribute(new Float32Array(tall.map(({ b }) => b.seed)), 1));
+  beaconGeometry.setAttribute("aSeed", new BufferAttribute(new Float32Array(lights.map((l) => l.seed)), 1));
   const beaconMaterial = new ShaderMaterial({
     vertexShader: beaconVertex,
     fragmentShader: beaconFragment,
@@ -234,7 +360,9 @@ export function createHavenCity(
     uniforms: {
       uTime: { value: 0 },
       uPixelRatio: { value: 1 },
-      uColor: { value: srgb(palette.beacon) },
+      uSize: { value: residential ? 6 : 9 },
+      uSteady: { value: residential ? 1 : 0 },
+      uColor: { value: srgb(residential ? palette.lamp : palette.beacon) },
       uFogRange: { value: FOG_RANGE },
     },
   });
@@ -266,7 +394,16 @@ export function createHavenCity(
     });
     city.instanceMatrix.needsUpdate = true;
     city.boundingSphere = null;
-    tall.forEach(({ b }, k) => beaconPositions.set([b.x, b.h + 0.12, wrapZ(b.z, scroll)], k * 3));
+    if (roofs) {
+      roofOwners.forEach((i, k) => {
+        const b = buildings[i];
+        matrix.makeScale(b.w * 1.06, b.roof, b.d * 1.06).setPosition(b.x, b.h, wrapZ(b.z, scroll));
+        roofs.setMatrixAt(k, matrix);
+      });
+      roofs.instanceMatrix.needsUpdate = true;
+      roofs.boundingSphere = null;
+    }
+    lights.forEach((l, k) => beaconPositions.set([l.x, l.y, wrapZ(l.z, scroll)], k * 3));
     beaconPositionAttribute.needsUpdate = true;
   };
 
@@ -315,15 +452,16 @@ export function createHavenCity(
     placeBuildings();
 
     parallax.lerp(pointerInside ? pointer : new Vector2(0, 0), reduce ? 1 : 0.04);
-    camera.position.set(parallax.x * 0.9, 3.1 + parallax.y * 0.35, 12.5);
+    camera.position.set(parallax.x * 0.9, params.cameraHeight + parallax.y * 0.35, 12.5);
     camera.lookAt(lookTarget);
     camera.updateMatrixWorld();
 
     if (pointerDirty || hovered >= 0) {
       pointerDirty = false;
       raycaster.setFromCamera(pointer, camera);
-      const hit = pointerInside ? raycaster.intersectObject(city, false)[0] : undefined;
-      const id = hit?.instanceId ?? -1;
+      const hit = pointerInside ? raycaster.intersectObjects(hoverTargets, false)[0] : undefined;
+      const instance = hit?.instanceId ?? -1;
+      const id = hit && instance >= 0 && hit.object === roofs ? roofOwners[instance] : instance;
       if (id !== hovered && id >= 0) flash(id, 1);
       hovered = id;
     }
@@ -332,6 +470,8 @@ export function createHavenCity(
       flashes[i] = i === hovered ? Math.min(1, flashes[i] + dt * 6) : Math.max(0, flashes[i] - dt * 1.4);
     }
     flashAttribute.needsUpdate = true;
+    roofOwners.forEach((i, k) => (roofFlashes[k] = flashes[i]));
+    roofFlashAttribute.needsUpdate = true;
     for (const r of ripples) {
       if (r.z < 0) continue;
       r.y += dt * params.speed * (reduce ? 0 : 1);
@@ -420,9 +560,10 @@ export function createHavenCity(
       window.removeEventListener("pointerdown", onPointerMove);
       document.documentElement.removeEventListener("pointerleave", onPointerLeave);
       document.removeEventListener("visibilitychange", onVisibility);
-      [box, ground.geometry, beaconGeometry, skyScene.children[0] instanceof Mesh ? skyScene.children[0].geometry : null].forEach((g) => g?.dispose());
-      [buildingMaterial, groundMaterial, beaconMaterial, skyMaterial].forEach((m) => m.dispose());
+      [box, roofGeo, ground.geometry, beaconGeometry, skyScene.children[0] instanceof Mesh ? skyScene.children[0].geometry : null].forEach((g) => g?.dispose());
+      [buildingMaterial, roofMaterial, groundMaterial, beaconMaterial, skyMaterial].forEach((m) => m.dispose());
       city.dispose();
+      roofs?.dispose();
       renderer.dispose();
     },
   };
