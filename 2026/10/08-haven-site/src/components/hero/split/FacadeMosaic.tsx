@@ -28,8 +28,8 @@ export function FacadeMosaic({ reduce }: { reduce: boolean }) {
     const draw = (time: number) => {
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
       const bg = ctx.createLinearGradient(0, 0, w, h);
-      bg.addColorStop(0, "#2a1a6e");
-      bg.addColorStop(1, "#120a3a");
+      bg.addColorStop(0, "#4a2a5c");
+      bg.addColorStop(1, "#22112b");
       ctx.fillStyle = bg;
       ctx.fillRect(0, 0, w, h);
 
@@ -44,20 +44,20 @@ export function FacadeMosaic({ reduce }: { reduce: boolean }) {
         for (let gy = -6; gy <= 6; gy++) {
           const lit = hash(gx, gy, 1) < 0.42 !== (hash(gx, gy, tick) < 0.025);
           const warm = hash(gx, gy, 2) < 0.18;
-          ctx.fillStyle = lit ? (warm ? "rgba(255,214,150,0.85)" : "rgba(201,193,255,0.7)") : "rgba(11,6,42,0.65)";
+          ctx.fillStyle = lit ? (warm ? "rgba(255,214,150,0.85)" : "rgba(201,181,218,0.7)") : "rgba(30,15,38,0.65)";
           ctx.fillRect(gx * step - ww / 2, gy * step - ww * 0.7, ww, ww * 1.4);
         }
       }
       ctx.restore();
       const shade = ctx.createLinearGradient(0, 0, 0, h);
-      shade.addColorStop(0, "rgba(15,8,51,0)");
-      shade.addColorStop(1, "rgba(15,8,51,0.55)");
+      shade.addColorStop(0, "rgba(38,19,47,0)");
+      shade.addColorStop(1, "rgba(38,19,47,0.55)");
       ctx.fillStyle = shade;
       ctx.fillRect(0, 0, w, h);
 
       const bs = h / BLOCK_ROWS;
       const c = cols();
-      ctx.fillStyle = "#c9c1ff";
+      ctx.fillStyle = "#c9b5da";
       for (const i of blocks) ctx.fillRect((i % c) * bs, Math.floor(i / c) * bs, bs, bs);
     };
 

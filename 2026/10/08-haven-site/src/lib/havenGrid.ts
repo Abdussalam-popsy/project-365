@@ -258,7 +258,7 @@ export function drawHavenGrid(ctx: CanvasRenderingContext2D, L: GridLayout, s: G
   drawDots(ctx, L, s);
   ctx.restore();
 
-  ctx.fillStyle = "rgba(11,6,42,0.35)";
+  ctx.fillStyle = "rgba(30,15,38,0.35)";
   ctx.fillRect(px, py, pw, ph);
 
   for (const p of s.packets) drawPacket(ctx, p);
@@ -296,7 +296,7 @@ export function drawHavenGrid(ctx: CanvasRenderingContext2D, L: GridLayout, s: G
     ctx.textAlign = "center";
     ctx.textBaseline = "middle";
     for (const x of [px, px + pw]) {
-      ctx.fillStyle = "#140b3d";
+      ctx.fillStyle = "#26132f";
       ctx.fillRect(x - 12, py - 12, 24, 24);
       ctx.strokeRect(Math.round(x - 12) + 0.5, Math.round(py - 12) + 0.5, 24, 24);
       ctx.fillStyle = `rgba(${LILAC_RGB},0.85)`;

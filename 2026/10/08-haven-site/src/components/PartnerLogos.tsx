@@ -6,7 +6,7 @@ import type { ReactNode } from "react";
  */
 type Mark = { width: number; art: ReactNode };
 
-const sans = "var(--font-inter-tight), system-ui, sans-serif";
+const sans = "var(--font-geist), system-ui, sans-serif";
 
 const marks: Record<string, Mark> = {
   Rentor: {
