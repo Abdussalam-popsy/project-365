@@ -283,6 +283,7 @@ The hero background can be swapped. Every design is kept as a numbered version i
 - `?hero=v1` shows the signal grid.
 - `?hero=v2` shows the 3D skyline (the current default).
 - `?hero=v4` shows the low-rise residential version of the skyline (see "v4 residential skyline" below).
+- `?hero=v5` and `?hero=v5-light` show the detached-house neighbourhood in its dark and light themes (see "v5 neighbourhood" below).
 - A switcher pill in the corner appears in dev, or whenever a `?hero=` link is opened.
 
 Component tree (excerpt):
@@ -691,7 +692,7 @@ It is in production builds too, but renders `null` unless the URL has `?tune`. T
 The client liked v2's skyline but wanted homes, not towers. v4 is the same Three.js scene, the same file and the same hover flash, with a different layout:
 
 - **Plots:** 60% are two-floor houses with pitched roofs. The rest are flat-roofed apartment blocks of 3–5 floors. v2's towers are up to about 10 units tall; here the tallest block is 1.9.
-- **Windows:** fewer, larger panes, and about 35% of lit windows glow warm cream instead of lilac.
+- **Windows:** small panes, two rows per floor like the towers (the client found the first, bigger panes unrealistic), and about 35% of lit windows glow warm cream instead of lilac.
 - **Lights:** steady street lamps line the avenue instead of blinking roof beacons.
 - **Camera:** lower (2.4 instead of 3.1) and tilted down, so you see the roofs.
 
@@ -706,7 +707,7 @@ v2 is unchanged: its new options all default to its old values.
 ```ts
 const variants = {
   towers: { look: new Vector3(0, 4.6, -10), winCell: new Vector2(0.12, 0.17), shadeHeight: 9 },
-  residential: { look: new Vector3(0, 1.1, -10), winCell: new Vector2(0.3, 0.36), shadeHeight: 3 },
+  residential: { look: new Vector3(0, 1.1, -10), winCell: new Vector2(0.12, 0.18), shadeHeight: 3 },
 };
 const params = { ...(residential ? residentialCityParams : defaultHavenCityParams), ...options.params };
 ```
@@ -750,7 +751,7 @@ Open `?hero=v4`, click **Tune** and drag *Roof pitch* to 0. <details><summary>An
 
 [Open the file](./src/components/hero/city/shaders.ts).
 
-- `uWinCell` replaces the old fixed `vec2(0.12, 0.17)`. In v4 it is `(0.3, 0.36)`, so one window row per 0.36-unit floor. A pixel on a front wall at `u = 0.45`, height 0.6: `g = (1.5, 1.67)`, so `f = (0.5, 0.67)`. Both are inside the pane box (0.22–0.78, 0.28–0.72), so it's glass.
+- `uWinCell` replaces the old fixed `vec2(0.12, 0.17)`. In v4 it is `(0.12, 0.18)`, two window rows per 0.36-unit floor. (It was `(0.3, 0.36)` at first, one big pane per floor, until the client asked for smaller windows.) A pixel on a front wall at `u = 0.45`, height 0.6: `g = (3.75, 3.33)`, so `f = (0.75, 0.33)`. Both are inside the pane box (0.22–0.78, 0.28–0.72), so it's glass.
 - `winColor = mix(winColor, uWarm, step(1.0 - uWarmth, hash(…)))`: with warmth 0.35, a window turns warm when its random number is above 0.65, about 35% of them. v2 passes 0, so `step(1.0, …)` is always 0 and nothing changes there.
 - `uShadeHeight` is the height over which walls brighten toward `uGlassTop`. That's 9 units in v2; in v4 it's 3, so a 0.82-tall house still reaches 27% of the way and doesn't look black.
 - `roofFragment`: slopes (`n.y > 0.2`) mix between `uRoof` and `uRoofLit` by `n.x`, so the right slope is lighter. Gable ends use `uGable`. Eaves and ridge (`vY` near 0 or 1) get a faint violet rim, and the flash adds to the whole roof.
@@ -779,3 +780,115 @@ Changing a layout slider means rebuilding the whole scene, which disposes it and
 ## Brand: Geist and the two hex codes
 
 [`layout.tsx`](./src/app/layout.tsx) loads Geist with `next/font/google`. That downloads it at build time and serves it from our own site, then exposes it as the CSS variable `--font-geist`. [`globals.css`](./src/app/globals.css) puts that first in `--font-sans`. The client's colours are tokens there: `--color-ink: #1e0f26` (dark background, so `bg-ink` everywhere) and `--color-lilac: #c9b5da` (light accent, `text-lilac`). The plum shades are mixed from those two. The 3D scenes can't read CSS variables, so `createHavenCity.ts`'s `palette` repeats the hex codes. The bright violet `#5740ef` stays for buttons, as the client approved.
+
+## v5 neighbourhood (dark and light)
+
+Most of Haven's customers manage single-family homes, so v5 is a calm suburban street instead of a city. Detached houses sit on lawns with driveways, hedges and fences. Trees line the verges, a car is parked here and there, and every second block has a side street (a T-junction). One brand-purple house in every other block has all its windows lit. The street drifts towards you endlessly, like v2, along a road that bends gently into the distance. Hovering a house lights it up and sends a ripple across the ground.
+
+`?hero=v5` is dark (the default). `?hero=v5-light` is the same scene with the light colours: the hero text turns dark and the nav bar goes solid so it stays readable.
+
+### How to tweak it
+| You want to change… | Edit | Notes |
+|---|---|---|
+| Any colour, either theme | [`suburbTheme.ts`](./src/components/hero/suburb/suburbTheme.ts) | One hex per role (`lawn`, `walls`, `focalWall`, …). No geometry is involved. |
+| A house type's shape | [`suburbHouses.ts`](./src/components/hero/suburb/suburbHouses.ts) `bungalow`, `gableGarage`, `hipPorch`, `corner` | Sizes are `[width, height, depth]` in world units. |
+| How often each type appears, road widths, plot size, number of blocks | `street` in the same file | `kinds` is the pool the random picker draws from. List a type twice to make it twice as common. |
+| Speed, bend, camera, window lights, trees, auto-flash | the **Tune** panel, "Neighbourhood (v5)" | Copy values, send them over, and they become the defaults in `defaultHavenSuburbParams`. |
+
+The four house types:
+1. **Bungalow:** single storey with a low hip roof, door and two windows, sometimes a chimney.
+2. **Two-storey gable with garage:** garage and driveway on one side.
+3. **Two-storey hip with porch:** porch roof on two posts and four windows. This is also the brand-purple "focal" house.
+4. **Corner house:** L-shaped, with a gable roof on each wing.
+
+`mirror` flips any house left to right, so the same four types don't look copy-pasted.
+
+<details>
+<summary>@file: src/components/hero/suburb/suburbHouses.ts — explained</summary>
+
+[Open the file](./src/components/hero/suburb/suburbHouses.ts).
+
+### Houses are lists of `Part`s
+```ts
+export type Part = { prim: Prim; pos: Vec3; size: Vec3; color: string; yaw?: number; window?: { lit: boolean; flicker: number } };
+```
+A house is just data: an array of simple shapes (`prim`), each with a position, a size and a colour. `pos` is the **base centre**: every shape's geometry starts at y = 0, so `pos[1]` is where its bottom sits. In `hipPorch`, the walls are `box([0, 0, 0], [2.0, 1.9, 1.7], …)`, so they run from y = 0 to 1.9. The roof is placed at `pos: [0, 1.9, 0]`, exactly on top. Each house faces +z, so its front wall is at z = depth / 2 = 0.85, and the windows sit there: `pane(l, -0.62, 0.35, 0.85)`.
+
+`pane()` makes one window and decides with the house's own random generator whether it's lit (`rand() < lit`), warm, or a slow blinker. The focal house skips the dice: `look.focal ||` makes every window lit and warm.
+
+### `planStreet()`: the T-junctions
+```ts
+const junction = block % 2 ? 1 : -1;
+if (side === junction && j === 0) continue;
+```
+`continue` skips one loop turn. The first plot (`j === 0`) on one side of each block stays empty, which is where the side street meets the road. `block % 2 ? 1 : -1` alternates the side: block 0 on the left, block 1 on the right, and so on. With 4 blocks × 2 sides × 4 plots = 32 plots, minus 4 junctions, you get **28 houses**.
+
+`seeded(i, salt)` gives the same "random" number every time for the same plot. That way the street looks hand-placed, not chaotic, and it's identical on every visit.
+</details>
+
+<details>
+<summary>@file: src/components/hero/suburb/createHavenSuburb.ts — explained</summary>
+
+[Open the file](./src/components/hero/suburb/createHavenSuburb.ts).
+
+### 1. Street space
+Each house, tree or car is a `Group` with `at` (how far along the road) and `lateral` (how far to the side; negative is left). A left-hand `hipPorch` has `lateral = -(0.85 + 0.45 + 1.3 + 0.85) = -3.45`: half the road, then the pavement, the front garden and half the house's depth.
+
+### 2. Four draw calls for everything
+Every `Part` is sorted by its `prim` into one `InstancedMesh` per shape: `box`, `gable`, `hip` and `blob` (tree crowns). Hundreds of parts are drawn in **4 draw calls**, plus the ground and the sky (the meter shows "6 draws"). Per-instance colour, group and window state go in `InstancedBufferAttribute`s, which give each copy its own value.
+
+`roof(ridgeHalf)` builds both roof types from 18 hand-written corner points (6 triangles). With `ridgeHalf = 0.5`, the ridge runs edge to edge, which is a gable. With `0.18`, it stops short, so the ends slope too: a hip roof.
+
+### 3. The endless drift: `place()`
+```ts
+const z = street.far + ((((g.at - street.far + travel) % streetLength) + streetLength) % streetLength);
+const theta = Math.atan(2 * p.curve * (z - p.cameraZ));
+pos.set(bend(z) + g.lateral * Math.cos(theta), 0, z - g.lateral * Math.sin(theta));
+```
+`travel` grows by `speed × dt` every frame. The double `%` is a *wrap*: once a house goes past the camera, it reappears at the far end in the fog. (The `+ streetLength` keeps the result positive.) `bend(z) = curve × (z − cameraZ)²` makes the road drift sideways the further away it is. `theta` is the road's angle at that point (the slope of `bend`), so houses turn to face the road as it curves.
+
+Worked example with the defaults (`far = −44`, length 13.6 × 4 = 54.4, `curve = 0.004`, `cameraZ = 12`): a house with `at = −30` after `travel = 20`:
+- z = −44 + ((−30 + 44 + 20) mod 54.4) = −44 + 34 = **−10**
+- bend(−10) = 0.004 × (−22)² = **1.94**, so the road has bent 1.94 units right.
+- θ = atan(2 × 0.004 × −22) = atan(−0.176) = **−0.174 rad** (−10°)
+- Left house (lateral −3.45): x = 1.94 − 3.45 × cos(−0.174) = **−1.46**, z = −10 − (−3.45 × sin(−0.174)) = **−10.6**
+
+After placing each group, each part's instance matrix is `groupMatrix × local`. The CPU redoes this every frame (about 700 matrix multiplies, well under a millisecond), so the raycaster always tests the real positions. Since the meshes move, `mesh.boundingSphere` is set once to a huge sphere and never recomputed.
+
+### 4. Hover
+`raycaster.intersectObjects(meshes…)` returns the first part under the pointer and its `instanceId`. `groupOf[instanceId]` turns that into the group, so a window, a roof or a hedge all mean "this house". Only `house: true` groups flash; trees and cars don't.
+</details>
+
+<details>
+<summary>@file: src/components/hero/suburb/suburbShaders.ts — explained</summary>
+
+[Open the file](./src/components/hero/suburb/suburbShaders.ts).
+
+**Flat colour by face, no textures.** The geometry has no normals at all. The fragment shader works out which way each face points from how the world position changes between neighbouring pixels:
+```glsl
+vec3 n = normalize(cross(dFdx(vWorld), dFdy(vWorld)));
+float shade = 0.62 + 0.38 * clamp(n.y, 0.0, 1.0) + 0.1 * n.z - 0.05 * n.x;
+```
+`dFdx` and `dFdy` are those changes across the screen, and their cross product is perpendicular to the face. On a flat face it's the same for every pixel, so the whole face gets one shade:
+- roof top or lawn-facing-up (n = 0, 1, 0): 0.62 + 0.38 = **1.0** (lightest)
+- wall facing the camera (0, 0, 1): 0.62 + 0.1 = **0.72**
+- wall facing +x (1, 0, 0): 0.62 − 0.05 = **0.57** (darkest)
+
+That's the brief's "top lighter, sides darker", with no gradients.
+
+**Windows.** `vWindow` is 1 for window parts. Unlit ones show `uGlass`. Lit ones skip shading (`mix(col, vColor, vGlow)`) so they glow. Blinkers multiply in `step(0.25, sin(time × rate + seed))`, which is on about 58% of the time.
+
+**Roads are drawn, not modelled.** The ground is one big plane. `streetFragment` undoes the drift for each pixel (`along = mod(z − far − travel, length)`), finds the block and whether it's on the junction side, and measures a *signed distance*: negative on tarmac, 0 to 0.45 on the pavement, above that on lawn. `fwidth()` softens the edge over exactly one pixel, so the kerbs stay crisp at any distance.
+</details>
+
+<details>
+<summary>@file: src/components/hero/SuburbBackdrop.tsx + Hero.tsx tone — explained</summary>
+
+- `SuburbScene({ theme })` is one component for both themes. `SuburbBackdrop` and `SuburbBackdropLight` just pass `"dark"` or `"light"`, so it's a prop, not a second scene. The theme picks a colour set from `suburbThemes` and a matching set of CSS overlays (`overlays.light` uses `bg-mist` and a pale centre glow).
+- In [`versions.tsx`](./src/components/hero/versions.tsx), `v5-light` has `tone: "light"`. [`Hero.tsx`](./src/components/Hero.tsx) reads `const light = version.tone === "light"` and swaps classes with template strings, e.g. `` `${light ? "bg-mist text-ink" : "bg-ink text-white"}` ``.
+- The nav lives outside the hero, so the hero sets `document.documentElement.dataset.heroTone = "light"`, which renders as `<html data-hero-tone="light">`. [`Nav.tsx`](./src/components/Nav.tsx) watches that attribute with a `MutationObserver` and goes solid, because white links on a pale hero would disappear.
+
+### Predict, change, observe
+1. In `suburbTheme.ts`, change dark `focalWall` from `#5740ef` to `#c9b5da` and reload `?hero=v5`. <details><summary>Answer</summary>The highlighted houses turn lilac. Only colours change; every shape stays put. Change it back.</details>
+2. In the Tune panel, set **Road bend** to 0. <details><summary>Answer</summary>`bend(z)` is 0 everywhere and θ = 0, so the street runs dead straight into the distance. Negative values bend it left.</details>
+</details>

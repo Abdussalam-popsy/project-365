@@ -88,7 +88,7 @@ export const residentialCityParams: HavenCityParams = {
 /** Per-variant look: where the camera aims, window grid size, and how tall the facade shading spans. */
 const variants = {
   towers: { look: new Vector3(0, 4.6, -10), winCell: new Vector2(0.12, 0.17), shadeHeight: 9 },
-  residential: { look: new Vector3(0, 1.1, -10), winCell: new Vector2(0.3, 0.36), shadeHeight: 3 },
+  residential: { look: new Vector3(0, 1.1, -10), winCell: new Vector2(0.12, 0.18), shadeHeight: 3 },
 };
 
 const palette = {

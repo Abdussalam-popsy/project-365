@@ -21,6 +21,11 @@ export function Hero() {
     return () => clearInterval(id);
   }, [reduce]);
 
+  const light = version.tone === "light";
+  useEffect(() => {
+    document.documentElement.dataset.heroTone = light ? "light" : "dark";
+  }, [light]);
+
   const Backdrop = version.Backdrop;
   const Layout = version.Layout;
   const tools = comparing && (
@@ -39,7 +44,7 @@ export function Hero() {
     );
 
   return (
-    <section className="grain relative isolate flex min-h-[100svh] flex-col items-center justify-center overflow-hidden bg-ink px-6 pt-32 pb-20 text-center text-white">
+    <section className={`grain relative isolate flex min-h-[100svh] flex-col items-center justify-center overflow-hidden ${light ? "bg-mist text-ink" : "bg-ink text-white"} px-6 pt-32 pb-20 text-center`}>
       <div className="pointer-events-none absolute inset-0 -z-10" aria-hidden>
         {Backdrop && <Backdrop />}
       </div>
@@ -47,7 +52,7 @@ export function Hero() {
 
       <motion.p
         data-hero-copy
-        className="mb-6 text-[15px] text-lilac/80"
+        className={`mb-6 text-[15px] ${light ? "text-plum-800/80" : "text-lilac/80"}`}
         initial={{ opacity: 0, y: 12 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.8, ease }}
@@ -67,7 +72,7 @@ export function Hero() {
           <AnimatePresence mode="popLayout" initial={false}>
             <motion.span
               key={hero.rotating[index]}
-              className="absolute inset-x-0 whitespace-nowrap text-lilac"
+              className={`absolute inset-x-0 whitespace-nowrap ${light ? "text-violet" : "text-lilac"}`}
               initial={{ y: "100%", opacity: 0, filter: "blur(6px)" }}
               animate={{ y: "0%", opacity: 1, filter: "blur(0px)" }}
               exit={{ y: "-100%", opacity: 0, filter: "blur(6px)" }}
@@ -89,7 +94,7 @@ export function Hero() {
       </motion.div>
 
       <motion.span
-        className="mt-10 block h-32 w-px origin-top bg-gradient-to-b from-white/70 to-white/0"
+        className={`mt-10 block h-32 w-px origin-top bg-gradient-to-b ${light ? "from-ink/50 to-ink/0" : "from-white/70 to-white/0"}`}
         initial={{ scaleY: 0 }}
         animate={{ scaleY: 1 }}
         transition={{ duration: 1.2, delay: 0.5, ease }}
@@ -97,7 +102,7 @@ export function Hero() {
       />
 
       <motion.p
-        className="mt-8 max-w-[420px] text-lg leading-snug text-white/80 sm:text-[21px]"
+        className={`mt-8 max-w-[420px] text-lg leading-snug sm:text-[21px] ${light ? "text-ink/75" : "text-white/80"}`}
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ duration: 1, delay: 0.8 }}
@@ -105,7 +110,7 @@ export function Hero() {
         {hero.sub}
       </motion.p>
 
-      <p data-hero-copy className="mt-6 inline-flex items-center gap-2 text-[13px] text-white/55">
+      <p data-hero-copy className={`mt-6 inline-flex items-center gap-2 text-[13px] ${light ? "text-ink/55" : "text-white/55"}`}>
         <span className="grid size-4 place-items-center bg-[#f26522] text-[10px] font-semibold text-white">Y</span>
         Backed by Y Combinator
       </p>

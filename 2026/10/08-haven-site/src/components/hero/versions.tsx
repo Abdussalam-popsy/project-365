@@ -13,10 +13,17 @@ export type HeroVersion = {
   Backdrop?: ComponentType;
   /** Replaces the whole hero section (its own layout and copy placement). */
   Layout?: ComponentType;
+  /** "light" flips the shared hero copy to dark text and makes the nav solid. */
+  tone?: "dark" | "light";
 };
 
 const CityBackdrop = dynamic(() => import("./CityBackdrop"), { ssr: false });
 const ResidentialBackdrop = dynamic(() => import("./CityBackdrop").then((m) => m.ResidentialBackdrop), {
+  ssr: false,
+});
+
+const SuburbBackdrop = dynamic(() => import("./SuburbBackdrop"), { ssr: false });
+const SuburbBackdropLight = dynamic(() => import("./SuburbBackdrop").then((m) => m.SuburbBackdropLight), {
   ssr: false,
 });
 
@@ -38,6 +45,8 @@ export const heroVersions: HeroVersion[] = [
   { id: "v3", label: "Split grid", Layout: SplitHero },
   { id: "v3-alt", label: "Centred grid", Backdrop: GridBackdrop },
   { id: "v4", label: "Residential", Backdrop: ResidentialBackdrop },
+  { id: "v5", label: "Neighbourhood", Backdrop: SuburbBackdrop },
+  { id: "v5-light", label: "Neighbourhood (light)", Backdrop: SuburbBackdropLight, tone: "light" },
 ];
 
 /** The version real visitors see. */
