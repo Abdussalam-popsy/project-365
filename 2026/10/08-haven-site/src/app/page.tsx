@@ -2,6 +2,7 @@ import { AnnouncementBar } from "@/components/AnnouncementBar";
 import { Nav } from "@/components/Nav";
 import { Hero } from "@/components/Hero";
 import { LogoMarquee } from "@/components/LogoMarquee";
+import { HomeZoom } from "@/components/HomeZoom";
 import { ProblemStatement } from "@/components/ProblemStatement";
 import { Agents } from "@/components/Agents";
 import { VoiceDemo } from "@/components/VoiceDemo";
@@ -19,6 +20,7 @@ export default function Page() {
       <main>
         <Hero />
         <LogoMarquee />
+        <HomeZoom />
         <ProblemStatement />
         <Agents />
         <VoiceDemo />

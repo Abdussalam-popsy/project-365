@@ -10,6 +10,7 @@ layout.tsx (font + <html>/<body>)
     └── <main>
         ├── Hero → HeroBackdrop
         ├── LogoMarquee
+        ├── HomeZoom          (scroll zoom through the H's door into white)
         ├── ProblemStatement → Word × N
         ├── Agents → Reveal + MaintenanceMock / LeasingMock / ComingSoonMock
         ├── VoiceDemo, Capabilities, Testimonials, Process, FinalCta
@@ -468,3 +469,137 @@ It draws one cell's icon. The icon builds up out of chunky blocks, holds, then d
 
 This cell stands in for LocalCan's photo. It draws a procedural, lit apartment facade with solid lilac blocks blinking over it. The blocks are `h / 4` square. A `Set` of block indices keeps about 3–8 of them lit, toggling one every 380 ms, and `pointermove` lights the block under the cursor. To use a real property photo instead, draw it with `drawImage` in place of the window loop.
 </details>
+
+## The H zoom (dark hero → white page)
+
+After the hero and the "Trusted by" strip, the screen holds on dark purple with only the house-shaped **H** from the logo. Scrolling grows the H around its little square "door" until the door covers the screen, then a white layer takes over and the light sections begin. Scrolling back up plays it in reverse, because every pose is calculated from the scroll position. No timers are involved.
+
+<details>
+<summary>@file: src/components/HomeZoom.tsx — explained</summary>
+
+[Open the file](./src/components/HomeZoom.tsx). It is rendered in [`page.tsx`](./src/app/page.tsx) between `<LogoMarquee />` and `<ProblemStatement />`.
+
+### What this file is responsible for
+
+It renders one tall section (`h-[280svh]`, 2.8 screen heights) with a `sticky` box inside it that is exactly one screen tall. While you scroll through the tall section, the sticky box stays pinned. That gives us 1.8 screens of scrolling (2.8 − 1) during which nothing moves on the page except what we animate. The page colours themselves live elsewhere: the next section ([`ProblemStatement.tsx`](./src/components/ProblemStatement.tsx)) is already `bg-mist`.
+
+```
+section  relative h-[280svh] bg-ink        ← the scroll "runway"
+└── div  sticky top-0 h-[100svh]           ← pinned stage
+    ├── motion.div  radial violet glow     (opacity: glowOpacity)
+    ├── motion.div  the H                  (scale + opacity, origin = door)
+    │   └── HomeMark <svg>                 two paths copied from Logo.tsx
+    └── motion.div  absolute inset-0 bg-mist (opacity: fill) ← the white takeover
+```
+
+The white layer is last, so it paints on top of the H. That is why it can hide the H at the end.
+
+### Read the code in small pieces
+
+**1. The H's measurements, copied from the logo SVG.**
+
+```tsx
+const MARK_W = 45.2281;
+const MARK_H = 56.2437;
+const DOOR = { x: 18.0294, y: 47.1738, size: 9.015 };
+const ORIGIN_X = ((DOOR.x + DOOR.size / 2) / MARK_W) * 100;
+const ORIGIN_Y = ((DOOR.y + DOOR.size / 2) / MARK_H) * 100;
+```
+
+The door is the path `M18.0294 47.1738H27.0444…` in [`Logo.tsx`](./src/components/Logo.tsx): a 9.015-unit square. Its centre is at x = 18.0294 + 4.5075 = 22.537 and y = 47.1738 + 4.5075 = 51.681. Divided by the H's size, that is **49.83% across, 91.89% down**. Those percentages become the CSS `transformOrigin`, so `scale` grows the H *around the door* instead of around its middle.
+
+**2. Scroll progress, 0 → 1, measured by us.**
+
+```tsx
+const { scrollY } = useScroll();            // page scroll in px
+const sectionTop = useMotionValue(0);       // where the section starts, in px
+const scrollRange = useMotionValue(1);      // how far you can scroll inside it
+
+const progress = useTransform(
+  [scrollY, sectionTop, scrollRange],
+  ([y, top, range]: number[]) => clamp01((y - top) / range),
+);
+```
+
+- `useScroll()` with no argument gives the window's scroll position as a *motion value*: a number that updates without re-rendering React.
+- `useTransform([a, b, c], fn)` builds a new motion value from several others. `([y, top, range]: number[])` is *array destructuring*: the three current numbers arrive in an array and get names.
+- `clamp01` keeps the result between 0 and 1, so before the section `progress` is 0 and after it `progress` is 1.
+
+`sectionTop` and `scrollRange` are measured in a `useEffect` (it runs after the page is on screen) and re-measured by a `ResizeObserver` on `<body>`, because the hero above can change height (fonts loading, window resize).
+
+**3. Turning progress into poses.**
+
+```tsx
+const SETTLE = 0.12;
+const ZOOM_END = 0.8;
+const ramp = (p, from, to) => clamp01((p - from) / (to - from));
+
+const scale = useTransform([progress, maxScale], ([p, m]: number[]) => {
+  if (p <= SETTLE) return 0.82 + 0.18 * (p / SETTLE);
+  const t = ramp(p, SETTLE, ZOOM_END);
+  return Math.pow(m, t * t);
+});
+const markOpacity = useTransform(progress, (p) => ramp(p, 0, SETTLE * 0.8));
+const fill = useTransform(progress, (p) => ramp(p, ZOOM_END - 0.06, ZOOM_END + 0.04));
+```
+
+`ramp(p, from, to)` reads as: "how far has `p` got between `from` and `to`, as 0 to 1?" So the timeline is:
+
+| progress | what happens |
+|---|---|
+| 0 → 0.096 | the H fades in (`markOpacity`) |
+| 0 → 0.12 | the H settles from 82% to 100% size |
+| 0.12 → 0.80 | the zoom: scale goes from 1 to `maxScale` |
+| 0.74 → 0.84 | the white layer fades in (`fill`) |
+| 0.84 → 1 | solid white, held, then the page carries on |
+
+Why `Math.pow(m, t * t)` and not a straight line? Zooming feels even when each bit of scroll *multiplies* the size by the same amount. `m ** t` does exactly that (it is 1 at t = 0 and `m` at t = 1). Squaring `t` makes the start gentle and the end fast, like rushing through a doorway.
+
+**4. How big is "big enough"?**
+
+```tsx
+const doorPx = (h * DOOR.size) / MARK_H;
+const doorOffsetY = (ORIGIN_Y / 100 - 0.5) * h;
+const halfCover = Math.max(window.innerWidth / 2, window.innerHeight / 2 + Math.abs(doorOffsetY));
+maxScale.set(((2 * halfCover) / doorPx) * 1.15);
+```
+
+The door has to end up wider than the screen. The door sits below the H's centre, and the flex layout centres the H, not the door. So the door also has to reach the top edge from slightly lower down; that is what `+ Math.abs(doorOffsetY)` handles. `* 1.15` adds 15% spare.
+
+### Follow one value all the way through
+
+Desktop window, 1440 × 900:
+
+1. The H's height class is `h-[clamp(96px,16vw,180px)]`. 16vw = 230px, which is more than the 180px max, so **h = 180px**.
+2. `doorPx` = 180 × 9.015 / 56.2437 = **28.85px**. `doorOffsetY` = (0.9189 − 0.5) × 180 = **75.4px**.
+3. `halfCover` = max(1440 / 2, 900 / 2 + 75.4) = max(720, 525.4) = **720**. Width wins on a wide screen.
+4. `maxScale` = 2 × 720 / 28.85 × 1.15 ≈ **57.4**, so the door ends up about 1656px wide.
+5. The section is 2.8 × 900 = 2520px tall, so `scrollRange` = 2520 − 900 = **1620px**. Scroll 810px into it and `progress` = 0.5.
+6. `t` = (0.5 − 0.12) / 0.68 = 0.559, `t²` = 0.312, `scale` = 57.4^0.312 ≈ **3.54**. Halfway through the scroll, the H is only 3.5× bigger; the big growth is saved for the end.
+
+On a 390 × 844 phone, the H is 96px tall (the clamp minimum), the door is 15.39px, height wins (422 + 40.2 = 462px), and `maxScale` ≈ 69.1.
+
+### Why we measure progress ourselves
+
+Motion also offers `useScroll({ target, offset })`, which hands you a ready-made `scrollYProgress`. The first version of this file used it. Scale (a function transform) worked, but the opacity transforms were handed to the browser's hardware-accelerated scroll timeline and ended up out of sync: at 90% through, the H showed at 76% opacity and the white layer at 0, so the "white" looked grey. Driving every value through function transforms of our own `progress` keeps all four poses on the same number.
+
+### Reduced motion
+
+`useReducedMotion()` is `true` when the visitor has asked their OS for less motion. The component then returns a short `h-[70svh]` dark section with a still H: no runway, no zoom.
+
+```tsx
+const [mounted, setMounted] = useState(false);
+useEffect(() => setMounted(true), []);
+const still = mounted && prefersReduced;
+```
+
+Why not just `if (prefersReduced)`? The page HTML is built ahead of time (static export), where there is no OS setting to read, so the HTML always contains the tall animated version. If the browser's first render picked the short version, React would find HTML that doesn't match what it expected (a *hydration mismatch*) and throw it away. `mounted` only becomes `true` in an effect, after that first matching render, so the swap to the still version happens one render later, safely. The section is `aria-hidden` in both branches because it is decoration; screen readers skip straight to the next heading.
+
+### Predict, change, observe
+
+Change `ZOOM_END` from `0.8` to `0.6` and scroll through slowly. What changes?
+
+<details><summary>Answer</summary>The zoom finishes sooner (it now runs over 0.12 → 0.6 of the runway) and the white layer fades in over 0.54 → 0.64. You then scroll through a longer stretch of plain white before the next section arrives. Change it back to 0.8 afterwards.</details>
+
+</details>
+
