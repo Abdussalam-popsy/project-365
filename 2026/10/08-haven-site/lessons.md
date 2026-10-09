@@ -785,6 +785,8 @@ Changing a layout slider means rebuilding the whole scene, which disposes it and
 
 Most of Haven's customers manage single-family homes, so v5 is a calm suburban street instead of a city. Detached houses sit on lawns with driveways, hedges and fences. Trees line the verges, a car is parked here and there, and every second block has a side street (a T-junction). One brand-purple house in every other block has all its windows lit. The street drifts towards you endlessly, like v2, along a road that bends gently into the distance. Hovering a house lights it up and sends a ripple across the ground.
 
+The camera copies v2's street-level angle: 2.6 units up (v2: 3.1), aiming at a point 2 units high, 22 units ahead (`lookY = 2`, so almost level), with the same 46° field of view (62° on phones). A first try at 5.4 units up, looking down, read as top-down, and the client preferred v2's angle.
+
 `?hero=v5` is dark (the default). `?hero=v5-light` is the same scene with the light colours: the hero text turns dark and the nav bar goes solid so it stays readable.
 
 ### How to tweak it

@@ -18,7 +18,7 @@ export type HavenSuburbParams = {
 };
 
 export const defaultHavenSuburbParams: HavenSuburbParams = {
-  speed: 0.45, curve: 0.004, cameraHeight: 5.4, cameraZ: 12, lookY: -0.4,
+  speed: 0.45, curve: 0.004, cameraHeight: 2.6, cameraZ: 12, lookY: 2,
   litWindows: 0.55, warmth: 0.5, flicker: 0.1, trees: 0.6, sway: 0.35,
   ambientFlashEvery: 3, glow: 1,
 };
@@ -167,7 +167,7 @@ export function createHavenSuburb(
   const renderer = new WebGLRenderer({ canvas, antialias: true, powerPreference: "high-performance" });
   renderer.autoClear = false;
   renderer.info.autoReset = false;
-  const camera = new PerspectiveCamera(40, 1, 0.1, 120);
+  const camera = new PerspectiveCamera(46, 1, 0.1, 120);
   const raycaster = new Raycaster();
   const pointer = new Vector2(), parallax = new Vector2(), probe = new Vector3(), look = new Vector3();
   const groupMatrix = groups.map(() => new Matrix4()), tmp = new Matrix4();
@@ -259,7 +259,7 @@ export function createHavenSuburb(
     renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
     renderer.setSize(width, height, false);
     camera.aspect = width / height;
-    camera.fov = camera.aspect < 1 ? 62 : 40;
+    camera.fov = camera.aspect < 1 ? 62 : 46;
     camera.updateProjectionMatrix();
     skyMaterial.uniforms.uAspect.value = camera.aspect;
     wake();
