@@ -7,7 +7,8 @@ const ease = [0.16, 1, 0.3, 1] as const;
 function Frame({ title, meta, children }: { title: string; meta: string; children: React.ReactNode }) {
   return (
     <div className="relative">
-      <div className="absolute -inset-6 -z-10 bg-[radial-gradient(60%_60%_at_50%_50%,rgba(87,64,239,0.18),transparent)]" />
+      {/* closest-side makes the glow reach zero exactly at its box edge, so it never ends in a hard line. */}
+      <div className="pointer-events-none absolute -inset-20 -z-10 bg-[radial-gradient(closest-side,rgba(87,64,239,0.16),transparent)]" />
       <div className="border border-ink/10 bg-white shadow-[0_30px_80px_-30px_rgba(30,15,38,0.35)]">
         <div className="flex items-center justify-between border-b border-ink/10 px-5 py-3.5">
           <span className="text-[14px] font-medium">{title}</span>
@@ -107,7 +108,7 @@ export function LeasingMock() {
   );
 }
 
-const upcoming = ["Vendor management", "Collections", "Renewals", "Move-ins", "Inspections"];
+const upcoming = ["Collections", "Renewals", "Move-ins", "Inspections"];
 
 export function ComingSoonMock() {
   return (

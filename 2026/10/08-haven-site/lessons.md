@@ -140,6 +140,10 @@ Alternating layout: `i % 2` is `0` for the 1st and 3rd rows and `1` for the 2nd.
 
 In the mocks, each item uses `whileInView` with `delay: 0.3 + i * 0.45`. For the 4 transcript lines that's 0.3s, 0.75s, 1.2s, 1.65s, so the call "plays out"; the work-order strip waits for `0.3 + 4 * 0.45 = 2.1s`.
 
+**Learn more buttons.** Maintenance and Leasing have a `link` in `agents` (in `site.ts`); "Coming soon" doesn't. `{"link" in agent && <Button …/>}` only renders the button when that key exists. `in` checks whether an object *has* a key, and TypeScript then knows `agent.link` is safe to read. The targets are `MAINTENANCE_URL` / `LEASING_URL` at the top of `site.ts` (placeholders, `#`, until the pages exist).
+
+**The glow behind each mock** (`Frame`): a radial gradient on a box 80px (`-inset-20`) bigger than the card on every side. `closest-side` sizes the gradient so it reaches `transparent` exactly at the box's nearest edge. The first version used `60% 60%` on a box only 24px bigger: the box edge sits at 50%, before the gradient had faded out, so the glow stopped in a faint straight line, like a shadow cut off.
+
 </details>
 
 <details>
