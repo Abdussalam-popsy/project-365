@@ -11,12 +11,15 @@ export type SuburbTheme = {
   road: string;
   pavement: string;
   driveway: string;
+  /** Kerb edge between road and pavement, and the double centre line. */
+  kerb: string;
+  marking: string;
   /** Wall and roof colours; each house picks one by index. */
   walls: string[];
   roofs: string[];
   trim: string;
-  focalWall: string;
-  focalRoof: string;
+  /** Haven violet: tail-lights and the "brand" hover style. */
+  brand: string;
   door: string;
   garage: string;
   /** Unlit window glass. */
@@ -46,11 +49,12 @@ export const suburbThemes: Record<SuburbThemeName, SuburbTheme> = {
     road: "#170b1d",
     pavement: "#2e1a39",
     driveway: "#2a1633",
+    kerb: "#3d2549",
+    marking: "#6f5887",
     walls: ["#4a2a5c", "#553269", "#41244f"],
     roofs: ["#2c1638", "#351b43", "#28132f"],
     trim: "#6a4a7e",
-    focalWall: "#5740ef",
-    focalRoof: "#3a28a6",
+    brand: "#5740ef",
     door: "#24112d",
     garage: "#3a2148",
     glass: "#1a0c20",
@@ -74,11 +78,12 @@ export const suburbThemes: Record<SuburbThemeName, SuburbTheme> = {
     road: "#d6c8e1",
     pavement: "#f7f4fa",
     driveway: "#e0d3e9",
+    kerb: "#ffffff",
+    marking: "#ffffff",
     walls: ["#d9c9e6", "#cdb9de", "#e3d6ee"],
     roofs: ["#a58bbd", "#9378ad", "#b199c7"],
     trim: "#f7f4fa",
-    focalWall: "#5740ef",
-    focalRoof: "#3a28a6",
+    brand: "#5740ef",
     door: "#7d62a0",
     garage: "#bba5cf",
     glass: "#8f78ad",

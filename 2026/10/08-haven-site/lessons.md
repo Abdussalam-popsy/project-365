@@ -280,11 +280,44 @@ Draw the glow once into a fixed image and only move it with CSS transforms. That
 
 The hero background can be swapped. Every design is kept as a numbered version in [`src/components/hero/versions.tsx`](src/components/hero/versions.tsx), so we can compare them:
 
-- `?hero=v1` shows the signal grid.
-- `?hero=v2` shows the 3D skyline (the current default).
-- `?hero=v4` shows the low-rise residential version of the skyline (see "v4 residential skyline" below).
-- `?hero=v5` and `?hero=v5-light` show the detached-house neighbourhood in its dark and light themes (see "v5 neighbourhood" below).
-- A switcher pill in the corner appears in dev, or whenever a `?hero=` link is opened.
+- `?hero=v5` and `?hero=v5-light` show the detached-house neighbourhood in its dark and light themes (see "v5 neighbourhood" below). **v5 is the default**, the one real visitors see.
+- v1 to v4 are **archived**: kept in the code, still reachable by link, but hidden from the switcher by default.
+  - `?hero=v1` shows the signal grid.
+  - `?hero=v2` shows the 3D skyline.
+  - `?hero=v4` shows the low-rise residential version of the skyline (see "v4 residential skyline" below).
+- A switcher pill in the corner appears in dev, or whenever a `?hero=` link is opened. It lists only the active versions plus an **Archive (5)** button that reveals the rest.
+
+<details>
+<summary>@file: src/components/hero/HeroVersionPicker.tsx — the Archive toggle, explained</summary>
+
+Source: [`HeroVersionPicker.tsx`](src/components/hero/HeroVersionPicker.tsx), flags in [`versions.tsx`](src/components/hero/versions.tsx)
+
+Each old version carries `archived: true`. The `?` in the type (`archived?: boolean`) means the field is optional: v5 doesn't mention it, so it's `undefined`, which counts as "not archived".
+
+```ts
+const activeVersions = heroVersions.filter((v) => !v.archived);
+const archivedVersions = heroVersions.filter((v) => v.archived);
+```
+`filter` builds a **new** array of the items where the function returns `true`; `heroVersions` itself is untouched. `!` flips true/false, so the first line keeps everything that is *not* archived (v5, v5-light) and the second keeps v1, v2, v3, v3-alt, v4. That's 5, which is where "Archive (5)" comes from.
+
+```ts
+const visible = showArchive
+  ? [...activeVersions, ...archivedVersions]
+  : [...activeVersions, ...(current.archived ? [current] : [])];
+```
+`condition ? a : b` picks `a` when the condition is true. `...` (spread) copies the items of one array into a new one. So with the archive open you get all 7 buttons; closed, you get the 2 active ones, plus the current one if a link opened an archived version (otherwise you'd be looking at v2 with no button showing it's selected).
+
+Why not decide this once when the picker first appears? Because `useHeroVersion` reads `?hero=` *after* the first render. The picker first sees v5, then a moment later v2. Working it out on every render handles both.
+
+### Follow one value
+1. You open `/?hero=v2`.
+2. The first render shows v5; the effect in `useHeroVersion` switches to v2.
+3. `current.archived` is `true`, so `visible` is `[v5, v5-light, v2]`.
+4. The pill shows those three buttons, with v2 highlighted, then **Archive (5)**.
+
+### Predict, change, observe
+In `versions.tsx`, remove `archived: true` from v4. What does the pill show on `/`? <details><summary>Answer</summary>v5, v5-light and v4, then "Archive (4)". Put the flag back afterwards.</details>
+</details>
 
 Component tree (excerpt):
 
@@ -309,7 +342,7 @@ It picks which hero version to show and keeps the URL shareable. It doesn't know
 ```ts
 const [id, setId] = useState(defaultHeroVersion);
 ```
-`useState` returns a pair: the current value and a setter. Destructuring (`[id, setId]`) names both of them. The first render always uses the default, `"v2"`.
+`useState` returns a pair: the current value and a setter. Destructuring (`[id, setId]`) names both of them. The first render always uses the default, `"v5"`.
 
 ```ts
 useEffect(() => {
@@ -326,7 +359,7 @@ This changes the address bar without reloading the page and without adding a bac
 
 ### Follow one value
 1. You open `/?hero=v1`.
-2. The first render shows v2.
+2. The first render shows v5.
 3. The effect reads `"v1"`, finds it in `heroVersions`, and calls `setId("v1")`.
 4. React re-renders with `SignalGridBackdrop`.
 
@@ -659,7 +692,9 @@ const listeners = new Set<() => void>();   // who to tell when anything changes
 ```
 These live at module level, outside any component, so every importer shares the same `Map`. `mounted` counts how many on-screen components use a group. The panel only lists groups with `mounted > 0`, so after you switch from v2 to v4 the skyline sliders go away.
 
-`setTuning(id, key, value)` clamps the value to `[min, max]`, replaces `group.values` with a new object (`{ ...group.values, [key]: v }`, so React sees a change), then `emit()` saves `changedTuning()` to `localStorage` and calls every listener.
+`setTuning(id, key, value)` clamps the value to `[min, max]`, replaces `group.values` with a new object (`{ ...group.values, [key]: v }`, so React sees a change), then `emit()` saves to `localStorage` and calls every listener.
+
+Saving goes through `persist()`, which **merges** instead of overwriting: it reads what's saved, drops the entries for groups that are registered right now, and adds their current changes. The first version wrote `changedTuning()` straight over the whole key. On a page load, the H zoom group registers first and saves, and at that moment the v5 group doesn't exist yet, so its saved sliders were wiped before it could read them. Merging keeps the values of groups that haven't mounted yet.
 
 ### Lifecycle of `useTuning`
 1. **First render:** `useState(() => defaultsOf(specs))` returns the plain defaults. The server-built HTML used those too, so hydration matches.
@@ -783,16 +818,32 @@ Changing a layout slider means rebuilding the whole scene, which disposes it and
 
 ## v5 neighbourhood (dark and light)
 
-Most of Haven's customers manage single-family homes, so v5 is a calm suburban street instead of a city. Detached houses sit on lawns with driveways, hedges and fences. Trees line the verges, a car is parked here and there, and every second block has a side street (a T-junction). One brand-purple house in every other block has all its windows lit. The street drifts towards you endlessly, like v2, along a road that bends gently into the distance. Hovering a house lights it up and sends a ripple across the ground.
+Most of Haven's customers manage single-family homes, so v5 is a calm suburban street instead of a city. Detached houses sit on lawns with driveways, hedges and fences. Trees and street lamps line the verges, cars sit on the driveways (never on the road, so the low camera can't drive through one), and every second block has a side street (a T-junction). The road has a kerb and a US-style double centre line, hidden by default (the **Road centre line** slider brings it back) because it made the sub-headline harder to read. Every house uses the same muted palette; an earlier version had a brand-violet "focal" house in every other block, which was dropped. The street drifts towards you endlessly, like v2, along a road that bends gently into the distance. Hovering a house switches its lights on and sends a ripple across the ground (see "Hover styles" below).
 
-The camera copies v2's street-level angle: 2.6 units up (v2: 3.1), aiming at a point 2 units high, 22 units ahead (`lookY = 2`, so almost level), with the same 46° field of view (62° on phones). A first try at 5.4 units up, looking down, read as top-down, and the client preferred v2's angle.
+The camera sits at pedestrian eye level: 0.8 units up (about 3 m), aiming slightly *upwards* at a point 2.65 units high, 22 units ahead, through a 47° lens (63° on phones). Warm windows are turned almost off (`warmth = 0.07`) so the scene stays in the purple duotone, and the sway is a little wider (0.58). These values were picked in the Tune panel. Earlier tries: 5.4 units up looking down read as top-down, then 2.6 units up (v2's angle).
+
+### Exploring camera angles (Tune panel)
+Open **Tune** (top right, dev or `?tune`), click **▾ H zoom** to fold that group away, and use the camera sliders under **Neighbourhood (v5)**. In world units (one house is about 2–3 units wide):
+
+| Slider | Param | Default | What it does |
+|---|---|---|---|
+| Camera height | `cameraHeight` | 2.6 | How high the eye is. ~1 is a pedestrian; 10+ is a drone. |
+| Camera forward/back | `cameraZ` | 12 | Where along the street you stand. The street's near end is at about 10.4, so above that you're behind it; lower walks you in among the houses. |
+| Camera slide left/right | `cameraX` | 0 | Steps sideways (towards the pavement, or over the front lawns). The aim moves with you, so you still look straight down the street. |
+| Turn left/right | `lookX` | 0 | Swings the aim sideways without moving. ±6 points the camera at the houses on one side. |
+| Look up/down | `lookY` | 2 | Height of the point you aim at, 22 units ahead. Pair a high camera with a negative value to look down. |
+| Zoom (lens °) | `fov` | 46 | Vertical field of view. Lower is telephoto (flatter, tighter); higher is wide-angle (more distortion, more street). Phones always get +16° (`PORTRAIT_FOV_EXTRA`), so 46 becomes 62. |
+
+Example (illustrative, not the default): height 11, look −5, lens 40, turn 3 gives an overhead "drone" view down the street. Turn **Camera sway** to 0 while comparing, so the gentle side-to-side drift doesn't muddy the angle. When you like one, **Copy values** puts just the changed numbers on your clipboard (e.g. `{"suburb": {"cameraHeight": 11, …}}`). Paste them into `defaultHavenSuburbParams` in [`createHavenSuburb.ts`](./src/components/hero/suburb/createHavenSuburb.ts) to make them what visitors see. Slider positions are remembered in your browser (`localStorage`) until you press **Reset**.
+
+<details><summary>Predict, change, observe</summary>Set Camera height to 0.8 and Look up/down to 1.5. What changes? <details><summary>Answer</summary>You're at eye level with the front doors, so the houses tower over you and the sky takes up more of the frame. Because the aim point (1.5) is now above the eye (0.8), you're looking slightly up, so the horizon drops lower on screen than in the default.</details></details>
 
 `?hero=v5` is dark (the default). `?hero=v5-light` is the same scene with the light colours: the hero text turns dark and the nav bar goes solid so it stays readable.
 
 ### How to tweak it
 | You want to change… | Edit | Notes |
 |---|---|---|
-| Any colour, either theme | [`suburbTheme.ts`](./src/components/hero/suburb/suburbTheme.ts) | One hex per role (`lawn`, `walls`, `focalWall`, …). No geometry is involved. |
+| Any colour, either theme | [`suburbTheme.ts`](./src/components/hero/suburb/suburbTheme.ts) | One hex per role (`lawn`, `walls`, `brand`, …). No geometry is involved. |
 | A house type's shape | [`suburbHouses.ts`](./src/components/hero/suburb/suburbHouses.ts) `bungalow`, `gableGarage`, `hipPorch`, `corner` | Sizes are `[width, height, depth]` in world units. |
 | How often each type appears, road widths, plot size, number of blocks | `street` in the same file | `kinds` is the pool the random picker draws from. List a type twice to make it twice as common. |
 | Speed, bend, camera, window lights, trees, auto-flash | the **Tune** panel, "Neighbourhood (v5)" | Copy values, send them over, and they become the defaults in `defaultHavenSuburbParams`. |
@@ -800,7 +851,7 @@ The camera copies v2's street-level angle: 2.6 units up (v2: 3.1), aiming at a p
 The four house types:
 1. **Bungalow:** single storey with a low hip roof, door and two windows, sometimes a chimney.
 2. **Two-storey gable with garage:** garage and driveway on one side.
-3. **Two-storey hip with porch:** porch roof on two posts and four windows. This is also the brand-purple "focal" house.
+3. **Two-storey hip with porch:** porch roof on two posts and four windows.
 4. **Corner house:** L-shaped, with a gable roof on each wing.
 
 `mirror` flips any house left to right, so the same four types don't look copy-pasted.
@@ -814,9 +865,18 @@ The four house types:
 ```ts
 export type Part = { prim: Prim; pos: Vec3; size: Vec3; color: string; yaw?: number; window?: { lit: boolean; flicker: number } };
 ```
-A house is just data: an array of simple shapes (`prim`), each with a position, a size and a colour. `pos` is the **base centre**: every shape's geometry starts at y = 0, so `pos[1]` is where its bottom sits. In `hipPorch`, the walls are `box([0, 0, 0], [2.0, 1.9, 1.7], …)`, so they run from y = 0 to 1.9. The roof is placed at `pos: [0, 1.9, 0]`, exactly on top. Each house faces +z, so its front wall is at z = depth / 2 = 0.85, and the windows sit there: `pane(l, -0.62, 0.35, 0.85)`.
+A house is just data: an array of simple shapes (`prim`), each with a position, a size and a colour. `pos` is the **base centre**: every shape's geometry starts at y = 0, so `pos[1]` is where its bottom sits. In `hipPorch`, the walls are `box([0, 0, 0], [2.0, 1.9, 1.7], …)`, so they run from y = 0 to 1.9. The roof is placed at `pos: [0, 1.9, 0]`, exactly on top. Each house faces +z, so its front wall is at z = depth / 2 = 0.85, and the windows sit there: `sillWindow(l, -0.62, 0.35, 0.85)`.
 
-`pane()` makes one window and decides with the house's own random generator whether it's lit (`rand() < lit`), warm, or a slow blinker. The focal house skips the dice: `look.focal ||` makes every window lit and warm.
+**Detail is more boxes, not smoother shapes.** Three helpers return small arrays of parts, and `...` (spread) drops them into the house's list:
+- `sillWindow()` = `pane()` plus a thin trim-coloured box just under it (the sill), pushed 0.02 forward so it sticks out of the wall.
+- `doorway()` = a frame (slightly bigger box just *behind* the door, so its edges show), the door, and a flat step in front.
+- `chimney()` = the stack plus a cap 0.06 wider.
+
+The car works the same way: wheels, a body, a narrower cabin in the body colour, four glass panels, headlights (`windowLit`) and tail-lights (`brand`, Haven violet, instead of red, to stay on palette). `lampParts()` is a pole, an arm reaching over the road, and a head marked as a lit window, so the existing shader makes it glow with no new code.
+
+Why it stays fast: every box in the whole street, whatever it belongs to, is one *instance* of the same `BoxGeometry` in one `InstancedMesh`. Adding sills to 28 houses adds ~100 instances but **zero** draw calls. The perf meter still shows 6 draws; triangles went from about 4k to 9k, which is nothing for a GPU.
+
+`pane()` makes one window and decides with the house's own random generator whether it's lit (`rand() < lit`), warm, or a slow blinker.
 
 ### `planStreet()`: the T-junctions
 ```ts
@@ -834,7 +894,7 @@ if (side === junction && j === 0) continue;
 [Open the file](./src/components/hero/suburb/createHavenSuburb.ts).
 
 ### 1. Street space
-Each house, tree or car is a `Group` with `at` (how far along the road) and `lateral` (how far to the side; negative is left). A left-hand `hipPorch` has `lateral = -(0.85 + 0.45 + 1.3 + 0.85) = -3.45`: half the road, then the pavement, the front garden and half the house's depth.
+Each house, tree or car is a `Group` with `at` (how far along the road) and `lateral` (how far to the side; negative is left). A left-hand `hipPorch` has `lateral = -(1.15 + 0.45 + 1.3 + 0.85) = -3.75`: half the road, then the pavement, the front garden and half the house's depth.
 
 ### 2. Four draw calls for everything
 Every `Part` is sorted by its `prim` into one `InstancedMesh` per shape: `box`, `gable`, `hip` and `blob` (tree crowns). Hundreds of parts are drawn in **4 draw calls**, plus the ground and the sky (the meter shows "6 draws"). Per-instance colour, group and window state go in `InstancedBufferAttribute`s, which give each copy its own value.
@@ -859,6 +919,17 @@ After placing each group, each part's instance matrix is `groupMatrix × local`.
 
 ### 4. Hover
 `raycaster.intersectObjects(meshes…)` returns the first part under the pointer and its `instanceId`. `groupOf[instanceId]` turns that into the group, so a window, a roof or a hedge all mean "this house". Only `house: true` groups flash; trees and cars don't.
+
+### Hover styles
+`flashes[i]` rises to 1 while you hover (about 0.17 s) and fades over ~0.7 s after. *What that number does* is chosen by the **Hover** slider (`hoverStyle`), read in `partFragment`:
+
+| Value | Name | What changes |
+|---|---|---|
+| 0 | Wash | The original: the whole house blends 30% toward the pale `flash` colour. Reads as a white overlay. |
+| **1** | **Lights on** (default) | Every window goes to 1.3 × `flash`, brighter than a normally lit window, and the walls get up to 28% brighter **in their own colour** (`col *= 1.0 + …`), like light spilling out. Nothing turns white. |
+| 2 | Brand | Lights on, plus walls and roof turn Haven violet (`brand`), keeping their light and shade (`uBrand * shade`). |
+
+Multiplying (`col *= 1.28`) keeps the hue: purple stays purple, just lighter. Mixing toward a pale colour (style 0) pulls every house toward the same grey-lilac, which is why it looked like a random white overlay.
 </details>
 
 <details>
@@ -881,6 +952,8 @@ That's the brief's "top lighter, sides darker", with no gradients.
 **Windows.** `vWindow` is 1 for window parts. Unlit ones show `uGlass`. Lit ones skip shading (`mix(col, vColor, vGlow)`) so they glow. Blinkers multiply in `step(0.25, sin(time × rate + seed))`, which is on about 58% of the time.
 
 **Roads are drawn, not modelled.** The ground is one big plane. `streetFragment` undoes the drift for each pixel (`along = mod(z − far − travel, length)`), finds the block and whether it's on the junction side, and measures a *signed distance*: negative on tarmac, 0 to 0.45 on the pavement, above that on lawn. `fwidth()` softens the edge over exactly one pixel, so the kerbs stay crisp at any distance.
+
+**Kerb and centre line are paint too.** The kerb is the strip where that signed distance is between 0 and `KERB` (0.07): just outside the tarmac, coloured `kerb`. The centre line uses `lateral` (sideways distance from the middle of the bending road). A pixel is on a line when `abs(abs(lateral) − LINE_GAP)` is under `LINE_HALF`: the inner `abs` folds left onto right, so one test draws both lines, centred 0.055 either side of the middle and 0.044 wide. Far away a line gets thinner than a pixel and would flicker, so the shader draws it one pixel wide but proportionally fainter (`LINE_HALF / lineHalf`).
 </details>
 
 <details>
@@ -891,6 +964,6 @@ That's the brief's "top lighter, sides darker", with no gradients.
 - The nav lives outside the hero, so the hero sets `document.documentElement.dataset.heroTone = "light"`, which renders as `<html data-hero-tone="light">`. [`Nav.tsx`](./src/components/Nav.tsx) watches that attribute with a `MutationObserver` and goes solid, because white links on a pale hero would disappear.
 
 ### Predict, change, observe
-1. In `suburbTheme.ts`, change dark `focalWall` from `#5740ef` to `#c9b5da` and reload `?hero=v5`. <details><summary>Answer</summary>The highlighted houses turn lilac. Only colours change; every shape stays put. Change it back.</details>
+1. In `suburbTheme.ts`, change dark `brand` from `#5740ef` to `#c9b5da`, set the **Hover** slider to 2, and hover a house. <details><summary>Answer</summary>The hovered house turns lilac instead of violet, and the cars' tail-lights go lilac too. Only colours change; every shape stays put. Change it back.</details>
 2. In the Tune panel, set **Road bend** to 0. <details><summary>Answer</summary>`bend(z)` is 0 everywhere and θ = 0, so the street runs dead straight into the distance. Negative values bend it left.</details>
 </details>

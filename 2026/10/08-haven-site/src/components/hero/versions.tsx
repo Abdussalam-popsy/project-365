@@ -15,6 +15,8 @@ export type HeroVersion = {
   Layout?: ComponentType;
   /** "light" flips the shared hero copy to dark text and makes the nav solid. */
   tone?: "dark" | "light";
+  /** Kept for reference: still opens via `?hero=<id>`, but hidden behind the picker's Archive toggle. */
+  archived?: boolean;
 };
 
 const CityBackdrop = dynamic(() => import("./CityBackdrop"), { ssr: false });
@@ -40,14 +42,14 @@ function SignalGridBackdrop() {
 
 /** Every hero backdrop we have tried, oldest first. Add new ones at the end. */
 export const heroVersions: HeroVersion[] = [
-  { id: "v1", label: "Signal grid", Backdrop: SignalGridBackdrop },
-  { id: "v2", label: "Skyline", Backdrop: CityBackdrop },
-  { id: "v3", label: "Split grid", Layout: SplitHero },
-  { id: "v3-alt", label: "Centred grid", Backdrop: GridBackdrop },
-  { id: "v4", label: "Residential", Backdrop: ResidentialBackdrop },
+  { id: "v1", label: "Signal grid", Backdrop: SignalGridBackdrop, archived: true },
+  { id: "v2", label: "Skyline", Backdrop: CityBackdrop, archived: true },
+  { id: "v3", label: "Split grid", Layout: SplitHero, archived: true },
+  { id: "v3-alt", label: "Centred grid", Backdrop: GridBackdrop, archived: true },
+  { id: "v4", label: "Residential", Backdrop: ResidentialBackdrop, archived: true },
   { id: "v5", label: "Neighbourhood", Backdrop: SuburbBackdrop },
   { id: "v5-light", label: "Neighbourhood (light)", Backdrop: SuburbBackdropLight, tone: "light" },
 ];
 
 /** The version real visitors see. */
-export const defaultHeroVersion = "v2";
+export const defaultHeroVersion = "v5";

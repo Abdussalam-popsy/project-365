@@ -30,8 +30,15 @@ function readSaved(): Record<string, Record<string, number>> {
   }
 }
 
+/** Saves the registered groups' changes without touching saved values of groups that haven't mounted yet. */
+function persist() {
+  const saved = readSaved();
+  groups.forEach((_, id) => delete saved[id]);
+  localStorage.setItem(STORAGE_KEY, JSON.stringify({ ...saved, ...changedTuning() }));
+}
+
 function emit() {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(changedTuning()));
+  persist();
   listeners.forEach((listener) => listener());
 }
 

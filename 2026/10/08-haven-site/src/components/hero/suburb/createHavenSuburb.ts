@@ -7,23 +7,32 @@ import { skyFragment, skyVertex } from "../city/shaders";
 import { reportHeroFrame } from "../perfStats";
 import { MAX_GROUPS, partFragment, partVertex, streetFragment, streetVertex } from "./suburbShaders";
 import {
-  blockLength, carParts, houseKinds, planStreet, seeded, street, streetLength, treeParts, type Part, type Prim,
+  blockLength, carParts, houseKinds, lampParts, planStreet, seeded, street, streetLength, treeParts, type Part, type Prim,
 } from "./suburbHouses";
 import { suburbThemes, type SuburbThemeName } from "./suburbTheme";
 
 export type HavenSuburbParams = {
   speed: number; curve: number; cameraHeight: number; cameraZ: number; lookY: number;
+  /** Lens (vertical field of view, degrees) on landscape screens; portrait adds PORTRAIT_FOV_EXTRA. */
+  fov: number; cameraX: number; lookX: number;
+  /** 0 = pale wash, 1 = lights on, 2 = brand takeover. */
+  hoverStyle: number;
+  /** Opacity of the double centre line, 0 = hidden. */
+  centreLine: number;
   litWindows: number; warmth: number; flicker: number; trees: number; sway: number;
   ambientFlashEvery: number; glow: number;
 };
 
 export const defaultHavenSuburbParams: HavenSuburbParams = {
-  speed: 0.45, curve: 0.004, cameraHeight: 2.6, cameraZ: 12, lookY: 2,
-  litWindows: 0.55, warmth: 0.5, flicker: 0.1, trees: 0.6, sway: 0.35,
+  speed: 0.45, curve: 0.004, cameraHeight: 0.8, cameraZ: 12, lookY: 2.65,
+  fov: 47, cameraX: 0, lookX: 0, hoverStyle: 1, centreLine: 0,
+  litWindows: 0.55, warmth: 0.07, flicker: 0.1, trees: 0.6, sway: 0.58,
   ambientFlashEvery: 3, glow: 1,
 };
 
 const MAX_RIPPLES = 6;
+/** Portrait screens are narrow, so they get a wider lens to keep both sides of the street in view. */
+const PORTRAIT_FOV_EXTRA = 16;
 const FOG_RANGE = new Vector2(16, 42);
 const UP = new Vector3(0, 1, 0);
 
@@ -61,9 +70,9 @@ export function createHavenSuburb(
   planStreet().forEach((plan, i) => {
     const shape = houseKinds[plan.kind]({
       theme: t, rand: rng(1000 + i * 77), lit: p.litWindows, warmth: p.warmth, flicker: p.flicker,
-      focal: plan.focal, chimney: plan.chimney,
-      wall: plan.focal ? t.focalWall : t.walls[plan.colour % t.walls.length],
-      roof: plan.focal ? t.focalRoof : t.roofs[plan.colour % t.roofs.length],
+      chimney: plan.chimney,
+      wall: t.walls[plan.colour % t.walls.length],
+      roof: t.roofs[plan.colour % t.roofs.length],
     });
     const front = shape.d / 2 + street.setback / 2;
     const parts: Part[] = [...shape.parts, { prim: "box", pos: [shape.doorX, 0, front], size: [0.34, 0.015, street.setback], color: t.pavement }];
@@ -76,7 +85,7 @@ export function createHavenSuburb(
       yaw: -plan.side * (Math.PI / 2), mirror: plan.mirror, parts, house: true,
     });
   });
-  // Street trees on the verge, back-garden trees behind the houses, and one car parked per block.
+  // Street trees on the verge and back-garden trees behind the houses.
   const plots = street.blocks * street.plotsPerBlock;
   for (let k = 0; k < plots * 2; k++) {
     const side = k % 2 ? 1 : -1, plot = Math.floor(k / 2);
@@ -84,11 +93,20 @@ export function createHavenSuburb(
     if (seeded(k, 11) < p.trees * 0.7) groups.push({ at, lateral: side * (edge + 0.55), yaw: k, mirror: false, parts: treeParts(t, t.trees[k % 3], 0.8 + seeded(k, 12) * 0.4), house: false });
     if (seeded(k, 13) < p.trees) groups.push({ at: at + 1.7, lateral: side * (7.2 + seeded(k, 14) * 2), yaw: k, mirror: false, parts: treeParts(t, t.trees[(k + 1) % 3], 1 + seeded(k, 15) * 0.5), house: false });
   }
+  // Street lamps on the pavement next to the kerb, two per side per block, staggered across the road.
+  // (Cars only park on driveways, so the low camera never drives through one.)
   for (let b = 0; b < street.blocks; b++) {
-    const side = b % 2 ? -1 : 1;
-    groups.push({ at: street.far + b * blockLength + 2.6 * street.plot, lateral: side * (street.roadHalf - 0.42), yaw: 0, mirror: false, parts: carParts(t, t.cars[b % t.cars.length]), house: false });
+    for (const side of [-1, 1] as const) {
+      for (const j of [1, 3]) {
+        const at = street.far + b * blockLength + (j + (side > 0 ? 0.5 : 0)) * street.plot;
+        groups.push({ at, lateral: side * (street.roadHalf + 0.12), yaw: 0, mirror: false, parts: lampParts(t, side > 0 ? -1 : 1), house: false });
+      }
+    }
   }
-  if (groups.length > MAX_GROUPS) groups.length = MAX_GROUPS;
+  if (groups.length > MAX_GROUPS) {
+    console.warn(`v5 suburb: ${groups.length} groups, only the first ${MAX_GROUPS} are drawn. Raise MAX_GROUPS or trim the plan.`);
+    groups.length = MAX_GROUPS;
+  }
 
   // 2. One InstancedMesh per primitive shape; every part becomes one instance.
   const geometries: Record<Prim, BufferGeometry> = {
@@ -102,6 +120,7 @@ export function createHavenSuburb(
     vertexShader: partVertex, fragmentShader: partFragment, side: DoubleSide,
     uniforms: {
       uFlashes: { value: flashes }, uTime: { value: 0 },
+      uHoverStyle: { value: Math.round(p.hoverStyle) }, uBrand: { value: srgb(t.brand) },
       uGlass: { value: srgb(t.glass) }, uFlash: { value: srgb(t.flash) },
       uFog: { value: srgb(t.fog) }, uFogRange: { value: FOG_RANGE },
     },
@@ -142,6 +161,7 @@ export function createHavenSuburb(
     vertexShader: streetVertex, fragmentShader: streetFragment,
     uniforms: {
       uLawn: { value: srgb(t.lawn) }, uRoad: { value: srgb(t.road) }, uPavementColor: { value: srgb(t.pavement) },
+      uKerb: { value: srgb(t.kerb) }, uMarking: { value: srgb(t.marking) }, uCentreLine: { value: p.centreLine },
       uFlash: { value: srgb(t.flash) }, uFog: { value: srgb(t.fog) }, uFogRange: { value: FOG_RANGE },
       uCurve: { value: p.curve }, uCamZ: { value: p.cameraZ }, uRoadHalf: { value: street.roadHalf },
       uSideHalf: { value: street.sideHalf }, uPavement: { value: street.pavement }, uFar: { value: street.far },
@@ -167,7 +187,7 @@ export function createHavenSuburb(
   const renderer = new WebGLRenderer({ canvas, antialias: true, powerPreference: "high-performance" });
   renderer.autoClear = false;
   renderer.info.autoReset = false;
-  const camera = new PerspectiveCamera(46, 1, 0.1, 120);
+  const camera = new PerspectiveCamera(p.fov, 1, 0.1, 120);
   const raycaster = new Raycaster();
   const pointer = new Vector2(), parallax = new Vector2(), probe = new Vector3(), look = new Vector3();
   const groupMatrix = groups.map(() => new Matrix4()), tmp = new Matrix4();
@@ -211,8 +231,8 @@ export function createHavenSuburb(
     }
     place();
     parallax.lerp(pointerInside ? pointer : new Vector2(), reduce ? 1 : 0.04);
-    camera.position.set(Math.sin(time * 0.08) * p.sway + parallax.x * 0.5, p.cameraHeight + parallax.y * 0.2, p.cameraZ);
-    camera.lookAt(look.set(bend(-10) * 0.5, p.lookY, -10));
+    camera.position.set(p.cameraX + Math.sin(time * 0.08) * p.sway + parallax.x * 0.5, p.cameraHeight + parallax.y * 0.2, p.cameraZ);
+    camera.lookAt(look.set(bend(-10) * 0.5 + p.cameraX + p.lookX, p.lookY, -10));
     camera.updateMatrixWorld();
 
     if (pointerDirty || hovered >= 0) {
@@ -259,7 +279,7 @@ export function createHavenSuburb(
     renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
     renderer.setSize(width, height, false);
     camera.aspect = width / height;
-    camera.fov = camera.aspect < 1 ? 62 : 46;
+    camera.fov = camera.aspect < 1 ? p.fov + PORTRAIT_FOV_EXTRA : p.fov;
     camera.updateProjectionMatrix();
     skyMaterial.uniforms.uAspect.value = camera.aspect;
     wake();

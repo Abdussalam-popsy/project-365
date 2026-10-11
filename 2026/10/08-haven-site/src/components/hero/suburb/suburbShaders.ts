@@ -35,6 +35,9 @@ void main() {
 export const partFragment = /* glsl */ `
 uniform vec3 uGlass;
 uniform vec3 uFlash;
+uniform vec3 uBrand;
+/** 0 = pale wash, 1 = lights on, 2 = brand takeover. */
+uniform float uHoverStyle;
 uniform vec3 uFog;
 uniform vec2 uFogRange;
 varying vec3 vColor;
@@ -50,7 +53,17 @@ void main() {
   float shade = 0.62 + 0.38 * clamp(n.y, 0.0, 1.0) + 0.1 * n.z - 0.05 * n.x;
   vec3 col = mix(vColor, uGlass, vWindow) * shade;
   col = mix(col, vColor, vGlow);
-  col = mix(col, uFlash, vFlash * 0.3) + uFlash * vFlash * vWindow * 0.6;
+  if (uHoverStyle < 0.5) {
+    // Original: blend the whole house toward the pale flash colour.
+    col = mix(col, uFlash, vFlash * 0.3) + uFlash * vFlash * vWindow * 0.6;
+  } else {
+    // Every window switches on, brighter than a normally lit one, as if someone just got home.
+    col = mix(col, uFlash * 1.3, vFlash * vWindow);
+    // ...and the walls catch a little of that light, in their own colour rather than a white wash.
+    col *= 1.0 + vFlash * (1.0 - vWindow) * 0.28;
+    // Brand takeover: walls and roof turn Haven violet, keeping their light and shade.
+    if (uHoverStyle > 1.5) col = mix(col, uBrand * shade, vFlash * 0.85 * (1.0 - vWindow));
+  }
   float fog = smoothstep(uFogRange.x, uFogRange.y, vDepth);
   gl_FragColor = vec4(mix(col, uFog, fog), 1.0);
 }
@@ -71,9 +84,15 @@ void main() {
 
 export const streetFragment = /* glsl */ `
 #define MAX_RIPPLES 6
+#define KERB 0.07
+#define LINE_HALF 0.022
+#define LINE_GAP 0.055
+uniform float uCentreLine;
 uniform vec3 uLawn;
 uniform vec3 uRoad;
 uniform vec3 uPavementColor;
+uniform vec3 uKerb;
+uniform vec3 uMarking;
 uniform vec3 uFlash;
 uniform vec3 uFog;
 uniform vec2 uFogRange;
@@ -113,7 +132,17 @@ void main() {
   float onPavement = 1.0 - smoothstep(-aa, aa, road - uPavement);
 
   vec3 col = mix(uLawn, uPavementColor, onPavement);
+  // Kerb: a narrow lighter band on the pavement side of every road edge.
+  float kerb = (1.0 - smoothstep(KERB - aa, KERB + aa, road)) * smoothstep(-aa, aa, road);
+  col = mix(col, uKerb, kerb);
   col = mix(col, uRoad, onRoad);
+
+  // US-style double centre line on the main road: two thin lines either side of the middle.
+  // Lines thinner than a pixel (far away) are drawn one pixel wide but fainter, so they don't shimmer.
+  float la = fwidth(lateral);
+  float lineHalf = max(LINE_HALF, la * 0.5);
+  float line = 1.0 - smoothstep(lineHalf - la * 0.5, lineHalf + la * 0.5, abs(abs(lateral) - LINE_GAP));
+  col = mix(col, uMarking, line * (LINE_HALF / lineHalf) * step(main, 0.0) * uCentreLine);
 
   for (int i = 0; i < MAX_RIPPLES; i++) {
     vec3 rp = uRipples[i];

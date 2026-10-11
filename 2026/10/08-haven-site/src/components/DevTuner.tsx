@@ -17,6 +17,7 @@ export function DevTuner() {
   const [enabled, setEnabled] = useState(false);
   const [open, setOpen] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [collapsed, setCollapsed] = useState<ReadonlySet<string>>(new Set());
   const [, rerender] = useState(0);
 
   useEffect(() => {
@@ -26,6 +27,12 @@ export function DevTuner() {
 
   if (!enabled) return null;
   const groups = visibleTuningGroups();
+  const toggleGroup = (id: string) =>
+    setCollapsed((prev) => {
+      const next = new Set(prev);
+      if (!next.delete(id)) next.add(id);
+      return next;
+    });
 
   const copy = async () => {
     const changed = changedTuning();
@@ -50,12 +57,19 @@ export function DevTuner() {
           {groups.map(([id, group]) => (
             <section key={id} className="mb-4 last:mb-2">
               <header className="mb-2 flex items-center justify-between">
-                <h2 className="font-medium text-white">{group.title}</h2>
+                <button
+                  type="button"
+                  onClick={() => toggleGroup(id)}
+                  aria-expanded={!collapsed.has(id)}
+                  className="font-medium text-white hover:text-lilac"
+                >
+                  {collapsed.has(id) ? "▸" : "▾"} {group.title}
+                </button>
                 <button type="button" onClick={() => resetTuning(id)} className="text-white/45 hover:text-white">
                   Reset
                 </button>
               </header>
-              {Object.entries(group.specs).map(([key, spec]) => {
+              {!collapsed.has(id) && Object.entries(group.specs).map(([key, spec]) => {
                 const value = group.values[key];
                 const moved = value !== spec.value;
                 return (
