@@ -12,7 +12,7 @@ export type HavenFieldParams = Readonly<{
 
 export const defaultHavenFieldParams: HavenFieldParams = {
   glowColor: "#5740ef",
-  accentColor: "#c9c1ff",
+  accentColor: "#c9b5da",
   lineColor: "#8b7bff",
   lineOpacity: 0.35,
   glowIntensity: 0.55,

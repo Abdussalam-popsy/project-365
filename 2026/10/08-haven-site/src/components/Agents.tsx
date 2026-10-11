@@ -1,4 +1,5 @@
 import { agents } from "@/content/site";
+import { Button } from "./Button";
 import { Eyebrow } from "./SectionHeading";
 import { Reveal } from "./Reveal";
 import { MaintenanceMock, LeasingMock, ComingSoonMock } from "./AgentMocks";
@@ -43,6 +44,11 @@ export function Agents() {
                     </li>
                   ))}
                 </ul>
+                {"link" in agent && (
+                  <Button href={agent.link.href} variant="outline" className="mt-10">
+                    {agent.link.label} <span aria-hidden className="ml-2">→</span>
+                  </Button>
+                )}
               </Reveal>
               <Reveal delay={0.15} className={i % 2 ? "md:order-1" : ""}>
                 <Mock />

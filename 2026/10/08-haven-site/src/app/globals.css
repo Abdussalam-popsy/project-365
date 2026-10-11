@@ -1,25 +1,21 @@
 @import "tailwindcss";
 
 @theme {
-  --font-sans: var(--font-inter-tight), ui-sans-serif, system-ui, sans-serif;
+  --font-sans: var(--font-geist), ui-sans-serif, system-ui, sans-serif;
 
-  --color-ink: #0b062a;
-  --color-plum-950: #0f0833;
-  --color-plum-900: #160c45;
-  --color-plum-800: #22145f;
+  --color-ink: #1e0f26;
+  --color-plum-950: #26132f;
+  --color-plum-900: #2f1839;
+  --color-plum-800: #43234f;
   --color-violet: #5740ef;
   --color-violet-soft: #8b7bff;
-  --color-lilac: #c9c1ff;
-  --color-mist: #f6f4fb;
-  --color-haze: #e7e3f3;
+  --color-lilac: #c9b5da;
+  --color-mist: #f7f4fa;
+  --color-haze: #ebe3f1;
 }
 
 html {
   scroll-behavior: smooth;
-}
-
-body {
-  font-feature-settings: "ss01", "cv11";
 }
 
 .grain::after {

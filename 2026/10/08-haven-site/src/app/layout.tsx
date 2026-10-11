@@ -1,11 +1,12 @@
 import type { Metadata } from "next";
-import { Inter_Tight } from "next/font/google";
+import { Geist } from "next/font/google";
 import { DevAgentation } from "@/components/DevAgentation";
+import { DevTuner } from "@/components/DevTuner";
 import "./globals.css";
 
-const interTight = Inter_Tight({
+const geist = Geist({
   subsets: ["latin"],
-  variable: "--font-inter-tight",
+  variable: "--font-geist",
   display: "swap",
 });
 
@@ -21,9 +22,10 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" className={interTight.variable}>
+    <html lang="en" className={geist.variable}>
       <body className="bg-mist font-sans text-ink antialiased">
         {children}
+        <DevTuner />
         <DevAgentation />
       </body>
     </html>

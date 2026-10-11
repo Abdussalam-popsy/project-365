@@ -8,7 +8,7 @@ import { FacadeMosaic } from "./FacadeMosaic";
 import { PixelIcon, type PixelIconSpec } from "./PixelIcon";
 
 const ease = [0.16, 1, 0.3, 1] as const;
-const LILAC = "#c9c1ff";
+const LILAC = "#c9b5da";
 const VIOLET = "#8b7bff";
 const MINT = "#8ee6b4";
 const EMBER = "#ff9a5c";

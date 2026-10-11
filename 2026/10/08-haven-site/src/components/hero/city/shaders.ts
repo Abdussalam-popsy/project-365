@@ -32,6 +32,10 @@ uniform vec3 uGlassTop;
 uniform vec3 uWindow;
 uniform vec3 uWindowAlt;
 uniform vec3 uFlash;
+uniform vec3 uWarm;
+uniform float uWarmth;
+uniform vec2 uWinCell;
+uniform float uShadeHeight;
 uniform vec3 uFog;
 uniform vec2 uFogRange;
 varying vec3 vLocal;
@@ -55,7 +59,7 @@ void main() {
   float halfWidth = 0.5 * (sideX ? vSize.z : vSize.x);
   float face = sideX ? sign(n.x) : 2.0 + sign(n.z);
 
-  vec2 g = vec2(u, vLocal.y) / vec2(0.12, 0.17);
+  vec2 g = vec2(u, vLocal.y) / uWinCell;
   vec2 id = floor(g);
   vec2 f = fract(g);
   float pane = step(0.22, f.x) * step(f.x, 0.78) * step(0.28, f.y) * step(f.y, 0.72);
@@ -68,10 +72,11 @@ void main() {
   float sharp = clamp(1.0 - max(fwidth(g.x), fwidth(g.y)) * 1.2, 0.0, 1.0);
   float win = mix(uWindowDensity * 0.45, pane * lit, sharp) * body * (1.0 - top);
   vec3 winColor = mix(uWindow, uWindowAlt, step(0.5, hash(vec3(id, vSeed + 3.0))));
+  winColor = mix(winColor, uWarm, step(1.0 - uWarmth, hash(vec3(id, vSeed + 5.0))));
 
-  vec3 col = mix(uGlass, uGlassTop, clamp(vLocal.y / 9.0, 0.0, 1.0));
+  vec3 col = mix(uGlass, uGlassTop, clamp(vLocal.y / uShadeHeight, 0.0, 1.0));
   col *= sideX ? 0.62 : 1.0;
-  col *= mix(1.0, 0.55, smoothstep(2.5, 9.0, vLocal.y));
+  col *= mix(1.0, 0.55, smoothstep(uShadeHeight * 0.28, uShadeHeight, vLocal.y));
   col = mix(col, uGlassTop * 1.25, top * 0.7);
   col += winColor * win * (0.5 + 0.4 * r);
 
@@ -175,14 +180,18 @@ export const beaconVertex = /* glsl */ `
 attribute float aSeed;
 uniform float uTime;
 uniform float uPixelRatio;
+uniform float uSize;
+uniform float uSteady;
 varying float vAlpha;
 varying float vDepth;
 
 void main() {
   vec4 mv = viewMatrix * modelMatrix * vec4(position, 1.0);
   vDepth = -mv.z;
-  vAlpha = pow(0.5 + 0.5 * sin(uTime * (1.2 + aSeed) + aSeed * 40.0), 8.0);
-  gl_PointSize = 9.0 * uPixelRatio * (12.0 / vDepth);
+  float blink = pow(0.5 + 0.5 * sin(uTime * (1.2 + aSeed) + aSeed * 40.0), 8.0);
+  float steady = 0.7 + 0.15 * sin(uTime * 0.5 + aSeed * 20.0);
+  vAlpha = mix(blink, steady, uSteady);
+  gl_PointSize = uSize * uPixelRatio * (12.0 / vDepth);
   gl_Position = projectionMatrix * mv;
 }
 `;
@@ -197,5 +206,48 @@ void main() {
   float d = length(gl_PointCoord - 0.5);
   float a = smoothstep(0.5, 0.0, d) * vAlpha * (1.0 - smoothstep(uFogRange.x, uFogRange.y, vDepth));
   gl_FragColor = vec4(uColor * a, a);
+}
+`;
+
+// Pitched roofs for the residential city: a unit prism, ridge along z, base at y = 0.
+export const roofVertex = /* glsl */ `
+attribute float aFlash;
+varying vec3 vNormal;
+varying float vY;
+varying float vFlash;
+varying float vDepth;
+
+void main() {
+  vNormal = normal;
+  vY = position.y;
+  vFlash = aFlash;
+  vec4 mv = viewMatrix * modelMatrix * instanceMatrix * vec4(position, 1.0);
+  vDepth = -mv.z;
+  gl_Position = projectionMatrix * mv;
+}
+`;
+
+export const roofFragment = /* glsl */ `
+uniform vec3 uRoof;
+uniform vec3 uRoofLit;
+uniform vec3 uGable;
+uniform vec3 uRim;
+uniform vec3 uFlash;
+uniform vec3 uFog;
+uniform vec2 uFogRange;
+varying vec3 vNormal;
+varying float vY;
+varying float vFlash;
+varying float vDepth;
+
+void main() {
+  vec3 n = normalize(vNormal);
+  float slope = step(0.2, n.y);
+  vec3 col = mix(uGable, mix(uRoof, uRoofLit, 0.5 + 0.5 * n.x), slope);
+  float edge = smoothstep(0.1, 0.0, vY) + smoothstep(0.9, 1.0, vY);
+  col += uRim * edge * 0.18;
+  col += uFlash * pow(vFlash, 1.4) * (0.2 + edge * 0.6);
+  float fog = smoothstep(uFogRange.x, uFogRange.y, vDepth);
+  gl_FragColor = vec4(mix(col, uFog, fog), 1.0);
 }
 `;

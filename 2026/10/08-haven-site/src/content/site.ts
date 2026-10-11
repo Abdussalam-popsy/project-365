@@ -1,4 +1,7 @@
 export const DEMO_URL = "#book-a-demo";
+/** Product pages for each AI worker. Placeholders until the pages exist. */
+export const MAINTENANCE_URL = "#";
+export const LEASING_URL = "#";
 
 export const announcement = {
   text: "Haven recognized among Top 50 AI startups in Real Estate",
@@ -44,6 +47,7 @@ export const agents = [
     title: "Your 24/7 maintenance coordinator.",
     body: "Answers every call, triages emergencies, dispatches the right vendor from your preferred list, and writes the work order straight into your property management system. Then it checks in with the resident once the job is done.",
     points: ["Answers every call, 24/7", "Triages emergencies", "Dispatches vendors", "Creates work orders"],
+    link: { label: "Learn more about Maintenance AI", href: MAINTENANCE_URL },
   },
   {
     id: "leasing",
@@ -51,13 +55,14 @@ export const agents = [
     title: "Every lead answered in seconds, not hours.",
     body: "Responds to calls, texts and emails from Zillow, Apartments.com and every other listing site. Qualifies prospects, books tours around your agents' calendars, and follows up until they're ready to sign.",
     points: ["Qualifies prospects", "Schedules tours", "Captures listing-site leads", "Follows up consistently"],
+    link: { label: "Learn more about Leasing AI", href: LEASING_URL },
   },
   {
     id: "coming-soon",
     eyebrow: "Coming soon",
-    title: "Vendors, collections and more.",
+    title: "Collections, renewals and more.",
     body: "New AI workers tailored to property management are on the way, trained on the same policies, vendors and workflows your team already uses.",
-    points: ["Vendor management", "Collections", "Renewals"],
+    points: ["Collections", "Renewals", "Move-ins"],
   },
 ] as const;
 
