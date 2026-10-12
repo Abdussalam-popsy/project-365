@@ -433,6 +433,13 @@ src/app/agents/maintenance/page.tsx ← picks the sections, in order
 
 <details><summary>Predict, change, observe</summary>In `maintenance.ts`, change the Invoiced step's label tone from `"neutral"` to `"green"`. What happens in the hero diagram? <details><summary>Answer</summary>The "Invoiced" label turns soft green, like "Confirmed". The `onDark` swap only applies to neutral chips, so green looks the same on dark as on light. Change it back.</details></details>
 
+## Favicon and link previews
+
+- **Favicon:** [`src/app/icon.png`](./src/app/icon.png). Next sees the file name and adds `<link rel="icon">` to every page.
+- **Link preview (Open Graph):** [`src/app/opengraph-image.jpg`](./src/app/opengraph-image.jpg), 1200×630 (the size Slack, iMessage, LinkedIn and X expect), with its alt text in `opengraph-image.alt.txt`. Same trick: the file name is the instruction. It's a JPEG because this convention doesn't accept WebP.
+- **`metadataBase`** in [`layout.tsx`](./src/app/layout.tsx): preview images must be full URLs (`https://…`), so Next needs the site's origin. It adds the base path itself, giving `https://abdussalam-popsy.github.io/project-365/2026/10/08-haven-site/opengraph-image.jpg`. Change the origin when the site moves to Haven's own domain.
+- `twitter: { card: "summary_large_image" }` asks X for the big image card instead of a small thumbnail.
+
 ## Run and check
 
 ```bash
