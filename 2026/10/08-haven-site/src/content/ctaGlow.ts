@@ -23,16 +23,16 @@ export interface GlowValues {
 
 export const ctaGlow: GlowValues = {
   background: "#0e0b10",
-  x: 50,
-  y: 55,
-  width: 60,
-  height: 55,
+  x: 47,
+  y: -20,
+  width: 160,
+  height: 73,
   color: "#43234f",
-  strength: 0.95,
+  strength: 1,
   accent: "#c9b5da",
-  accentStrength: 0.1,
+  accentStrength: 0,
   accentSize: 58,
-  accentOffsetY: 5,
+  accentOffsetY: 21,
 };
 
 /** "#43234f" + 0.95 → "rgba(67,35,79,0.95)". */

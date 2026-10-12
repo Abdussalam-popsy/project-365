@@ -20,7 +20,7 @@ export function FinalCta({
   callHref = "#voice-demo",
 }: FinalCtaProps) {
   return (
-    <section id="book-a-demo" className="grain relative overflow-hidden bg-night px-6 py-36 text-center text-white">
+    <section id="book-a-demo" className="grain grain-fade-bottom relative overflow-hidden bg-night px-6 py-36 text-center text-white">
       {/* Plum and a touch of lilac, faded out before the footer starts. Adjust it with the "Closing glow" dev tool on any page. */}
       <CtaGlow />
       <Reveal className="relative mx-auto max-w-[820px]">
