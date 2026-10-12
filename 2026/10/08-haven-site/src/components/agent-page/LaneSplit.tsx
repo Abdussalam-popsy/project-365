@@ -3,7 +3,7 @@ import { Reveal } from "../Reveal";
 
 function LaneGroup({ title, items, human }: { title: string; items: string[]; human: boolean }) {
   return (
-    <div className={`rounded-[28px] p-7 sm:p-9 ${human ? "bg-ink text-white" : "border border-ink/[0.07] bg-white"}`}>
+    <div className={`rounded-[28px] p-7 sm:p-9 ${human ? "bg-night text-white" : "border border-ink/[0.07] bg-white"}`}>
       <p className={`text-[13px] font-medium tracking-[0.14em] uppercase ${human ? "text-lilac" : "text-violet"}`}>{title}</p>
       <ul className="mt-6 flex flex-wrap gap-2.5">
         {items.map((item) => (

@@ -17,6 +17,8 @@
   --color-bubble: #e6e0e9;
   /* Agent-page light background (client's reference), in place of pure white. */
   --color-page: #f6f3f8;
+  /* Agent-page dark background (client's reference): darker and more neutral than ink. */
+  --color-night: #0e0b10;
 }
 
 html {

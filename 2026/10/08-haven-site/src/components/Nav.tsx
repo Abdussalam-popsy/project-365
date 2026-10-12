@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { usePathname } from "next/navigation";
 import { motion, useMotionValueEvent, useScroll } from "motion/react";
 import { navLinks } from "@/content/site";
 import { Logo } from "./Logo";
@@ -9,7 +10,13 @@ import { SiteLink } from "./SiteLink";
 import { AgentsMenu } from "./nav/AgentsMenu";
 import { MobileMenu } from "./nav/MobileMenu";
 
+/** Solid nav colour as "r,g,b": ink on the homepage, the darker `night` (#0e0b10) on agent pages. */
+const INK_RGB = "30,15,38";
+const NIGHT_RGB = "14,11,16";
+
 export function Nav() {
+  const onAgentPage = usePathname().startsWith("/agents");
+  const rgb = onAgentPage ? NIGHT_RGB : INK_RGB;
   const { scrollY } = useScroll();
   const [solid, setSolid] = useState(false);
 
@@ -32,7 +39,7 @@ export function Nav() {
     <motion.header
       className="fixed inset-x-0 top-10 z-20 border-b transition-colors duration-300"
       animate={{
-        backgroundColor: dark ? "rgba(30,15,38,0.92)" : "rgba(30,15,38,0)",
+        backgroundColor: dark ? `rgba(${rgb},0.92)` : `rgba(${rgb},0)`,
         borderColor: dark ? "rgba(201,181,218,0.12)" : "rgba(201,181,218,0.18)",
       }}
       style={{ backdropFilter: dark ? "blur(14px)" : "none" }}

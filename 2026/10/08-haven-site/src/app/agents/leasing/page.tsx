@@ -67,9 +67,9 @@ export default function LeasingPage() {
           </Reveal>
         </Section>
 
-        <FinalCta title={cta.title} body={cta.body} demoSubject={meta.demoSubject} callHref={null} />
+        <FinalCta night title={cta.title} body={cta.body} demoSubject={meta.demoSubject} callHref={null} />
       </main>
-      <Footer />
+      <Footer night />
     </>
   );
 }

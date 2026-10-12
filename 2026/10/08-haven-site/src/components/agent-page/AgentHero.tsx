@@ -21,7 +21,7 @@ interface AgentHeroProps {
 /** Dark split hero: big headline with lilac highlights, two buttons, and a visual beside it. */
 export function AgentHero({ eyebrow, title, body, demoSubject, secondary, visual }: AgentHeroProps) {
   return (
-    <section className="grain relative overflow-hidden bg-ink px-6 pt-40 pb-24 text-white sm:pt-48 sm:pb-32">
+    <section className="grain relative overflow-hidden bg-night px-6 pt-40 pb-24 text-white sm:pt-48 sm:pb-32">
       <div className="mx-auto grid max-w-[1240px] items-center gap-14 lg:grid-cols-[1.05fr_1fr] lg:gap-16">
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.9, ease }}>
           <Eyebrow tone="dark">{eyebrow}</Eyebrow>

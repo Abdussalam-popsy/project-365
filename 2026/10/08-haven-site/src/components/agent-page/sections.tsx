@@ -7,7 +7,7 @@ type Surface = "mist" | "white" | "ink";
 const surfaces: Record<Surface, string> = {
   mist: "bg-page text-ink",
   white: "bg-page text-ink",
-  ink: "grain relative overflow-hidden bg-ink text-white",
+  ink: "grain relative overflow-hidden bg-night text-white",
 };
 
 /** A full-width band with the site's standard padding and max width. */
