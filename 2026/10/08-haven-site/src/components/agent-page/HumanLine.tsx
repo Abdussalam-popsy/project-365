@@ -3,7 +3,7 @@ import { Reveal } from "../Reveal";
 
 function Column({ column, accent }: { column: LineColumn; accent: boolean }) {
   return (
-    <div className={`rounded-[28px] p-7 sm:p-9 ${accent ? "bg-ink text-white" : "border border-ink/[0.07] bg-white"}`}>
+    <div className={`rounded-[28px] p-7 sm:p-9 ${accent ? "bg-night text-white" : "border border-ink/[0.07] bg-white"}`}>
       <h3 className="text-[24px] font-light tracking-[-0.02em]">{column.title}</h3>
       <p className={`mt-1 text-[14px] ${accent ? "text-lilac/80" : "text-ink/50"}`}>{column.subtitle}</p>
       <ul className="mt-7 flex flex-col">

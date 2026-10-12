@@ -1,5 +1,6 @@
 import { demoUrl } from "@/content/site";
 import { Button } from "./Button";
+import { CtaGlow } from "./CtaGlow";
 import { PhoneIcon } from "./PhoneIcon";
 import { Reveal } from "./Reveal";
 
@@ -9,6 +10,8 @@ interface FinalCtaProps {
   demoSubject?: string;
   /** Where "Hear a call" jumps to; null hides it on pages without a call sample. */
   callHref?: string | null;
+  /** Agent pages use the darker `night` background instead of ink. */
+  night?: boolean;
 }
 
 /** Closing call to action. Agent pages pass their own copy; the homepage uses the defaults. */
@@ -17,11 +20,12 @@ export function FinalCta({
   body = "Hand the repetitive work to Haven, and spend your time growing your portfolio.",
   demoSubject,
   callHref = "#voice-demo",
+  night = false,
 }: FinalCtaProps) {
   return (
-    <section id="book-a-demo" className="grain relative overflow-hidden bg-ink px-6 py-36 text-center text-white">
-      {/* Plum and a touch of lilac, centred above the bottom edge so it has faded out before the footer (also ink) starts. */}
-      <div className="absolute inset-0 bg-[radial-gradient(60%_55%_at_50%_55%,rgba(67,35,79,0.95),transparent),radial-gradient(35%_30%_at_50%_60%,rgba(201,181,218,0.10),transparent)]" />
+    <section id="book-a-demo" className={`grain relative overflow-hidden ${night ? "bg-night" : "bg-ink"} px-6 py-36 text-center text-white`}>
+      {/* Plum and a touch of lilac, faded out before the footer starts. Adjustable in the Tune panel (CtaGlow.tsx). */}
+      <CtaGlow />
       <Reveal className="relative mx-auto max-w-[820px]">
         <h2 className="text-[44px] leading-[1.03] font-light tracking-[-0.035em] sm:text-[68px]">
           {title}

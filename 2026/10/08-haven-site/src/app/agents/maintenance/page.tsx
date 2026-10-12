@@ -6,18 +6,23 @@ import { Footer } from "@/components/Footer";
 import { Reveal } from "@/components/Reveal";
 import { AgentHero } from "@/components/agent-page/AgentHero";
 import { LifecycleVisual } from "@/components/agent-page/LifecycleVisual";
-import { FeatureGrid, Section, SectionIntro, Split, StageGrid } from "@/components/agent-page/sections";
-import { ChatThread, WorkOrderCard } from "@/components/agent-page/ChatThread";
-import { EventLog } from "@/components/agent-page/EventLog";
+import { FeatureGrid, Section, SectionIntro, Split } from "@/components/agent-page/sections";
+import { WorkOrderCard } from "@/components/agent-page/ChatThread";
+import { LoopingChat } from "@/components/agent-page/motion/LoopingChat";
+import { StageStepper } from "@/components/agent-page/motion/StageStepper";
+import { StatsBand } from "@/components/agent-page/StatsBand";
+import { DispatchLogMotion } from "@/components/agent-page/motion/DispatchLogMotion";
+import { ScheduleThreadMotion } from "@/components/agent-page/motion/ScheduleThreadMotion";
 import { CallTranscript } from "@/components/agent-page/CallTranscript";
 import { HumanLine } from "@/components/agent-page/HumanLine";
-import { FaqList, SystemsList } from "@/components/agent-page/FaqList";
+import { FaqSplit, SystemsList } from "@/components/agent-page/FaqList";
 import { EstimateMock } from "@/components/agent-page/maintenance/EstimateMock";
-import { Chip, MockPanel } from "@/components/agent-page/ui";
+import { MockPanel } from "@/components/agent-page/ui";
 import {
   maintenanceApprovals as approvals, maintenanceCall as call, maintenanceCta as cta, maintenanceDispatch as dispatch,
   maintenanceFaq as faq, maintenanceHero as hero, maintenanceHumanLine as humanLine, maintenanceLifecycle as lifecycle,
-  maintenanceMeta as meta, maintenanceStages as stages, maintenanceSystems as systems, maintenanceTriage as triage,
+  maintenanceMeta as meta, maintenanceStages as stages, maintenanceStats as stats, maintenanceSystems as systems,
+  maintenanceTriage as triage,
 } from "@/content/agents/maintenance";
 
 export const metadata: Metadata = { title: meta.title, description: meta.description };
@@ -32,16 +37,17 @@ export default function MaintenancePage() {
 
         <Section id="lifecycle">
           <SectionIntro title={stages.title} body={stages.body} />
-          <StageGrid stages={stages.items} />
+          <StageStepper stages={stages.items} visuals={stages.visuals} recordTitle={triage.workOrder.title} recordDate={triage.workOrder.date} />
         </Section>
+
+        <StatsBand title={stats.title} body={stats.body} items={stats.items} />
 
         <Section surface="white">
           <Split
-            text={<SectionIntro eyebrow={triage.eyebrow} title={triage.title} body={triage.body} />}
+            text={<SectionIntro title={triage.title} body={triage.body} />}
             visual={
-              <MockPanel className="flex flex-col gap-6">
-                <ChatThread messages={triage.chat} />
-                <WorkOrderCard order={triage.workOrder} />
+              <MockPanel>
+                <LoopingChat messages={triage.chat} after={[<WorkOrderCard key="order" order={triage.workOrder} />]} />
               </MockPanel>
             }
           />
@@ -49,25 +55,16 @@ export default function MaintenancePage() {
         </Section>
 
         <Section>
-          <SectionIntro eyebrow={dispatch.eyebrow} title={dispatch.title} body={dispatch.body} />
+          <SectionIntro title={dispatch.title} body={dispatch.body} />
           <div className="mt-14 flex flex-col gap-16">
             <Split
               flip
               text={<BlockText {...dispatch.blocks[0]} />}
-              visual={<EventLog heading={dispatch.log.heading} title={dispatch.log.vendor} date={dispatch.log.date} events={dispatch.log.events} />}
+              visual={<DispatchLogMotion heading={dispatch.log.heading} title={dispatch.log.vendor} date={dispatch.log.date} events={dispatch.log.events} />}
             />
             <Split
               text={<BlockText {...dispatch.blocks[1]} />}
-              visual={
-                <MockPanel className="flex flex-col gap-5">
-                  <div className="flex flex-wrap gap-2">
-                    {dispatch.threadStatus.map((chip) => (
-                      <Chip key={chip.label} chip={chip} />
-                    ))}
-                  </div>
-                  <ChatThread messages={dispatch.thread} />
-                </MockPanel>
-              }
+              visual={<ScheduleThreadMotion messages={dispatch.thread} order={dispatch.threadOrder} />}
             />
           </div>
         </Section>
@@ -76,7 +73,7 @@ export default function MaintenancePage() {
           <Split
             text={
               <>
-                <SectionIntro eyebrow={approvals.eyebrow} title={approvals.title} body={approvals.body} />
+                <SectionIntro title={approvals.title} body={approvals.body} />
                 <ul className="mt-10 flex flex-col">
                   {approvals.cards.map((card) => (
                     <li key={card.title} className="border-t border-ink/10 py-5">
@@ -93,13 +90,13 @@ export default function MaintenancePage() {
 
         <Section id="voice-demo" surface="ink">
           <Split
-            text={<SectionIntro eyebrow={call.eyebrow} title={call.title} body={call.body} dark />}
+            text={<SectionIntro title={call.title} body={call.body} dark />}
             visual={<CallTranscript sample={call.sample} />}
           />
         </Section>
 
         <Section>
-          <SectionIntro eyebrow={humanLine.eyebrow} title={humanLine.title} body={humanLine.body} centered />
+          <SectionIntro title={humanLine.title} body={humanLine.body} centered />
           <HumanLine agent={humanLine.agent} you={humanLine.you} footnote={humanLine.footnote} />
         </Section>
 
@@ -111,13 +108,12 @@ export default function MaintenancePage() {
         </Section>
 
         <Section id="faq">
-          <SectionIntro title="Questions, answered." centered />
-          <FaqList items={faq} />
+          <FaqSplit title="Questions, answered." items={faq} />
         </Section>
 
-        <FinalCta title={cta.title} body={cta.body} demoSubject={meta.demoSubject} />
+        <FinalCta night title={cta.title} body={cta.body} demoSubject={meta.demoSubject} />
       </main>
-      <Footer />
+      <Footer night />
     </>
   );
 }

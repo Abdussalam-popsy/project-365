@@ -1,26 +1,22 @@
 "use client";
 
-import { motion } from "motion/react";
 import type { LifecycleStep } from "@/content/agents/types";
-import { Chip, DateChip, DocIcon } from "./ui";
+import { SequenceReveal } from "./motion/SequenceReveal";
+import { Chip, DateChip, DocIcon, HeroPanel } from "./ui";
 
-const ease = [0.16, 1, 0.3, 1] as const;
 /** Cards step left and right so the path reads as a journey, not a list. */
 const offsets = ["sm:ml-0", "sm:ml-[18%]", "sm:ml-[8%]", "sm:ml-[24%]", "sm:ml-[4%]"];
 
-/** The hero's lifecycle diagram: white work-order cards joined by a thin line, each with its stage label. */
+/** The hero's lifecycle diagram: white work-order cards joined by stage labels, revealed in order on a loop. */
 export function LifecycleVisual({ steps }: { steps: LifecycleStep[] }) {
   return (
-    <div className="relative rounded-[28px] border border-white/[0.07] bg-white/[0.03] p-5 sm:p-8">
-      <ol className="relative flex flex-col gap-3">
-        {steps.map((step, i) => (
-          <motion.li
-            key={step.title}
-            className={`relative ${offsets[i % offsets.length]}`}
-            initial={{ opacity: 0, y: 14 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.7, delay: 0.35 + i * 0.18, ease }}
-          >
+    <HeroPanel>
+      <SequenceReveal
+        as="ul"
+        className="flex flex-col gap-3"
+        itemClassNames={steps.map((_, i) => offsets[i % offsets.length])}
+        items={steps.map((step) => (
+          <>
             <div className="mb-2 flex items-center gap-2 pl-4">
               <span className="h-4 w-px bg-white/20" aria-hidden />
               <Chip chip={step.label} onDark />
@@ -31,9 +27,9 @@ export function LifecycleVisual({ steps }: { steps: LifecycleStep[] }) {
               <DateChip date={step.date} />
               {step.status && <Chip chip={step.status} />}
             </div>
-          </motion.li>
+          </>
         ))}
-      </ol>
-    </div>
+      />
+    </HeroPanel>
   );
 }

@@ -1,5 +1,5 @@
 // Leasing Agent page copy. Facts follow the client's reference; the wording is ours.
-import type { ChatMessage, Chip, Decision, Lanes, TitlePart, TitledText } from "./types";
+import type { ChatMessage, Chip, Decision, Lanes, StageVisual, TitlePart, TitledText } from "./types";
 
 export const leasingMeta = {
   title: "Leasing Agent | Haven",
@@ -36,13 +36,11 @@ export const leasingThread = {
 };
 
 export const leasingWhy = {
-  eyebrow: "Why it matters",
   title: "Speed to lead decides who gets the tour.",
   body: "The first firm to reply usually books the tour. Most leads arrive after hours, at weekends and in bursts no team can staff for. The Leasing Agent answers each one the moment it lands, in your voice and by your rules.",
 };
 
 export const leasingFeatures = {
-  eyebrow: "What it does",
   title: "From first inquiry to complete application, on the record.",
   items: [
     { title: "Answers every inquiry instantly", body: "Web leads, texts and calls get a real answer within seconds, day or night." },
@@ -61,10 +59,17 @@ export const leasingBeats = {
     { title: "Tour", body: "Real availability offered, the tour confirmed, and reminders sent to cut no-shows." },
     { title: "Advance", body: "The application sent and completed, then the binding decision brought to you." },
   ] as TitledText[],
+  /** The lead beside the stepper, one snapshot per beat (same order as `items`). */
+  record: { title: "Lead · 14 Oak, Unit 2", date: "11:04pm" },
+  visuals: [
+    { chip: { label: "Replied in 8s", tone: "green" }, line: "Is the 2-bed at 14 Oak still available?" },
+    { chip: { label: "Meets criteria", tone: "green" }, line: "Income 3.1× rent · one cat · moving Nov 1" },
+    { chip: { label: "Tour booked", tone: "violet" }, line: "Saturday 11am · reminder sent" },
+    { chip: { label: "Waiting on you", tone: "amber" }, line: "Application complete · approve and send lease" },
+  ] as StageVisual[],
 };
 
 export const leasingStops = {
-  eyebrow: "Where it stops",
   title: "It knows which decisions stay yours.",
   body: "The Leasing Agent works at machine speed on everything that can be undone: answering, qualifying, scheduling and chasing paperwork. Anything binding waits for a person, whether that's approving an applicant, signing a lease or making an exception to policy.",
   lanes: {

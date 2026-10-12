@@ -1,6 +1,6 @@
 // Maintenance Agent page copy. Facts and sample data follow the client's reference; the wording is ours.
 import type {
-  CallSample, ChatMessage, Chip, Faq, LifecycleStep, LineColumn, LogEvent, TitlePart, TitledText, WorkOrder,
+  CallSample, ChatMessage, Chip, Faq, LifecycleStep, LineColumn, LogEvent, Stat, StageVisual, StatusTimeline, TitlePart, TitledText, WorkOrder,
 } from "./types";
 import { systemsOfRecord } from "./shared";
 
@@ -15,7 +15,7 @@ export const maintenanceHero = {
   eyebrow: "Maintenance Agent",
   title: ["Every work order, carried from ", { highlight: "the first text" }, " to ", { highlight: "the paid invoice" }, "."] as TitlePart[],
   body: "Intake, triage, dispatch, scheduling and invoicing, run inside your PMS by your rules. It pauses for you wherever the decision is yours.",
-  secondary: { label: "See the lifecycle", href: "#lifecycle" },
+  secondary: { label: "Hear it take a call", href: "#voice-demo" },
 };
 
 export const maintenanceLifecycle: LifecycleStep[] = [
@@ -27,7 +27,7 @@ export const maintenanceLifecycle: LifecycleStep[] = [
 ];
 
 export const maintenanceStages = {
-  title: "Seven stages. One work order the whole way.",
+  title: ["Seven stages. ", { highlight: "One work order the whole way." }] as TitlePart[],
   body: "Most tools let go after intake. Haven stays with the work order through every hand-off, and writes each step back to your PMS as it happens.",
   items: [
     { title: "Intake", body: "Texts, calls and portal tickets answered the moment they arrive. Photos read, repeat reports merged." },
@@ -38,10 +38,31 @@ export const maintenanceStages = {
     { title: "Confirm", body: "The vendor confirms the job is done and the resident confirms the problem is gone. Nothing closes on an assumption." },
     { title: "Invoice", body: "The invoice is collected, matched to the work order and filed in your PMS next to its approval." },
   ] as TitledText[],
+  /** What the work order looks like at each stage, shown beside the stepper (same order as `items`). */
+  visuals: [
+    { chip: { label: "Text · 7:42pm", tone: "neutral" }, line: "No heat since last night, it's freezing." },
+    { chip: { label: "Emergency", tone: "red" }, line: "HVAC · Furnace · no heat" },
+    { chip: { label: "Accepted", tone: "green" }, line: "Knox HVAC · ETA 45 min" },
+    { chip: { label: "Scheduled", tone: "violet" }, line: "Tue 9–11am · resident agreed" },
+    { chip: { label: "Owner approved", tone: "amber" }, line: "Estimate $840 · furnace control board" },
+    { chip: { label: "Done", tone: "green" }, line: "Vendor: DONE · resident: heat's back" },
+    { chip: { label: "Attached", tone: "neutral" }, line: "Invoice #4471 · $840" },
+  ] as StageVisual[],
+};
+
+/** Stats band under the stages. The client's figures are still placeholders, shown in brackets like their mock. */
+export const maintenanceStats = {
+  title: ["The maintenance line, ", { highlight: "by the numbers." }] as TitlePart[],
+  body: "Across every firm running the Maintenance Agent.",
+  items: [
+    { value: "[0,000]", label: "Work orders handled in the last 30 days" },
+    { value: "[0]%", label: "Dispatched without a person touching them" },
+    { value: "[0] min", label: "Median time to first response, after hours" },
+    { value: "[0]%", label: "Residents who confirmed the fix" },
+  ] as Stat[],
 };
 
 export const maintenanceTriage = {
-  eyebrow: "Intake and triage",
   title: "Understood before anyone is sent out.",
   body: [
     "Residents describe symptoms, not causes. Haven reads the request, the photos and the unit's history, asks what a seasoned coordinator would ask, and works out the problem, the urgency and the right trade, usually before your team has opened the ticket.",
@@ -75,7 +96,6 @@ export const maintenanceTriage = {
 };
 
 export const maintenanceDispatch = {
-  eyebrow: "Dispatch and scheduling",
   title: "Dispatched, scheduled and confirmed finished.",
   body: "The vendor you would have chosen, reached the way vendors actually respond, and followed through to the end. The work order is assigned in your PMS before anyone is contacted.",
   log: {
@@ -103,20 +123,23 @@ export const maintenanceDispatch = {
     },
   ] as TitledText[],
   thread: [
-    { from: "them", label: "Knox HVAC", text: "I can do Tuesday, 9 to 11." },
-    { from: "them", label: "Resident", text: "Tuesday works for me." },
+    { from: "party", label: "Knox HVAC", text: "I can do Tuesday, 9 to 11." },
+    { from: "them", text: "Tuesday works for me." },
     { from: "haven", label: "Haven · Wednesday 10:02am", text: "Is the job finished, or is more work needed? Reply DONE or MORE." },
-    { from: "them", label: "Knox HVAC", text: "DONE" },
+    { from: "party", label: "Knox HVAC", text: "DONE" },
   ] as ChatMessage[],
-  threadStatus: [
-    { label: "Vendor accepted", tone: "green" },
-    { label: "Scheduled · Tue 9–11am", tone: "violet" },
-    { label: "Resolved", tone: "neutral" },
-  ] as WorkOrder["chips"],
+  /** The work order above the thread; its chip changes as messages arrive (`from` = messages shown so far). */
+  threadOrder: {
+    title: "WO-9002 · No heat",
+    status: [
+      { from: 0, chip: { label: "Vendor accepted", tone: "amber" } },
+      { from: 2, chip: { label: "Scheduled · Tue 9–11am", tone: "green" } },
+      { from: 4, chip: { label: "Resolved", tone: "violet" } },
+    ],
+  } as StatusTimeline,
 };
 
 export const maintenanceApprovals = {
-  eyebrow: "Estimates and invoices",
   title: "Estimates, approvals and invoices, without chasing anyone.",
   body: "When a vendor finds more work, Haven collects a structured estimate and checks it against that property's spending limit.",
   cards: [
@@ -137,7 +160,6 @@ export const maintenanceApprovals = {
 };
 
 export const maintenanceCall = {
-  eyebrow: "After hours",
   title: "Listen to it handle a call.",
   body: [
     "An after-hours no-heat call, from hello to a booked technician. The agent recognises the unit from the caller's number, asks the one question that matters, applies your emergency rule and books within your authority. Nobody waits on hold.",
@@ -161,7 +183,6 @@ export const maintenanceCall = {
 };
 
 export const maintenanceHumanLine = {
-  eyebrow: "The human line",
   title: "Instant where it can be undone. Waiting where it can't.",
   body: "Property management is fiduciary work. The Maintenance Agent moves at machine speed on anything inside your policy, and brings you only the decisions that involve money, risk or judgment.",
   agent: {

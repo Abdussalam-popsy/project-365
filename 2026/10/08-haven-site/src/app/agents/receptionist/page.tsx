@@ -9,7 +9,8 @@ import { CallLog } from "@/components/agent-page/CallLog";
 import { CallTranscript } from "@/components/agent-page/CallTranscript";
 import { LaneSplit } from "@/components/agent-page/LaneSplit";
 import { SystemsList } from "@/components/agent-page/FaqList";
-import { FeatureGrid, Section, SectionIntro, Split, StageGrid } from "@/components/agent-page/sections";
+import { FeatureGrid, Section, SectionIntro, Split } from "@/components/agent-page/sections";
+import { StageStepper } from "@/components/agent-page/motion/StageStepper";
 import {
   receptionistAlways as always, receptionistBeats as beats, receptionistCall as call, receptionistCallLog as callLog,
   receptionistCta as cta, receptionistFeatures as features, receptionistHero as hero, receptionistMeta as meta,
@@ -28,28 +29,28 @@ export default function ReceptionistPage() {
         <AgentHero {...hero} demoSubject={meta.demoSubject} visual={<CallLog entries={callLog} />} />
 
         <Section>
-          <SectionIntro eyebrow={always.eyebrow} title={always.title} body={always.body} centered />
+          <SectionIntro title={always.title} body={always.body} centered />
         </Section>
 
         <Section surface="white">
-          <SectionIntro eyebrow={features.eyebrow} title={features.title} />
+          <SectionIntro title={features.title} />
           <FeatureGrid items={features.items} />
         </Section>
 
         <Section id="voice-demo" surface="ink">
           <Split
-            text={<SectionIntro eyebrow={call.eyebrow} title={call.title} body={call.body} dark />}
+            text={<SectionIntro title={call.title} body={call.body} dark />}
             visual={<CallTranscript sample={call.sample} />}
           />
         </Section>
 
         <Section id="how-it-works">
           <SectionIntro title={beats.title} />
-          <StageGrid stages={beats.items} />
+          <StageStepper stages={beats.items} visuals={beats.visuals} recordTitle={beats.record.title} recordDate={beats.record.date} stepLabel="Beat" />
         </Section>
 
         <Section surface="white">
-          <SectionIntro eyebrow={stops.eyebrow} title={stops.title} body={stops.body} />
+          <SectionIntro title={stops.title} body={stops.body} />
           <LaneSplit lanes={stops.lanes} />
         </Section>
 
@@ -60,9 +61,9 @@ export default function ReceptionistPage() {
           </Reveal>
         </Section>
 
-        <FinalCta title={cta.title} body={cta.body} demoSubject={meta.demoSubject} />
+        <FinalCta night title={cta.title} body={cta.body} demoSubject={meta.demoSubject} />
       </main>
-      <Footer />
+      <Footer night />
     </>
   );
 }

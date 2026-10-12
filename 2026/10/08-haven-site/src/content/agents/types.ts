@@ -16,8 +16,11 @@ export interface TitledText {
 }
 
 export interface ChatMessage {
-  /** "them" = resident/vendor/caller bubble on the right, "haven" = Haven's raised card on the left. */
-  from: "them" | "haven";
+  /**
+   * "them" = the resident's grey bubble on the right. "haven" = Haven's raised white card on the left.
+   * "party" = another participant (e.g. the vendor), also a white card on the left, named by `label`.
+   */
+  from: "them" | "haven" | "party";
   /** Small label above the message, e.g. "Haven · one question" or "Knox HVAC". */
   label?: string;
   text: string;
@@ -93,4 +96,21 @@ export interface CallLogEntry {
   caller: string;
   place: string;
   outcome: string;
+}
+
+/** A record whose status chip changes as a thread plays: each chip applies once `from` messages are showing. */
+export interface StatusTimeline {
+  title: string;
+  status: { from: number; chip: Chip }[];
+}
+
+/** A stage's snapshot of the work order, for the stepper's visual. */
+export interface StageVisual {
+  chip: Chip;
+  line: string;
+}
+
+export interface Stat {
+  value: string;
+  label: string;
 }
