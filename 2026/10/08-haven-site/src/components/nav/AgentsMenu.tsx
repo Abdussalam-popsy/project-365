@@ -1,12 +1,14 @@
 "use client";
 
-import { useEffect, useId, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { AnimatePresence, motion } from "motion/react";
 import { agentPages } from "@/content/site";
 import { SiteLink } from "../SiteLink";
 import { Chevron } from "./icons";
 
 const CLOSE_DELAY_MS = 140;
+/** Fixed id (the nav renders once per page): React's useId came out different on server and client here. */
+const PANEL_ID = "agents-menu";
 const ease = [0.16, 1, 0.3, 1] as const;
 
 /** Desktop "Agents" dropdown: opens on hover or click, closes on Escape, outside click, or picking a page. */
@@ -17,7 +19,6 @@ export function AgentsMenu() {
   const closeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   // Hovering opens the menu just before the click lands; that click shouldn't close it again.
   const openedByHover = useRef(false);
-  const panelId = useId();
 
   const cancelClose = () => {
     if (closeTimer.current) clearTimeout(closeTimer.current);
@@ -69,7 +70,7 @@ export function AgentsMenu() {
         ref={buttonRef}
         type="button"
         aria-expanded={open}
-        aria-controls={panelId}
+        aria-controls={PANEL_ID}
         onClick={() => {
           if (openedByHover.current) {
             openedByHover.current = false;
@@ -87,7 +88,7 @@ export function AgentsMenu() {
         {open && (
           // pt-3 (not mt-3) so the hover area has no gap between button and panel.
           <motion.div
-            id={panelId}
+            id={PANEL_ID}
             className="absolute top-full -left-4 pt-3"
             initial={{ opacity: 0, y: -6 }}
             animate={{ opacity: 1, y: 0 }}

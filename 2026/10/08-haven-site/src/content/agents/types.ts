@@ -53,7 +53,7 @@ export interface CallSample {
   title: string;
   when: string;
   outcome: string;
-  duration: string;
+  duration?: string;
   lines: TranscriptLine[];
   note: string;
 }
@@ -67,4 +67,30 @@ export interface LineColumn {
 export interface Faq {
   question: string;
   answer: string;
+}
+
+/** A "waiting on you" card: a decision the agent prepared and won't make itself. */
+export interface Decision {
+  heading: string;
+  title: string;
+  meta: string;
+  primary: string;
+  secondary: string[];
+}
+
+/** Which kinds of work the agent runs, and which go to a person. */
+export interface Lanes {
+  agentTitle: string;
+  agent: string[];
+  youTitle: string;
+  you: string[];
+  note?: TitledText;
+}
+
+/** One row in the receptionist's live call log. */
+export interface CallLogEntry {
+  time: string;
+  caller: string;
+  place: string;
+  outcome: string;
 }

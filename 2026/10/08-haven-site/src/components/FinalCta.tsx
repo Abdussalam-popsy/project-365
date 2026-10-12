@@ -7,6 +7,8 @@ interface FinalCtaProps {
   title?: string;
   body?: string;
   demoSubject?: string;
+  /** Where "Hear a call" jumps to; null hides it on pages without a call sample. */
+  callHref?: string | null;
 }
 
 /** Closing call to action. Agent pages pass their own copy; the homepage uses the defaults. */
@@ -14,6 +16,7 @@ export function FinalCta({
   title = "Future-proof your property management business.",
   body = "Hand the repetitive work to Haven, and spend your time growing your portfolio.",
   demoSubject,
+  callHref = "#voice-demo",
 }: FinalCtaProps) {
   return (
     <section id="book-a-demo" className="grain relative overflow-hidden bg-ink px-6 py-36 text-center text-white">
@@ -30,10 +33,12 @@ export function FinalCta({
           <Button variant="light" href={demoUrl(demoSubject)}>
             Book a demo
           </Button>
-          <Button variant="outline" href="#voice-demo">
-            <PhoneIcon className="mr-2" />
-            Hear a call
-          </Button>
+          {callHref && (
+            <Button variant="outline" href={callHref}>
+              <PhoneIcon className="mr-2" />
+              Hear a call
+            </Button>
+          )}
         </div>
       </Reveal>
     </section>

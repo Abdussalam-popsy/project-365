@@ -28,7 +28,7 @@ export function CallTranscript({ sample }: { sample: CallSample }) {
       </ol>
       <p className="mt-6 flex justify-between border-t border-white/10 pt-4 text-[12px] text-white/35">
         <span>{sample.note}</span>
-        <span className="tabular-nums">{sample.duration}</span>
+        {sample.duration && <span className="tabular-nums">{sample.duration}</span>}
       </p>
     </div>
   );

@@ -2,6 +2,7 @@
 import type {
   CallSample, ChatMessage, Chip, Faq, LifecycleStep, LineColumn, LogEvent, TitlePart, TitledText, WorkOrder,
 } from "./types";
+import { systemsOfRecord } from "./shared";
 
 export const maintenanceMeta = {
   title: "Maintenance Agent | Haven",
@@ -189,10 +190,8 @@ export const maintenanceHumanLine = {
 };
 
 export const maintenanceSystems = {
-  title: "Works inside your system of record.",
+  ...systemsOfRecord,
   body: "No second database to keep in sync. Work orders, vendors, notes and statuses stay where your team already looks.",
-  live: ["AppFolio", "Buildium", "Rentvine"],
-  next: ["Rent Manager", "Propertyware"],
 };
 
 export const maintenanceFaq: Faq[] = [

@@ -5,8 +5,8 @@ import { Eyebrow } from "../SectionHeading";
 
 type Surface = "mist" | "white" | "ink";
 const surfaces: Record<Surface, string> = {
-  mist: "bg-mist text-ink",
-  white: "bg-white text-ink",
+  mist: "bg-page text-ink",
+  white: "bg-page text-ink",
   ink: "grain relative overflow-hidden bg-ink text-white",
 };
 

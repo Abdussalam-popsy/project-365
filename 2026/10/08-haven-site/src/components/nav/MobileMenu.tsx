@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useId, useState } from "react";
+import { useEffect, useState } from "react";
 import { AnimatePresence, motion } from "motion/react";
 import { agentPages, navLinks } from "@/content/site";
 import { Button } from "../Button";
@@ -8,11 +8,11 @@ import { SiteLink } from "../SiteLink";
 import { MenuIcon } from "./icons";
 
 const ease = [0.16, 1, 0.3, 1] as const;
+const PANEL_ID = "mobile-menu";
 
 /** Below md: a menu button that drops a full-width panel with every nav destination. */
 export function MobileMenu() {
   const [open, setOpen] = useState(false);
-  const panelId = useId();
   const close = () => setOpen(false);
 
   useEffect(() => {
@@ -29,7 +29,7 @@ export function MobileMenu() {
       <button
         type="button"
         aria-expanded={open}
-        aria-controls={panelId}
+        aria-controls={PANEL_ID}
         aria-label={open ? "Close menu" : "Open menu"}
         onClick={() => setOpen((o) => !o)}
         className="grid size-10 place-items-center rounded-full text-white/85 hover:text-white"
@@ -40,7 +40,7 @@ export function MobileMenu() {
       <AnimatePresence>
         {open && (
           <motion.div
-            id={panelId}
+            id={PANEL_ID}
             className="absolute inset-x-0 top-full px-3 pt-2"
             initial={{ opacity: 0, y: -8 }}
             animate={{ opacity: 1, y: 0 }}

@@ -54,3 +54,8 @@ export function MockCard({ children, className = "" }: { children: React.ReactNo
     </div>
   );
 }
+
+/** The translucent frame hero visuals sit in, on the dark hero. */
+export function HeroPanel({ children, className = "" }: { children: React.ReactNode; className?: string }) {
+  return <div className={`rounded-[28px] border border-white/[0.07] bg-white/[0.03] p-5 sm:p-8 ${className}`}>{children}</div>;
+}
