@@ -411,7 +411,8 @@ src/components/agent-page/          ← reusable sections and mocks
 src/app/agents/maintenance/page.tsx ← picks the sections, in order
 ```
 
-- **Route = folder.** Next's App Router turns `src/app/agents/maintenance/page.tsx` into the URL `/agents/maintenance`. No router config.
+- **Route = folder.** Next's App Router turns `src/app/agents/maintenance/page.tsx` into the URL `/agents/maintenance/`. No router config.
+- **Trailing slashes** (`trailingSlash: true` in `next.config.ts`): the static export writes each page as `agents/maintenance/index.html` instead of `agents/maintenance.html`. GitHub Pages then serves `/agents/maintenance/` and redirects the no-slash version to it. It also fixes navigating *back* to the homepage: on a client-side link click, Next fetches the page's data file. Without the setting it asked for `08-haven-site.txt`, which doesn't exist (404, so the browser fell back to a full reload). With it, it asks for `08-haven-site/index.txt`, which does.
 - **Copy lives in content files.** To reword something, edit `maintenance.ts`. Components only decide how it looks.
 - **Highlighted headline words** are data: `title: ["Every work order, carried from ", { highlight: "the first text" }, …]`. `AgentHero` renders plain strings as-is and wraps `{ highlight }` pieces in a lilac `<span>`. `typeof part === "string"` is how it tells them apart.
 - **Mocks** (chat bubbles, work-order cards, status chips, the lifecycle diagram) follow the client's screenshots: rounded corners, soft lilac-grey bubbles for the resident, white raised cards for Haven. Chip colours are `red / amber / green / violet / neutral` in `agent-page/ui.tsx`; pass `onDark` on dark backgrounds so the neutral grey stays visible.
