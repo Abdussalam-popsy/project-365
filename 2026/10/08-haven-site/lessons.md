@@ -521,6 +521,8 @@ Draw the glow once into a fixed image and only move it with CSS transforms. That
 
 ## Hero versions and the v2 skyline (Three.js)
 
+> **Current hero (v6, day/night artwork):** the highlighted words rotate again, as the original hero did. Each scene in [`DioramaHero.tsx`](./src/components/hero/DioramaHero.tsx) has a `headlines` list (night: "2am emergencies.", "maintenance calls."…; day: "work orders moving.", "tours booked."…), and [`RotatingWords.tsx`](./src/components/hero/RotatingWords.tsx) swaps them every 2.6s: the old phrase slides up and out while the new one slides in, inside a one-line box with `overflow-hidden`, so nothing below it moves. The visible rotation is `aria-hidden`; screen readers read one stable sentence (prefix + first phrase) from an `sr-only` span, so they aren't interrupted every few seconds. To change the phrases, edit the `headlines` arrays.
+
 The hero background can be swapped. Every design is kept as a numbered version in [`src/components/hero/versions.tsx`](src/components/hero/versions.tsx), so we can compare them:
 
 - `?hero=v6` and `?hero=v6-light` show the static night/day dioramas. **v6 is the default.**

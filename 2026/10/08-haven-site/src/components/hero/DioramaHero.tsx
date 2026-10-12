@@ -3,6 +3,7 @@ import type { HeroLayoutProps } from "./versions";
 import { hero } from "@/content/site";
 import { Button } from "../Button";
 import { PhoneIcon } from "../PhoneIcon";
+import { RotatingWords } from "./RotatingWords";
 import daySmallAvif from "../../../public/hero/haven-day-768.avif";
 import dayMediumAvif from "../../../public/hero/haven-day-1200.avif";
 import dayLargeAvif from "../../../public/hero/haven-day-1586.avif";
@@ -20,7 +21,8 @@ import styles from "./DioramaHero.module.css";
 const scenes = {
   night: {
     prefix: "Haven answers your",
-    headline: "2am emergencies.",
+    /** Rotates every 2.6s; the first one is what screen readers and reduced-motion visitors get. */
+    headlines: ["2am emergencies.", "maintenance calls.", "leasing leads.", "after-hours texts."],
     description:
       "Late-night calls and urgent repairs, handled while your team is off the clock.",
     avif: [nightSmallAvif, nightMediumAvif, nightLargeAvif],
@@ -28,7 +30,7 @@ const scenes = {
   },
   day: {
     prefix: "Haven keeps your",
-    headline: "work orders moving.",
+    headlines: ["work orders moving.", "tours booked.", "vendors on schedule.", "residents in the loop."],
     description:
       "From the first request to the final follow-up, keep maintenance moving without chasing every detail.",
     avif: [daySmallAvif, dayMediumAvif, dayLargeAvif],
@@ -84,8 +86,14 @@ export default function DioramaHero({
           aria-live="polite"
           aria-atomic="true"
         >
-          {scene.prefix}
-          <span>{scene.headline}</span>
+          {/* Visually, the prefix plus rotating words; for screen readers, one stable sentence. */}
+          <span className="sr-only">
+            {scene.prefix} {scene.headlines[0]}
+          </span>
+          <span aria-hidden className={styles.prefix}>
+            {scene.prefix}
+          </span>
+          <RotatingWords words={scene.headlines} />
         </h1>
         <p className={styles.description} data-hero-copy>
           {scene.description}
