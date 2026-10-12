@@ -24,7 +24,7 @@ export function VoiceDemo() {
         </h2>
       </Reveal>
 
-      <Reveal delay={0.15} className="relative mx-auto mt-16 flex max-w-[760px] items-center gap-6 border border-white/15 bg-white/[0.04] p-5 backdrop-blur">
+      <Reveal delay={0.15} className="relative mx-auto mt-16 flex max-w-[760px] items-center gap-6 rounded-2xl border border-white/15 bg-white/[0.04] p-5 backdrop-blur">
         <button
           type="button"
           onClick={() => setPlaying((p) => !p)}

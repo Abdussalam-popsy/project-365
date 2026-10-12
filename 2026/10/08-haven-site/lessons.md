@@ -433,6 +433,23 @@ src/app/agents/maintenance/page.tsx ← picks the sections, in order
 
 <details><summary>Predict, change, observe</summary>In `maintenance.ts`, change the Invoiced step's label tone from `"neutral"` to `"green"`. What happens in the hero diagram? <details><summary>Answer</summary>The "Invoiced" label turns soft green, like "Confirmed". The `onDark` swap only applies to neutral chips, so green looks the same on dark as on light. Change it back.</details></details>
 
+## The problem statement (dub.co style)
+
+[`ProblemStatement.tsx`](./src/components/ProblemStatement.tsx) used to be one long sentence. Now it's three short paragraphs (`problem` in `site.ts`), and each part is one of three shapes:
+
+```ts
+"Yet for most teams it looks familiar:"         // plain words, in ink
+{ icon: "moon", text: "midnight emergencies," } // an icon tile + a phrase in orchid
+{ muted: "All of it pulling you away from…" }   // the soft-grey closing line
+```
+
+- **Scroll reveal, kept:** every word still fades from 15% to 100% as you scroll past its share of the section (`useTransform(scrollYProgress, [i/total, (i+1)/total], [0.15, 1])`).
+- **Icons ride on their first word.** `tokensOf()` attaches each icon to the first word of its phrase, and each word is `whitespace-nowrap`, so the tile can never be left at the end of a line while its phrase wraps to the next.
+- **The icons** ([`problem/ProblemIcon.tsx`](./src/components/problem/ProblemIcon.tsx)) are small SVGs that loop with `motion`: the moon rocks while two stars twinkle, the phone rings in bursts and a red "missed" badge pops, the top sheet of the stack slides off and lands again. Tiles are sized in `em` (`size-[1.05em]`), so they scale with the text on every screen. With reduced motion they're still pictures.
+- **Floating cards** ([`problem/FloatingCards.tsx`](./src/components/problem/FloatingCards.tsx)) drift up and down beside the text on screens 1280px and wider (`xl:block`), and the faint dot grid is a repeating `radial-gradient` faded out at the edges with a `mask-image`.
+
+**Buttons** are all one component ([`Button.tsx`](./src/components/Button.tsx)) with `rounded-[10px]` corners, so changing that one class reshapes every button on the site.
+
 ## Favicon and link previews
 
 - **Favicon:** [`src/app/icon.png`](./src/app/icon.png). Next sees the file name and adds `<link rel="icon">` to every page.
