@@ -19,10 +19,13 @@ export function Hero() {
   const devToolsVisible = useDevToolsVisible();
 
   useEffect(() => {
-    if (reduce) return;
-    const id = setInterval(() => setIndex((i) => (i + 1) % hero.rotating.length), 2600);
+    if (reduce || version.Layout) return;
+    const id = setInterval(
+      () => setIndex((i) => (i + 1) % hero.rotating.length),
+      2600,
+    );
     return () => clearInterval(id);
-  }, [reduce]);
+  }, [reduce, version.Layout]);
 
   const light = version.tone === "light";
   useEffect(() => {
@@ -41,13 +44,15 @@ export function Hero() {
   if (Layout)
     return (
       <>
-        <Layout />
+        <Layout tone={version.tone} onSelect={select} />
         {tools}
       </>
     );
 
   return (
-    <section className={`grain relative isolate flex min-h-[100svh] flex-col items-center justify-center overflow-hidden ${light ? "bg-mist text-ink" : "bg-ink text-white"} px-6 pt-32 pb-20 text-center`}>
+    <section
+      className={`grain relative isolate flex min-h-[100svh] flex-col items-center justify-center overflow-hidden ${light ? "bg-mist text-ink" : "bg-ink text-white"} px-6 pt-32 pb-20 text-center`}
+    >
       <div className="pointer-events-none absolute inset-0 -z-10" aria-hidden>
         {Backdrop && <Backdrop />}
       </div>
@@ -95,7 +100,11 @@ export function Hero() {
       >
         <Button>Book a demo</Button>
         {/* Frosted backing so the label stays readable when a lamp or house drifts behind it. */}
-        <Button variant="outline" href="#voice-demo" className={`backdrop-blur-sm ${light ? "bg-mist/50" : "bg-ink/40"}`}>
+        <Button
+          variant="outline"
+          href="#voice-demo"
+          className={`backdrop-blur-sm ${light ? "bg-mist/50" : "bg-ink/40"}`}
+        >
           <PhoneIcon className="mr-2" />
           Hear a call
         </Button>
@@ -118,8 +127,13 @@ export function Hero() {
         {hero.sub}
       </motion.p>
 
-      <p data-hero-copy className={`mt-6 inline-flex items-center gap-2 text-[13px] ${light ? "text-ink/55" : "text-white/55"}`}>
-        <span className="grid size-4 place-items-center bg-[#f26522] text-[10px] font-semibold text-white">Y</span>
+      <p
+        data-hero-copy
+        className={`mt-6 inline-flex items-center gap-2 text-[13px] ${light ? "text-ink/55" : "text-white/55"}`}
+      >
+        <span className="grid size-4 place-items-center bg-[#f26522] text-[10px] font-semibold text-white">
+          Y
+        </span>
         Backed by Y Combinator
       </p>
     </section>
