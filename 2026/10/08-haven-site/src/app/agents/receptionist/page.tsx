@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import { agentMetadata } from "@/lib/agentMetadata";
 import { AnnouncementBar } from "@/components/AnnouncementBar";
 import { Nav } from "@/components/Nav";
 import { FinalCta } from "@/components/FinalCta";
@@ -18,7 +18,7 @@ import {
 } from "@/content/agents/receptionist";
 import { systemsOfRecord as systems } from "@/content/agents/shared";
 
-export const metadata: Metadata = { title: meta.title, description: meta.description };
+export const generateMetadata = agentMetadata(meta);
 
 export default function ReceptionistPage() {
   return (
@@ -61,9 +61,9 @@ export default function ReceptionistPage() {
           </Reveal>
         </Section>
 
-        <FinalCta night title={cta.title} body={cta.body} demoSubject={meta.demoSubject} />
+        <FinalCta title={cta.title} body={cta.body} demoSubject={meta.demoSubject} />
       </main>
-      <Footer night />
+      <Footer />
     </>
   );
 }

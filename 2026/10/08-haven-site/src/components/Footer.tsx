@@ -1,10 +1,9 @@
 import { footerLinks } from "@/content/site";
 import { Logo } from "./Logo";
 
-/** `night`: the agent pages' darker background, so the footer matches the section above it. */
-export function Footer({ night = false }: { night?: boolean }) {
+export function Footer() {
   return (
-    <footer className={`${night ? "bg-night" : "bg-ink"} px-6 pt-20 pb-10 text-white`}>
+    <footer className="bg-night px-6 pt-20 pb-10 text-white">
       <div className="mx-auto grid max-w-[1140px] gap-12 md:grid-cols-[1.5fr_repeat(4,1fr)]">
         <div>
           <Logo />

@@ -49,12 +49,12 @@ export function DevTuner() {
       <button
         type="button"
         onClick={() => setOpen((o) => !o)}
-        className="ml-auto block rounded-full border border-white/15 bg-ink/85 px-3 py-1.5 backdrop-blur-md hover:bg-ink"
+        className="ml-auto block rounded-full border border-white/15 bg-night/85 px-3 py-1.5 backdrop-blur-md hover:bg-night"
       >
         {open ? "Close tuner" : "Tune"}
       </button>
       {open && (
-        <div className="mt-2 max-h-[70vh] overflow-y-auto rounded-2xl border border-white/15 bg-ink/90 p-3 backdrop-blur-md">
+        <div className="mt-2 max-h-[70vh] overflow-y-auto rounded-2xl border border-white/15 bg-night/90 p-3 backdrop-blur-md">
           {groups.length === 0 && <p className="text-white/50">Nothing tunable on screen.</p>}
           {groups.map(([id, group]) => (
             <section key={id} className="mb-4 last:mb-2">

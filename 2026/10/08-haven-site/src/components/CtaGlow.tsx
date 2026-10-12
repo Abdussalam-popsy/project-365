@@ -1,36 +1,55 @@
 "use client";
 
-import { useTuning, type TuningSpecs } from "@/lib/tuning";
-
-/** Sliders for the closing section's glow (Tune panel, dev or ?tune). Defaults are what visitors see. */
-const glowTuning = {
-  x: { label: "Glow centre, left/right (%)", min: 0, max: 100, step: 1, value: 50 },
-  y: { label: "Glow centre, up/down (%)", min: 0, max: 120, step: 1, value: 55 },
-  width: { label: "Glow width (%)", min: 20, max: 140, step: 1, value: 60 },
-  height: { label: "Glow height (%)", min: 20, max: 140, step: 1, value: 55 },
-  plum: { label: "Plum strength", min: 0, max: 1, step: 0.01, value: 0.95 },
-  lilac: { label: "Lilac strength", min: 0, max: 0.6, step: 0.01, value: 0.1 },
-  lilacSize: { label: "Lilac size (% of glow)", min: 10, max: 100, step: 1, value: 58 },
-} satisfies TuningSpecs;
+import { useRef } from "react";
+import { glowBackground } from "@/content/ctaGlow";
+import { setGlow, useGlow } from "@/lib/glowStore";
 
 /**
- * The closing section's background glow: a plum radial gradient with a smaller lilac one on top.
- * Plum is #43234f (67,35,79) and lilac #c9b5da (201,181,218), the brand's own family.
+ * The closing section's background glow. Visitors get the values in src/content/ctaGlow.ts. In dev, the
+ * "Closing glow" editor (dev tools, § or `) edits it live, and while that editor is open you can click or drag
+ * on the section itself to move the glow.
  */
 export function CtaGlow() {
-  const t = useTuning("cta-glow", "Closing section glow", glowTuning);
-  const lilacW = (t.width * t.lilacSize) / 100;
-  const lilacH = (t.height * t.lilacSize) / 100;
+  const { values, editing } = useGlow();
+  const layer = useRef<HTMLDivElement>(null);
+  const dragging = useRef(false);
+
+  const moveTo = (clientX: number, clientY: number) => {
+    const rect = layer.current?.getBoundingClientRect();
+    if (!rect) return;
+    setGlow({
+      x: Math.round(Math.min(100, Math.max(0, ((clientX - rect.left) / rect.width) * 100))),
+      y: Math.round(Math.min(130, Math.max(-20, ((clientY - rect.top) / rect.height) * 100))),
+    });
+  };
+
   return (
-    <div
-      className="absolute inset-0"
-      aria-hidden
-      style={{
-        backgroundImage: [
-          `radial-gradient(${t.width}% ${t.height}% at ${t.x}% ${t.y}%, rgba(67,35,79,${t.plum}), transparent)`,
-          `radial-gradient(${lilacW}% ${lilacH}% at ${t.x}% ${t.y + 5}%, rgba(201,181,218,${t.lilac}), transparent)`,
-        ].join(", "),
-      }}
-    />
+    <>
+      <div
+        className="absolute inset-0"
+        aria-hidden
+        style={{ backgroundColor: values.background, backgroundImage: glowBackground(values) }}
+      />
+      {editing && (
+        // Sits above the section's text and buttons while editing, so a drag anywhere moves the glow.
+        <div
+          ref={layer}
+          className="absolute inset-0 z-20 cursor-crosshair touch-none outline-2 -outline-offset-2 outline-lilac/40 outline-dashed"
+          onPointerDown={(e) => {
+            dragging.current = true;
+            e.currentTarget.setPointerCapture(e.pointerId);
+            moveTo(e.clientX, e.clientY);
+          }}
+          onPointerMove={(e) => dragging.current && moveTo(e.clientX, e.clientY)}
+          onPointerUp={() => (dragging.current = false)}
+          aria-hidden
+        >
+          <span
+            className="pointer-events-none absolute size-6 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-white bg-white/20 shadow-[0_0_0_4px_rgba(0,0,0,0.25)]"
+            style={{ left: `${values.x}%`, top: `${values.y}%` }}
+          />
+        </div>
+      )}
+    </>
   );
 }

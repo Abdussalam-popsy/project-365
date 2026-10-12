@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import { agentMetadata } from "@/lib/agentMetadata";
 import { AnnouncementBar } from "@/components/AnnouncementBar";
 import { Nav } from "@/components/Nav";
 import { FinalCta } from "@/components/FinalCta";
@@ -25,7 +25,7 @@ import {
   maintenanceTriage as triage,
 } from "@/content/agents/maintenance";
 
-export const metadata: Metadata = { title: meta.title, description: meta.description };
+export const generateMetadata = agentMetadata(meta);
 
 export default function MaintenancePage() {
   return (
@@ -111,9 +111,9 @@ export default function MaintenancePage() {
           <FaqSplit title="Questions, answered." items={faq} />
         </Section>
 
-        <FinalCta night title={cta.title} body={cta.body} demoSubject={meta.demoSubject} />
+        <FinalCta title={cta.title} body={cta.body} demoSubject={meta.demoSubject} />
       </main>
-      <Footer night />
+      <Footer />
     </>
   );
 }

@@ -7,7 +7,7 @@ const chipTones: Record<ChipTone, string> = {
   amber: "bg-[#f6ecd9] text-[#8a6326]",
   green: "bg-[#e3efe7] text-[#4c7a5c]",
   violet: "bg-[#ece4f3] text-plum-800",
-  neutral: "bg-ink/[0.05] text-ink/55",
+  neutral: "bg-night/[0.05] text-ink/55",
 };
 
 /** `onDark`: the neutral chip's faint grey would vanish on ink, so it gets a light-on-dark version. */
@@ -22,7 +22,7 @@ export function Chip({ chip, onDark = false, className = "" }: { chip: ChipData;
 
 export function DateChip({ date }: { date: string }) {
   return (
-    <span className="inline-flex items-center gap-1 rounded-md bg-ink/[0.05] px-2 py-1 text-[12px] leading-none text-ink/50">
+    <span className="inline-flex items-center gap-1 rounded-md bg-night/[0.05] px-2 py-1 text-[12px] leading-none text-ink/50">
       <svg width="11" height="11" viewBox="0 0 12 12" fill="none" aria-hidden>
         <circle cx="6" cy="6" r="4.75" stroke="currentColor" strokeWidth="1.1" />
         <path d="M6 3.5V6l1.6 1" stroke="currentColor" strokeWidth="1.1" strokeLinecap="round" />

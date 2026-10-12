@@ -47,7 +47,7 @@ export function MobileMenu() {
             exit={{ opacity: 0, y: -8 }}
             transition={{ duration: 0.25, ease }}
           >
-            <nav aria-label="Mobile" className="rounded-2xl border border-lilac/15 bg-ink/95 p-2 shadow-[0_24px_60px_-20px_rgba(0,0,0,0.6)] backdrop-blur-xl">
+            <nav aria-label="Mobile" className="rounded-2xl border border-lilac/15 bg-night/95 p-2 shadow-[0_24px_60px_-20px_rgba(0,0,0,0.6)] backdrop-blur-xl">
               <SiteLink href={navLinks.platform.href} onClick={close} className={rowClass}>
                 {navLinks.platform.label}
               </SiteLink>
@@ -61,7 +61,7 @@ export function MobileMenu() {
                 {navLinks.customers.label}
               </SiteLink>
               <div className="p-2 pt-3">
-                <Button className="w-full rounded-xl">Book a demo</Button>
+                <Button variant="light" className="w-full rounded-xl">Book a demo</Button>
               </div>
             </nav>
           </motion.div>

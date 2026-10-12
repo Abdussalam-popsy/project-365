@@ -46,8 +46,21 @@ export const customers = [
   "Oakline Properties",
 ];
 
-export const problem =
-  "Property management shouldn't keep you up at night. Yet for most teams it looks familiar: midnight maintenance emergencies, missed leasing opportunities, and endless admin pulling you away from growing your portfolio.";
+/** One piece of the problem statement: plain words, a phrase led by an animated icon, or a muted closing line. */
+export type ProblemPart = string | { icon: "moon" | "call" | "stack"; text: string } | { muted: string };
+
+/** The homepage problem statement, as short paragraphs (dub.co style). Icons live in components/problem/. */
+export const problem: ProblemPart[][] = [
+  ["Property management shouldn't keep you up at night."],
+  [
+    "Yet for most teams it looks familiar:",
+    { icon: "moon", text: "midnight emergencies," },
+    { icon: "call", text: "missed leasing leads," },
+    "and",
+    { icon: "stack", text: "endless admin." },
+  ],
+  [{ muted: "All of it pulling you away from growing your portfolio." }],
+];
 
 export const agents = [
   {

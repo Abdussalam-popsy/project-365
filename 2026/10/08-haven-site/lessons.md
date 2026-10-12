@@ -299,7 +299,7 @@ The text has 31 words. Word `i = 10` gets `[10/31, 11/31]` ≈ `[0.323, 0.355]`.
 
 Alternating layout: `i % 2` is `0` for the 1st and 3rd rows and `1` for the 2nd. When it's `1`, the text gets `md:order-2` and the mock gets `md:order-1`, swapping sides on screens ≥ 768px only (`md:` is a media query, not nesting). On mobile they stack in source order.
 
-In the mocks, each item uses `whileInView` with `delay: 0.3 + i * 0.45`. For the 4 transcript lines that's 0.3s, 0.75s, 1.2s, 1.65s, so the call "plays out"; the work-order strip waits for `0.3 + 4 * 0.45 = 2.1s`.
+**The mocks** ([`AgentMocks.tsx`](./src/components/AgentMocks.tsx)) are built from the agent pages' pieces: `MockPanel` (the rounded tray), `MockCard` (white rounded card), `LoopingChat` (grey resident bubbles, Haven's white cards, then the work order) and `Chip`. They replay on the shared `SequenceReveal` loop, so the homepage and the agent pages look and move the same way.
 
 **Learn more buttons.** Maintenance and Leasing have a `link` in `agents` (in `site.ts`); "Coming soon" doesn't. `{"link" in agent && <Button …/>}` only renders the button when that key exists. `in` checks whether an object _has_ a key, and TypeScript then knows `agent.link` is safe to read. The targets are `MAINTENANCE_URL` / `LEASING_URL` at the top of `site.ts` (placeholders, `#`, until the pages exist).
 
@@ -425,13 +425,34 @@ src/app/agents/maintenance/page.tsx ← picks the sections, in order
 - **Feature grid** ([`FeatureGrid.tsx`](./src/components/agent-page/FeatureGrid.tsx)): bordered cells, and the tinted diagonal is every cell where `(row + col + phase) % 3 === 0`. `phase` steps 0 → 1 → 2 every 2.6s, which slides the diagonal one column along.
 - **Stats** ([`StatsBand.tsx`](./src/components/agent-page/StatsBand.tsx)) sit right under the stages. The numbers are still the client's bracketed placeholders (`[0,000]`) until real figures arrive.
 - **FAQ** ([`FaqSplit`](./src/components/agent-page/FaqList.tsx)): heading on the left (it stays put while you scroll the answers, `lg:sticky`), answers on the right; one centred column below 1024px.
-- **Closing glow** ([`CtaGlow.tsx`](./src/components/CtaGlow.tsx)): the gradient is built from slider values (centre, size, plum and lilac strength) in the **Tune** panel under "Closing section glow". **Copy values** gives you the numbers to make permanent.
+- **Closing glow** ([`CtaGlow.tsx`](./src/components/CtaGlow.tsx)): its values live in [`content/ctaGlow.ts`](./src/content/ctaGlow.ts) (centre, size, colour and strength of the main glow and the smaller accent, and the background). To adjust it **in context**, show the dev tools (§ or `) and click **Closing glow** (bottom left) on any page that has the section. The editor panel ([`tools/GlowEditor.tsx`](./src/components/tools/GlowEditor.tsx)) changes the real section live, so you see it with the footer and the rest of the page, on any screen size (on phones it docks as a bottom sheet). While it's open, click or drag on the section to move the glow. **Copy values** gives JSON to paste back into `ctaGlow.ts`; **Reset** returns to the site's values. The editor and the section share one small store ([`lib/glowStore.ts`](./src/lib/glowStore.ts)); visitors always get `ctaGlow.ts`, because the store only applies edits where tuning is enabled (dev, or `?tune`).
+
+> **Why the closing section used to show a line above the footer:** both are `#0e0b10`, but the section has the `grain` noise texture (7% opacity) and the footer doesn't. Noise lightens a flat colour slightly, so the step showed as a hard edge. `grain-fade-bottom` masks the noise out over the bottom of the section (`mask-image: linear-gradient(to bottom, black 35%, transparent 95%)`), so by the time the footer starts, both are the same flat colour.
+
+> Don't run `next build` while `npm run dev` is running: both write to `.next/`, and the build breaks the dev server's files (it then serves blank pages). Stop the dev server, delete `.next/`, start it again.
 - **Client's colours for this style** are tokens in `globals.css`: `page` (`#f6f3f8`, the light background instead of pure white), `tray` (`#ede8f1`, behind the mocks) and `bubble` (`#e6e0e9`, the resident's chat bubbles). Haven's replies stay white.
 - **Receptionist's call log** scrolls forever with no jump: `CallLog` renders the list twice, and the CSS animation `ticker` moves it up by exactly 50%, which is one full copy. At that moment the second copy sits exactly where the first started, so the loop restarts invisibly. The second copy has `aria-hidden` so screen readers only hear the list once.
 - **A hydration bug** showed up as a "1 Issue" badge: the nav menus used React's `useId()` to link each button to its panel (`aria-controls`), and the server and browser produced different ids. The nav appears once per page, so plain fixed ids (`"agents-menu"`, `"mobile-menu"`) do the job and can't disagree.
 - Left out on purpose for now: the client's stats ("[0,000] work orders") and customers table ("[Units]", "[PMS]"), because their numbers are still placeholders.
 
 <details><summary>Predict, change, observe</summary>In `maintenance.ts`, change the Invoiced step's label tone from `"neutral"` to `"green"`. What happens in the hero diagram? <details><summary>Answer</summary>The "Invoiced" label turns soft green, like "Confirmed". The `onDark` swap only applies to neutral chips, so green looks the same on dark as on light. Change it back.</details></details>
+
+## The problem statement (dub.co style)
+
+[`ProblemStatement.tsx`](./src/components/ProblemStatement.tsx) used to be one long sentence. Now it's three short paragraphs (`problem` in `site.ts`), and each part is one of three shapes:
+
+```ts
+"Yet for most teams it looks familiar:"         // plain words, in ink
+{ icon: "moon", text: "midnight emergencies," } // an icon tile + a phrase in orchid
+{ muted: "All of it pulling you away from…" }   // the soft-grey closing line
+```
+
+- **Scroll reveal, kept:** every word still fades from 15% to 100% as you scroll past its share of the section (`useTransform(scrollYProgress, [i/total, (i+1)/total], [0.15, 1])`).
+- **Icons ride on their first word.** `tokensOf()` attaches each icon to the first word of its phrase, and each word is `whitespace-nowrap`, so the tile can never be left at the end of a line while its phrase wraps to the next.
+- **The icons** ([`problem/ProblemIcon.tsx`](./src/components/problem/ProblemIcon.tsx)) are small SVGs that loop with `motion`: the moon rocks while two stars twinkle, the phone rings in bursts and a red "missed" badge pops, the top sheet of the stack slides off and lands again. Tiles are sized in `em` (`size-[1.05em]`), so they scale with the text on every screen. With reduced motion they're still pictures.
+- **Floating cards** ([`problem/FloatingCards.tsx`](./src/components/problem/FloatingCards.tsx)) drift up and down beside the text on screens 1280px and wider (`xl:block`), and the faint dot grid is a repeating `radial-gradient` faded out at the edges with a `mask-image`.
+
+**Buttons** are all one component ([`Button.tsx`](./src/components/Button.tsx)) with `rounded-[10px]` corners, so changing that one class reshapes every button on the site.
 
 ## Favicon and link previews
 
@@ -542,7 +563,7 @@ The hero background can be swapped. Every design is kept as a numbered version i
 
 ### Showing and hiding the dev overlays
 
-All the floating dev tools (hero switcher, perf meter, **Tune**, the feedback toolbar) are **hidden by default**. Press **`** (backtick, the key left of 1) to show them; press it again to hide them. The choice is remembered in your browser. Adding `?tools` to the URL always shows them. Next.js's own "N" badge is switched off in `next.config.ts` (`devIndicators: false`).
+All the floating dev tools (hero switcher, perf meter, **Tune**, the feedback toolbar) are **hidden by default**. Press **`** or **§** to show them, and again to hide them. On a US keyboard the key left of 1 types `; on a UK Mac it types § (the ` key sits next to left Shift), so both are accepted, matched by character and by physical key (`e.code` `Backquote` / `IntlBackslash`). The choice is remembered in your browser. Adding `?tools` to the URL always shows them. Next.js's own "N" badge is switched off in `next.config.ts` (`devIndicators: false`).
 
 How it works ([`src/lib/devTools.ts`](src/lib/devTools.ts)): one module-level `visible` flag, a `keydown` listener installed once, and a `useDevToolsVisible()` hook that each overlay calls. The listener ignores the key while you're typing in a field, so a backtick in a text box doesn't toggle anything. The hook returns `false` on the first render (the server can't read `localStorage`), then the real value after mount, so the server HTML and the first browser render always match.
 
@@ -1160,9 +1181,26 @@ Changing a layout slider means rebuilding the whole scene, which disposes it and
 
 </details>
 
-## Brand: Geist and the two hex codes
+## Brand: Geist and the colour system
 
-[`layout.tsx`](./src/app/layout.tsx) loads Geist with `next/font/google`. That downloads it at build time and serves it from our own site, then exposes it as the CSS variable `--font-geist`. [`globals.css`](./src/app/globals.css) puts that first in `--font-sans`. The client's colours are tokens there: `--color-ink: #1e0f26` (dark background, so `bg-ink` everywhere) and `--color-lilac: #c9b5da` (light accent, `text-lilac`). The plum shades are mixed from those two. The 3D scenes can't read CSS variables, so `createHavenCity.ts`'s `palette` repeats the hex codes. The bright violet `#5740ef` stays for buttons, as the client approved.
+[`layout.tsx`](./src/app/layout.tsx) loads Geist with `next/font/google`. That downloads it at build time and serves it from our own site, then exposes it as the CSS variable `--font-geist`. [`globals.css`](./src/app/globals.css) puts that first in `--font-sans`.
+
+**The palette** lives in the `@theme` block of `globals.css`, and every colour has one job:
+
+| Group | Token | Hex | Job |
+|---|---|---|---|
+| Darks | `night` | `#0e0b10` | every dark section background (homepage and agent pages) |
+| | `ink` | `#1e0f26` | text on light backgrounds |
+| | `plum-800` | `#43234f` | soft glows on dark |
+| Lights | `page` | `#f6f3f8` | every light section background, and the light button |
+| | `tray` | `#ede8f1` | the tray behind mocks |
+| | `bubble` | `#e6e0e9` | resident chat bubbles |
+| | `blush` | `#efe4f2` | tinted cells |
+| Purples | `lilac` | `#c9b5da` | highlighted words and accents **on dark** |
+| | `orchid` | `#9a77b3` | highlighted words **on light** |
+| | `heather` | `#5c3a70` | labels, small accents, and the primary button **on light** |
+
+**Buttons (option C):** white (`variant="light"`, `bg-page`) on dark backgrounds, heather (`variant="solid"`) on light ones. The old saturated violet `#5740ef` and its friends (`violet-soft`, `mist`, `haze`, `plum-900/950`) were retired in one sweep; the git tag `haven-before-palette` marks the commit just before, to compare or roll back. The 3D scenes (archived heroes) still hard-code their own hex colours, since they can't read CSS variables.
 
 **Keep violet off dark backgrounds.** `#5740ef` leans blue, ink and lilac lean red-purple. Used as a big glow on ink, the two read as opposing colours (blue at the top of the section, plum at the bottom). So the dark sections glow with the brand's own family instead: `bg-plum-800/80` behind the Voice demo, and a plum + faint lilac radial gradient in the final CTA, centred at 55% so it has faded out before the footer (also `bg-ink`) begins: no seam. Eyebrows take `tone="dark"` on dark sections, which switches them to lilac.
 

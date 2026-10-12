@@ -95,7 +95,7 @@ export function AgentsMenu() {
             exit={{ opacity: 0, y: -6 }}
             transition={{ duration: 0.22, ease }}
           >
-            <ul className="w-[320px] rounded-2xl border border-lilac/15 bg-ink/95 p-2 shadow-[0_24px_60px_-20px_rgba(0,0,0,0.6)] backdrop-blur-xl">
+            <ul className="w-[320px] rounded-2xl border border-lilac/15 bg-night/95 p-2 shadow-[0_24px_60px_-20px_rgba(0,0,0,0.6)] backdrop-blur-xl">
               {agentPages.map((page) => (
                 <li key={page.id}>
                   <SiteLink

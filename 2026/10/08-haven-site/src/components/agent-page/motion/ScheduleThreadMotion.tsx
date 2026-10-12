@@ -28,8 +28,8 @@ function ThreadPeek({ visible }: { visible: boolean }) {
         <div className="mt-3 flex flex-col gap-2.5">
           {[0, 1, 2, 3, 4].map((i) => (
             <span key={i} className="flex gap-1.5">
-              <span className="h-2 w-12 rounded-full bg-ink/[0.07]" />
-              <span className="h-2 flex-1 rounded-full bg-ink/[0.07]" />
+              <span className="h-2 w-12 rounded-full bg-night/[0.07]" />
+              <span className="h-2 flex-1 rounded-full bg-night/[0.07]" />
             </span>
           ))}
         </div>

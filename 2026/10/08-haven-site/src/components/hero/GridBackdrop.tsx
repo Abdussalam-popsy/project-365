@@ -194,7 +194,7 @@ export default function GridBackdrop() {
 
   return (
     <>
-      <div className="absolute inset-0 bg-ink" />
+      <div className="absolute inset-0 bg-night" />
       <div className="absolute inset-x-0 top-0 h-[70%] bg-[radial-gradient(55%_70%_at_50%_0%,rgba(87,64,239,0.16),transparent)]" />
       <canvas ref={canvasRef} className="absolute inset-0 size-full" />
     </>

@@ -1,10 +1,15 @@
 import { useEffect, useState } from "react";
 
 // One switch for every floating dev overlay (hero picker, perf meter, Tune, feedback toolbar).
-// Hidden by default so the page reads like the real site; press ` (backtick) to show or hide them.
+// Hidden by default so the page reads like the real site; press ` or § (the key left of 1) to show or hide them.
 
 const STORAGE_KEY = "haven-dev-tools";
-const TOGGLE_KEY = "`";
+/**
+ * The toggle key, matched by character AND by physical key, because keyboards disagree: on a US layout the key
+ * left of 1 types `, on a UK Mac it types § (and ` lives next to left Shift). Either works.
+ */
+const TOGGLE_KEYS = ["`", "~", "§", "±"];
+const TOGGLE_CODES = ["Backquote", "IntlBackslash"];
 const listeners = new Set<() => void>();
 let visible: boolean | null = null;
 let keyListenerInstalled = false;
@@ -39,7 +44,8 @@ function installKeyListener() {
   if (keyListenerInstalled) return;
   keyListenerInstalled = true;
   window.addEventListener("keydown", (e) => {
-    if (e.key !== TOGGLE_KEY || e.metaKey || e.ctrlKey || e.altKey || isTyping(e.target)) return;
+    const isToggle = TOGGLE_KEYS.includes(e.key) || TOGGLE_CODES.includes(e.code);
+    if (!isToggle || e.metaKey || e.ctrlKey || e.altKey || isTyping(e.target)) return;
     setVisible(!readVisible());
   });
 }

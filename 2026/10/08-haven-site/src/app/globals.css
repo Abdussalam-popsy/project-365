@@ -3,28 +3,24 @@
 @theme {
   --font-sans: var(--font-geist), ui-sans-serif, system-ui, sans-serif;
 
-  --color-ink: #1e0f26;
-  --color-plum-950: #26132f;
-  --color-plum-900: #2f1839;
-  --color-plum-800: #43234f;
-  --color-violet: #5740ef;
-  --color-violet-soft: #8b7bff;
-  --color-lilac: #c9b5da;
-  --color-mist: #f7f4fa;
-  --color-haze: #ebe3f1;
-  /* Agent-page mocks (client's reference): the tray behind them, and the resident's chat bubbles. */
-  --color-tray: #ede8f1;
-  --color-bubble: #e6e0e9;
-  /* Agent-page light background (client's reference), in place of pure white. */
-  --color-page: #f6f3f8;
-  /* Agent-page dark background (client's reference): darker and more neutral than ink. */
-  --color-night: #0e0b10;
-  /* Muted plum for agent-page accents and highlighted heading words; the button violet is too saturated here. */
-  --color-heather: #5c3a70;
-  /* Lighter purple for highlighted words in headings on light agent-page sections. */
-  --color-orchid: #9a77b3;
-  /* Tinted cells in the agent-page feature grid (client's reference). */
-  --color-blush: #efe4f2;
+  /* Haven palette: every colour has one job. Buttons: white (page) on dark, heather on light. */
+
+  /* Darks */
+  --color-night: #0e0b10; /* every dark section background */
+  --color-ink: #1e0f26; /* text on light backgrounds */
+  --color-plum-800: #43234f; /* soft glows on dark */
+
+  /* Lights */
+  --color-page: #f6f3f8; /* every light section background; also the light button */
+  --color-tray: #ede8f1; /* the tray behind mocks */
+  --color-bubble: #e6e0e9; /* resident chat bubbles */
+  --color-blush: #efe4f2; /* tinted cells */
+
+  /* Purples */
+  --color-lilac: #c9b5da; /* highlighted words, eyebrows and accents on dark */
+  --color-orchid: #9a77b3; /* highlighted words on light */
+  --color-heather: #5c3a70; /* labels, small accents, the primary button on light */
+  --color-heather-hover: #6e4886;
 }
 
 html {
@@ -47,6 +43,14 @@ p, li, figcaption {
   /* Plain alpha, no mix-blend-mode: blending forces the browser to re-blend the whole area every animated frame. */
   opacity: 0.07;
   background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3' stitchTiles='stitch'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");
+}
+
+/*
+ * Grain that fades out towards the bottom edge. The noise lightens a flat background slightly, so a section with
+ * grain sitting on one without it (the closing CTA on the footer) shows a hard line. Fading it out removes the seam.
+ */
+.grain-fade-bottom::after {
+  mask-image: linear-gradient(to bottom, black 35%, transparent 95%);
 }
 
 @keyframes marquee {

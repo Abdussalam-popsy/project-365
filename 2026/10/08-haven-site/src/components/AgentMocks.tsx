@@ -1,110 +1,80 @@
 "use client";
 
-import { motion } from "motion/react";
+import type { ChatMessage, Chip as ChipData, WorkOrder } from "@/content/agents/types";
+import { WorkOrderCard } from "./agent-page/ChatThread";
+import { LoopingChat } from "./agent-page/motion/LoopingChat";
+import { SequenceReveal } from "./agent-page/motion/SequenceReveal";
+import { Chip, DateChip, MockCard, MockPanel } from "./agent-page/ui";
 
-const ease = [0.16, 1, 0.3, 1] as const;
+// The homepage Agents section mocks, built from the same pieces as the agent pages (rounded tray, white cards,
+// chat bubbles, soft chips) and played on the same looping reveal, so the whole site shares one visual language.
 
-function Frame({ title, meta, children }: { title: string; meta: string; children: React.ReactNode }) {
+/** The tray's title line: what this mock is, and when. */
+function MockHeader({ title, meta }: { title: string; meta: string }) {
   return (
-    <div className="relative">
-      {/* closest-side makes the glow reach zero exactly at its box edge, so it never ends in a hard line. */}
-      <div className="pointer-events-none absolute -inset-20 -z-10 bg-[radial-gradient(closest-side,rgba(87,64,239,0.16),transparent)]" />
-      <div className="border border-ink/10 bg-white shadow-[0_30px_80px_-30px_rgba(30,15,38,0.35)]">
-        <div className="flex items-center justify-between border-b border-ink/10 px-5 py-3.5">
-          <span className="text-[14px] font-medium">{title}</span>
-          <span className="text-[12px] text-ink/45">{meta}</span>
-        </div>
-        <div className="p-5">{children}</div>
-      </div>
+    <div className="mb-5 flex items-center justify-between gap-3">
+      <span className="text-[14px] font-medium text-ink/80">{title}</span>
+      <DateChip date={meta} />
     </div>
   );
 }
 
-const transcript = [
-  { from: "resident", text: "Hi, there's water coming through the ceiling in my bathroom." },
-  { from: "haven", text: "I'm sorry to hear that. Is the water actively leaking right now?" },
-  { from: "resident", text: "Yes, it's dripping pretty fast." },
-  { from: "haven", text: "I've marked this as an emergency and I'm dispatching a plumber now." },
+const call: ChatMessage[] = [
+  { from: "them", text: "Hi, there's water coming through the ceiling in my bathroom." },
+  { from: "haven", label: "Haven · Maintenance", text: "I'm sorry to hear that. Is the water actively leaking right now?" },
+  { from: "them", text: "Yes, it's dripping pretty fast." },
+  { from: "haven", label: "Haven · Maintenance", text: "I've marked this as an emergency and I'm dispatching a plumber now." },
 ];
+
+const callOrder: WorkOrder = {
+  title: "WO-2318 · Ceiling leak, Unit 4B",
+  date: "2:14am",
+  chips: [
+    { label: "Emergency", tone: "red" },
+    { label: "Plumbing", tone: "violet" },
+    { label: "Plumber dispatched", tone: "green" },
+  ],
+};
 
 export function MaintenanceMock() {
   return (
-    <Frame title="Incoming call · Unit 4B" meta="2:14 AM">
-      <div className="flex flex-col gap-2.5">
-        {transcript.map((line, i) => (
-          <motion.div
-            key={i}
-            className={`max-w-[85%] px-3.5 py-2.5 text-[14px] leading-snug ${
-              line.from === "haven" ? "self-end bg-violet text-white" : "self-start bg-mist text-ink"
-            }`}
-            initial={{ opacity: 0, y: 10 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.5, delay: 0.3 + i * 0.45, ease }}
-          >
-            {line.text}
-          </motion.div>
-        ))}
-      </div>
-      <motion.div
-        className="mt-5 grid grid-cols-3 border border-ink/10 text-[12px]"
-        initial={{ opacity: 0, y: 10 }}
-        whileInView={{ opacity: 1, y: 0 }}
-        viewport={{ once: true }}
-        transition={{ duration: 0.6, delay: 0.3 + transcript.length * 0.45, ease }}
-      >
-        {[
-          ["Work order", "#2318 created"],
-          ["Priority", "Emergency"],
-          ["Vendor", "Dispatched"],
-        ].map(([k, v]) => (
-          <div key={k} className="border-r border-ink/10 px-3 py-2.5 last:border-r-0">
-            <p className="text-ink/45">{k}</p>
-            <p className="mt-0.5 font-medium">{v}</p>
-          </div>
-        ))}
-      </motion.div>
-    </Frame>
+    <MockPanel>
+      <MockHeader title="Incoming call · Unit 4B" meta="2:14am" />
+      <LoopingChat messages={call} after={[<WorkOrderCard key="order" order={callOrder} />]} />
+    </MockPanel>
   );
 }
 
-const leads = [
-  { name: "Maya Chen", source: "Zillow", status: "Tour booked", time: "12s" },
-  { name: "Jordan Ellis", source: "Apartments.com", status: "Qualified", time: "9s" },
-  { name: "Priya Shah", source: "SMS", status: "Following up", time: "14s" },
-  { name: "Sam Ortiz", source: "Email", status: "Application sent", time: "21s" },
+const leads: { name: string; source: string; status: ChipData; time: string }[] = [
+  { name: "Maya Chen", source: "Zillow", status: { label: "Tour booked", tone: "green" }, time: "12s" },
+  { name: "Jordan Ellis", source: "Apartments.com", status: { label: "Qualified", tone: "violet" }, time: "9s" },
+  { name: "Priya Shah", source: "SMS", status: { label: "Following up", tone: "amber" }, time: "14s" },
+  { name: "Sam Ortiz", source: "Email", status: { label: "Application sent", tone: "neutral" }, time: "21s" },
 ];
 
 export function LeasingMock() {
   return (
-    <Frame title="Leasing inbox" meta="Today">
-      <div className="flex flex-col">
-        {leads.map((lead, i) => (
-          <motion.div
-            key={lead.name}
-            className="flex items-center justify-between border-b border-ink/10 py-3 last:border-b-0"
-            initial={{ opacity: 0, x: -10 }}
-            whileInView={{ opacity: 1, x: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.5, delay: 0.3 + i * 0.15, ease }}
-          >
-            <div className="flex items-center gap-3">
-              <span className="grid size-8 place-items-center bg-lilac/50 text-[12px] font-medium text-plum-800">
-                {lead.name.split(" ").map((n) => n[0]).join("")}
+    <MockPanel>
+      <MockHeader title="Leasing inbox" meta="Today" />
+      <SequenceReveal
+        as="ul"
+        className="flex flex-col gap-2.5"
+        items={leads.map((lead) => (
+          <MockCard key={lead.name} className="flex items-center gap-3 px-4 py-3">
+            <span className="grid size-9 shrink-0 place-items-center rounded-full bg-bubble text-[12px] font-medium text-heather">
+              {lead.name.split(" ").map((n) => n[0]).join("")}
+            </span>
+            <span className="min-w-0 flex-1">
+              <span className="block truncate text-[14px] text-ink">{lead.name}</span>
+              <span className="block text-[12px] text-ink/45">
+                via {lead.source} · replied in {lead.time}
               </span>
-              <div>
-                <p className="text-[14px] font-medium">{lead.name}</p>
-                <p className="text-[12px] text-ink/45">via {lead.source}</p>
-              </div>
-            </div>
-            <div className="text-right">
-              <p className="text-[13px] text-violet">{lead.status}</p>
-              <p className="text-[11px] text-ink/45">replied in {lead.time}</p>
-            </div>
-          </motion.div>
+            </span>
+            <Chip chip={lead.status} />
+          </MockCard>
         ))}
-      </div>
-    </Frame>
+      />
+    </MockPanel>
   );
 }
 
@@ -112,22 +82,20 @@ const upcoming = ["Collections", "Renewals", "Move-ins", "Inspections"];
 
 export function ComingSoonMock() {
   return (
-    <Frame title="AI workers" meta="Roadmap">
-      <div className="flex flex-wrap gap-2.5">
-        {upcoming.map((item, i) => (
-          <motion.span
-            key={item}
-            className="border border-dashed border-violet/40 px-3.5 py-2 text-[14px] text-plum-800"
-            initial={{ opacity: 0, scale: 0.92 }}
-            whileInView={{ opacity: 1, scale: 1 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.5, delay: 0.2 + i * 0.1, ease }}
-          >
-            {item}
-          </motion.span>
-        ))}
-      </div>
-      <p className="mt-6 text-[13px] text-ink/45">Trained on your policies, vendors and workflows.</p>
-    </Frame>
+    <MockPanel>
+      <MockHeader title="AI workers" meta="Roadmap" />
+      <MockCard className="px-5 py-5">
+        <SequenceReveal
+          as="ul"
+          className="flex flex-wrap gap-2.5"
+          items={upcoming.map((item) => (
+            <span key={item} className="inline-block rounded-full border border-dashed border-heather/35 bg-page px-4 py-2 text-[14px] text-heather">
+              {item}
+            </span>
+          ))}
+        />
+        <p className="mt-5 text-[13px] text-ink/45">Trained on your policies, vendors and workflows.</p>
+      </MockCard>
+    </MockPanel>
   );
 }

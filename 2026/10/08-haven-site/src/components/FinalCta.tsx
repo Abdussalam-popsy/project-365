@@ -10,8 +10,6 @@ interface FinalCtaProps {
   demoSubject?: string;
   /** Where "Hear a call" jumps to; null hides it on pages without a call sample. */
   callHref?: string | null;
-  /** Agent pages use the darker `night` background instead of ink. */
-  night?: boolean;
 }
 
 /** Closing call to action. Agent pages pass their own copy; the homepage uses the defaults. */
@@ -20,11 +18,10 @@ export function FinalCta({
   body = "Hand the repetitive work to Haven, and spend your time growing your portfolio.",
   demoSubject,
   callHref = "#voice-demo",
-  night = false,
 }: FinalCtaProps) {
   return (
-    <section id="book-a-demo" className={`grain relative overflow-hidden ${night ? "bg-night" : "bg-ink"} px-6 py-36 text-center text-white`}>
-      {/* Plum and a touch of lilac, faded out before the footer starts. Adjustable in the Tune panel (CtaGlow.tsx). */}
+    <section id="book-a-demo" className="grain grain-fade-bottom relative overflow-hidden bg-night px-6 py-36 text-center text-white">
+      {/* Plum and a touch of lilac, faded out before the footer starts. Adjust it with the "Closing glow" dev tool on any page. */}
       <CtaGlow />
       <Reveal className="relative mx-auto max-w-[820px]">
         <h2 className="text-[44px] leading-[1.03] font-light tracking-[-0.035em] sm:text-[68px]">
