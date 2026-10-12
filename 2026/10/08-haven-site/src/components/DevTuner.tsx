@@ -10,7 +10,6 @@ import {
   visibleTuningGroups,
 } from "@/lib/tuning";
 import { useDevToolsVisible } from "@/lib/devTools";
-import { usePathname } from "next/navigation";
 
 const decimals = (step: number) => (String(step).split(".")[1] ?? "").length;
 
@@ -22,15 +21,13 @@ export function DevTuner() {
   const [collapsed, setCollapsed] = useState<ReadonlySet<string>>(new Set());
   const [, rerender] = useState(0);
   const devToolsVisible = useDevToolsVisible();
-  // The /tools/ pages are their own focused editors; the general Tune panel would only get in the way there.
-  const onToolPage = usePathname().startsWith("/tools");
 
   useEffect(() => {
     setEnabled(tuningEnabled());
     return subscribeTuning(() => rerender((n) => n + 1));
   }, []);
 
-  if (!enabled || !devToolsVisible || onToolPage) return null;
+  if (!enabled || !devToolsVisible) return null;
   const groups = visibleTuningGroups();
   const toggleGroup = (id: string) =>
     setCollapsed((prev) => {

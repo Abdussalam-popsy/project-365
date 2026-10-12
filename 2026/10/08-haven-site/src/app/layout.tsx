@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Geist } from "next/font/google";
 import { DevAgentation } from "@/components/DevAgentation";
 import { DevTuner } from "@/components/DevTuner";
+import { GlowEditor } from "@/components/tools/GlowEditor";
 import "./globals.css";
 
 const geist = Geist({
@@ -35,6 +36,7 @@ export default function RootLayout({
       <body className="bg-page font-sans text-ink antialiased">
         {children}
         <DevTuner />
+        <GlowEditor />
         <DevAgentation />
       </body>
     </html>

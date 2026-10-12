@@ -1,5 +1,4 @@
 import { demoUrl } from "@/content/site";
-import type { GlowValues } from "@/content/ctaGlow";
 import { Button } from "./Button";
 import { CtaGlow } from "./CtaGlow";
 import { PhoneIcon } from "./PhoneIcon";
@@ -11,8 +10,6 @@ interface FinalCtaProps {
   demoSubject?: string;
   /** Where "Hear a call" jumps to; null hides it on pages without a call sample. */
   callHref?: string | null;
-  /** Live glow values from the /tools/cta-glow/ tool; the site uses src/content/ctaGlow.ts. */
-  glow?: GlowValues;
 }
 
 /** Closing call to action. Agent pages pass their own copy; the homepage uses the defaults. */
@@ -21,12 +18,11 @@ export function FinalCta({
   body = "Hand the repetitive work to Haven, and spend your time growing your portfolio.",
   demoSubject,
   callHref = "#voice-demo",
-  glow,
 }: FinalCtaProps) {
   return (
     <section id="book-a-demo" className="grain relative overflow-hidden bg-night px-6 py-36 text-center text-white">
-      {/* Plum and a touch of lilac, faded out before the footer starts. Adjust it visually at /tools/cta-glow/. */}
-      <CtaGlow values={glow} />
+      {/* Plum and a touch of lilac, faded out before the footer starts. Adjust it with the "Closing glow" dev tool on any page. */}
+      <CtaGlow />
       <Reveal className="relative mx-auto max-w-[820px]">
         <h2 className="text-[44px] leading-[1.03] font-light tracking-[-0.035em] sm:text-[68px]">
           {title}
