@@ -73,18 +73,5 @@ export function StageGrid({ stages }: { stages: TitledText[] }) {
   );
 }
 
-/** A grid of short title + one-line feature descriptions. */
-export function FeatureGrid({ items, columns = 3 }: { items: TitledText[]; columns?: 2 | 3 }) {
-  return (
-    <div className={`mt-16 grid gap-x-10 gap-y-10 sm:grid-cols-2 ${columns === 3 ? "lg:grid-cols-3" : ""}`}>
-      {items.map((item, i) => (
-        <Reveal key={item.title} delay={(i % 3) * 0.06}>
-          <div className="border-t border-ink/10 pt-5">
-            <h3 className="text-[17px] font-medium">{item.title}</h3>
-            <p className="mt-2 text-[15px] leading-relaxed text-ink/55">{item.body}</p>
-          </div>
-        </Reveal>
-      ))}
-    </div>
-  );
-}
+/** Features: a bordered grid with a looping tinted diagonal (see FeatureGrid.tsx). */
+export { FeatureGrid } from "./FeatureGrid";

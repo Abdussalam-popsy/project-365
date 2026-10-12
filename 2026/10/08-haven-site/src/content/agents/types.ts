@@ -103,3 +103,14 @@ export interface StatusTimeline {
   title: string;
   status: { from: number; chip: Chip }[];
 }
+
+/** A stage's snapshot of the work order, for the stepper's visual. */
+export interface StageVisual {
+  chip: Chip;
+  line: string;
+}
+
+export interface Stat {
+  value: string;
+  label: string;
+}

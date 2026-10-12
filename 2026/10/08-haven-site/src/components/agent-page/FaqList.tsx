@@ -1,9 +1,10 @@
 import type { Faq } from "@/content/agents/types";
+import { Reveal } from "../Reveal";
 
 /** Questions as native <details> rows: keyboard and screen-reader friendly with no JavaScript. */
 export function FaqList({ items }: { items: Faq[] }) {
   return (
-    <div className="mx-auto mt-12 max-w-[820px] border-b border-ink/10">
+    <div className="border-b border-ink/10">
       {items.map((item) => (
         <details key={item.question} className="group border-t border-ink/10">
           <summary className="flex cursor-pointer list-none items-center justify-between gap-6 py-5 text-[18px] [&::-webkit-details-marker]:hidden">
@@ -35,5 +36,19 @@ export function SystemsList({ live, next }: { live: string[]; next: string[] }) 
         </li>
       ))}
     </ul>
+  );
+}
+
+/** FAQ section body: heading on the left and answers on the right on desktop; stacked and centred below that. */
+export function FaqSplit({ title, items }: { title: string; items: Faq[] }) {
+  return (
+    <div className="grid gap-12 lg:grid-cols-[0.8fr_1.2fr] lg:gap-20">
+      <Reveal className="text-center lg:sticky lg:top-32 lg:self-start lg:text-left">
+        <h2 className="text-[36px] leading-[1.06] font-light tracking-[-0.035em] sm:text-[48px]">{title}</h2>
+      </Reveal>
+      <div className="mx-auto w-full max-w-[820px] lg:max-w-none">
+        <FaqList items={items} />
+      </div>
+    </div>
   );
 }

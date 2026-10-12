@@ -1,6 +1,6 @@
 // Maintenance Agent page copy. Facts and sample data follow the client's reference; the wording is ours.
 import type {
-  CallSample, ChatMessage, Chip, Faq, LifecycleStep, LineColumn, LogEvent, StatusTimeline, TitlePart, TitledText, WorkOrder,
+  CallSample, ChatMessage, Chip, Faq, LifecycleStep, LineColumn, LogEvent, Stat, StageVisual, StatusTimeline, TitlePart, TitledText, WorkOrder,
 } from "./types";
 import { systemsOfRecord } from "./shared";
 
@@ -15,7 +15,7 @@ export const maintenanceHero = {
   eyebrow: "Maintenance Agent",
   title: ["Every work order, carried from ", { highlight: "the first text" }, " to ", { highlight: "the paid invoice" }, "."] as TitlePart[],
   body: "Intake, triage, dispatch, scheduling and invoicing, run inside your PMS by your rules. It pauses for you wherever the decision is yours.",
-  secondary: { label: "See the lifecycle", href: "#lifecycle" },
+  secondary: { label: "Hear it take a call", href: "#voice-demo" },
 };
 
 export const maintenanceLifecycle: LifecycleStep[] = [
@@ -27,7 +27,7 @@ export const maintenanceLifecycle: LifecycleStep[] = [
 ];
 
 export const maintenanceStages = {
-  title: ["Seven stages. ", { highlight: "One work order" }, " the whole way."] as TitlePart[],
+  title: ["Seven stages. ", { highlight: "One work order the whole way." }] as TitlePart[],
   body: "Most tools let go after intake. Haven stays with the work order through every hand-off, and writes each step back to your PMS as it happens.",
   items: [
     { title: "Intake", body: "Texts, calls and portal tickets answered the moment they arrive. Photos read, repeat reports merged." },
@@ -38,6 +38,28 @@ export const maintenanceStages = {
     { title: "Confirm", body: "The vendor confirms the job is done and the resident confirms the problem is gone. Nothing closes on an assumption." },
     { title: "Invoice", body: "The invoice is collected, matched to the work order and filed in your PMS next to its approval." },
   ] as TitledText[],
+  /** What the work order looks like at each stage, shown beside the stepper (same order as `items`). */
+  visuals: [
+    { chip: { label: "Text · 7:42pm", tone: "neutral" }, line: "No heat since last night, it's freezing." },
+    { chip: { label: "Emergency", tone: "red" }, line: "HVAC · Furnace · no heat" },
+    { chip: { label: "Accepted", tone: "green" }, line: "Knox HVAC · ETA 45 min" },
+    { chip: { label: "Scheduled", tone: "violet" }, line: "Tue 9–11am · resident agreed" },
+    { chip: { label: "Owner approved", tone: "amber" }, line: "Estimate $840 · furnace control board" },
+    { chip: { label: "Done", tone: "green" }, line: "Vendor: DONE · resident: heat's back" },
+    { chip: { label: "Attached", tone: "neutral" }, line: "Invoice #4471 · $840" },
+  ] as StageVisual[],
+};
+
+/** Stats band under the stages. The client's figures are still placeholders, shown in brackets like their mock. */
+export const maintenanceStats = {
+  title: ["The maintenance line, ", { highlight: "by the numbers." }] as TitlePart[],
+  body: "Across every firm running the Maintenance Agent.",
+  items: [
+    { value: "[0,000]", label: "Work orders handled in the last 30 days" },
+    { value: "[0]%", label: "Dispatched without a person touching them" },
+    { value: "[0] min", label: "Median time to first response, after hours" },
+    { value: "[0]%", label: "Residents who confirmed the fix" },
+  ] as Stat[],
 };
 
 export const maintenanceTriage = {

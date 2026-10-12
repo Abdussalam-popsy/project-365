@@ -21,6 +21,10 @@
   --color-night: #0e0b10;
   /* Muted plum for agent-page accents and highlighted heading words; the button violet is too saturated here. */
   --color-heather: #5c3a70;
+  /* Lighter purple for highlighted words in headings on light agent-page sections. */
+  --color-orchid: #9a77b3;
+  /* Tinted cells in the agent-page feature grid (client's reference). */
+  --color-blush: #efe4f2;
 }
 
 html {

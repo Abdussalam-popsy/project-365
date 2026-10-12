@@ -5,7 +5,7 @@ import { FinalCta } from "@/components/FinalCta";
 import { Footer } from "@/components/Footer";
 import { Reveal } from "@/components/Reveal";
 import { AgentHero } from "@/components/agent-page/AgentHero";
-import { ChatThread } from "@/components/agent-page/ChatThread";
+import { LoopingChat } from "@/components/agent-page/motion/LoopingChat";
 import { DecisionCard } from "@/components/agent-page/DecisionCard";
 import { LaneSplit } from "@/components/agent-page/LaneSplit";
 import { SystemsList } from "@/components/agent-page/FaqList";
@@ -29,14 +29,18 @@ export default function LeasingPage() {
           {...hero}
           demoSubject={meta.demoSubject}
           visual={
-            <HeroPanel className="flex flex-col gap-5">
-              <ChatThread messages={thread.messages} />
-              <div className="flex flex-wrap gap-2">
-                {thread.status.map((chip) => (
-                  <Chip key={chip.label} chip={chip} />
-                ))}
-              </div>
-              <DecisionCard decision={thread.decision} />
+            <HeroPanel>
+              <LoopingChat
+                messages={thread.messages}
+                after={[
+                  <div key="status" className="flex flex-wrap gap-2">
+                    {thread.status.map((chip) => (
+                      <Chip key={chip.label} chip={chip} />
+                    ))}
+                  </div>,
+                  <DecisionCard key="decision" decision={thread.decision} />,
+                ]}
+              />
             </HeroPanel>
           }
         />
