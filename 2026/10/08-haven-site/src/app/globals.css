@@ -18,6 +18,14 @@ html {
   scroll-behavior: smooth;
 }
 
+/* Headings wrap into even lines (no lonely last word); body copy only avoids a single-word last line. */
+h1, h2, h3, h4, h5, h6, blockquote {
+  text-wrap: balance;
+}
+p, li, figcaption {
+  text-wrap: pretty;
+}
+
 .grain::after {
   content: "";
   position: absolute;

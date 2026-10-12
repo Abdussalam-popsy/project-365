@@ -151,6 +151,17 @@ In the mocks, each item uses `whileInView` with `delay: 0.3 + i * 0.45`. For the
 
 **Nav**: `useMotionValueEvent(scrollY, "change", (y) => setSolid(y > 80))` flips a boolean once you've scrolled 80px; `animate` then fades the background colour in.
 
+Layout: **Platform · Agents ▾ · Customers** on the left, the logo in the middle, **Book a demo** (an email to hello@usehaven.ai) on the right. The links live in `site.ts` (`navLinks`, `agentPages`, `DEMO_URL`), so a new agent is one entry in `agentPages` and shows up in both menus.
+- [`nav/AgentsMenu.tsx`](./src/components/nav/AgentsMenu.tsx): the desktop dropdown. It opens on hover *or* click and closes on Escape, a click outside, or picking a page. Hover and click fight each other: hovering opens the menu a moment before your click lands, and a plain toggle would close it straight away. `openedByHover` (a `useRef`, so changing it doesn't re-render) remembers "the hover just opened this", and that first click is ignored. The panel sits in a wrapper with `pt-3` rather than `mt-3`: padding is part of the hover area, a margin is a gap the mouse would fall through.
+- [`nav/MobileMenu.tsx`](./src/components/nav/MobileMenu.tsx): below 768px (`md:hidden`), a menu button drops a full-width panel with every destination.
+- [`SiteLink.tsx`](./src/components/SiteLink.tsx): links starting with `/` go through Next's `<Link>`, which adds the base path the GitHub Pages copy lives under (`/project-365/2026/10/08-haven-site`). A plain `<a href="/agents/leasing">` would skip it and 404 there. Homepage sections are linked as `/#platform`, not `#platform`, so they also work from an agent page.
+
+Two traps hit while building it:
+1. `className="hidden sm:inline-flex"` on `<Button>` didn't hide it: Button already has `inline-flex`, and the later rule in the CSS file won. Hiding a wrapping `<span className="hidden sm:block">` avoids the fight.
+2. On a phone the page was 431px wide instead of 375px, which pushed the menu button off-screen. The cause was the Agents cards' glow (80px past each card), which stuck out past the right edge. `overflow-x-clip` on the section trims it. `clip` rather than `hidden`, because `hidden` would turn the section into a scroll container.
+
+**Text wrapping** (`globals.css`): every heading gets `text-wrap: balance` (lines of similar length, no lonely last word at any width), and paragraphs and list items get `text-wrap: pretty` (only avoids a single-word last line, cheaper for long text).
+
 **Reveal**: a reusable wrapper. Anything inside it fades/blurs/slides up 24px the first time it enters the viewport (`viewport={{ once: true, margin: "-80px" }}` means "trigger 80px after it enters, only once").
 
 **VoiceDemo**: the 56 waveform heights are computed once at module load with a deterministic formula and `Math.round`. Rounding matters: the server and browser must produce *identical* strings for `style.height`, otherwise React reports a hydration mismatch (we hit this: `85.6785642236443%` vs `85.6786%`).

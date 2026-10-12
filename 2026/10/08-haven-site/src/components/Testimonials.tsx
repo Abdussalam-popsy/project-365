@@ -4,7 +4,7 @@ import { Reveal } from "./Reveal";
 
 export function Testimonials() {
   return (
-    <section id="testimonials" className="bg-white px-6 py-32">
+    <section id="testimonials" className="scroll-mt-28 bg-white px-6 py-32">
       <div className="mx-auto max-w-[1140px]">
         <Reveal className="text-center">
           <Eyebrow>What our customers say</Eyebrow>

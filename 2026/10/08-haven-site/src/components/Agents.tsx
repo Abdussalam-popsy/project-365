@@ -11,8 +11,9 @@ const mocks = {
 };
 
 export function Agents() {
+  // overflow-x-clip: the mock cards' glow reaches 80px past them, which on phones would make the page scroll sideways.
   return (
-    <section id="agents" className="bg-mist px-6 pb-32">
+    <section id="agents" className="overflow-x-clip bg-mist px-6 pb-32">
       <Reveal className="mx-auto max-w-[720px] text-center">
         <h2 className="text-[40px] leading-[1.05] font-light tracking-[-0.035em] sm:text-[56px]">
           Agents that work while you sleep.

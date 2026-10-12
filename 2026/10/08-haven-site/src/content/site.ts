@@ -1,7 +1,14 @@
-export const DEMO_URL = "#book-a-demo";
-/** Product pages for each AI worker. Placeholders until the pages exist. */
-export const MAINTENANCE_URL = "#";
-export const LEASING_URL = "#";
+export const DEMO_URL = "mailto:hello@usehaven.ai?subject=Haven%20demo";
+
+/** One page per agent, in the order the nav lists them. `href` is site-relative; links add the base path. */
+export const agentPages = [
+  { id: "receptionist", label: "Receptionist", href: "/agents/receptionist", blurb: "Every call answered on the first ring." },
+  { id: "leasing", label: "Leasing", href: "/agents/leasing", blurb: "Every prospect answered in seconds." },
+  { id: "maintenance", label: "Maintenance", href: "/agents/maintenance", blurb: "Work orders from first text to paid invoice." },
+] as const;
+
+export const MAINTENANCE_URL = "/agents/maintenance";
+export const LEASING_URL = "/agents/leasing";
 
 export const announcement = {
   text: "Haven recognized among Top 50 AI startups in Real Estate",
@@ -9,11 +16,11 @@ export const announcement = {
   href: "#",
 };
 
-export const navLinks = [
-  { label: "Use cases", href: "#agents" },
-  { label: "Voice demo", href: "#voice-demo" },
-  { label: "Testimonials", href: "#testimonials" },
-];
+/** Homepage sections, written with a leading "/" so they also work from the agent pages. */
+export const navLinks = {
+  platform: { label: "Platform", href: "/#platform" },
+  customers: { label: "Customers", href: "/#testimonials" },
+};
 
 export const hero = {
   lead: "AI workers for property management.",
