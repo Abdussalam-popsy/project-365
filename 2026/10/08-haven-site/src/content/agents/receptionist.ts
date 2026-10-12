@@ -1,5 +1,5 @@
 // Receptionist Agent page copy. Facts follow the client's reference; the wording is ours.
-import type { CallLogEntry, CallSample, Lanes, TitlePart, TitledText } from "./types";
+import type { CallLogEntry, CallSample, Lanes, StageVisual, TitlePart, TitledText } from "./types";
 
 export const receptionistMeta = {
   title: "Receptionist Agent | Haven",
@@ -76,6 +76,14 @@ export const receptionistBeats = {
     { title: "Understand", body: "Sorts the call against the reasons for calling your firm has set up." },
     { title: "Act", body: "Routine calls are resolved on the spot. Anything that needs a person reaches one, with the context already gathered." },
   ] as TitledText[],
+  /** The call beside the stepper, one snapshot per beat (same order as `items`). */
+  record: { title: "Call · 220 Gay Street", date: "7:42pm" },
+  visuals: [
+    { chip: { label: "First ring", tone: "green" }, line: "Incoming call · after hours" },
+    { chip: { label: "Resident", tone: "violet" }, line: "Luis Moreno · 220 Gay Street, unit B" },
+    { chip: { label: "Emergency", tone: "red" }, line: "Kitchen leak · water spreading" },
+    { chip: { label: "Put through to on-call", tone: "amber" }, line: "Caller, unit and problem passed on" },
+  ] as StageVisual[],
 };
 
 export const receptionistStops = {

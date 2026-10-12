@@ -11,7 +11,11 @@ const STAGE_MS = 3800;
 interface StageStepperProps {
   stages: TitledText[];
   visuals: StageVisual[];
-  orderTitle: string;
+  /** The record shown beside the steps: a work order, a lead, a call… */
+  recordTitle: string;
+  recordDate?: string;
+  /** What one step is called in the caption ("Stage 2 of 7", "Beat 2 of 4"). */
+  stepLabel?: string;
 }
 
 /**
@@ -19,7 +23,7 @@ interface StageStepperProps {
  * a progress line under it, and the work order beside it showing that stage. Loops while on screen;
  * clicking or hovering a stage jumps to it and restarts the timer. Reduced motion: no auto-advance.
  */
-export function StageStepper({ stages, visuals, orderTitle }: StageStepperProps) {
+export function StageStepper({ stages, visuals, recordTitle, recordDate, stepLabel = "Stage" }: StageStepperProps) {
   const ref = useRef<HTMLDivElement>(null);
   const reduce = useReducedMotion();
   const [active, setActive] = useState(0);
@@ -107,8 +111,8 @@ export function StageStepper({ stages, visuals, orderTitle }: StageStepperProps)
         <MockCard className="px-5 py-5">
           <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
             <DocIcon />
-            <p className="mr-auto text-[16px] text-ink/85">{orderTitle}</p>
-            <DateChip date="Sep 12" />
+            <p className="mr-auto text-[16px] text-ink/85">{recordTitle}</p>
+            {recordDate && <DateChip date={recordDate} />}
           </div>
           <AnimatePresence mode="wait" initial={false}>
             <motion.div
@@ -124,7 +128,7 @@ export function StageStepper({ stages, visuals, orderTitle }: StageStepperProps)
             </motion.div>
           </AnimatePresence>
           <p className="mt-4 text-[13px] text-ink/45">
-            Stage {active + 1} of {stages.length} · {stages[active].title}
+            {stepLabel} {active + 1} of {stages.length} · {stages[active].title}
           </p>
         </MockCard>
       </MockPanel>

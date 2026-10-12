@@ -9,7 +9,8 @@ import { CallLog } from "@/components/agent-page/CallLog";
 import { CallTranscript } from "@/components/agent-page/CallTranscript";
 import { LaneSplit } from "@/components/agent-page/LaneSplit";
 import { SystemsList } from "@/components/agent-page/FaqList";
-import { FeatureGrid, Section, SectionIntro, Split, StageGrid } from "@/components/agent-page/sections";
+import { FeatureGrid, Section, SectionIntro, Split } from "@/components/agent-page/sections";
+import { StageStepper } from "@/components/agent-page/motion/StageStepper";
 import {
   receptionistAlways as always, receptionistBeats as beats, receptionistCall as call, receptionistCallLog as callLog,
   receptionistCta as cta, receptionistFeatures as features, receptionistHero as hero, receptionistMeta as meta,
@@ -45,7 +46,7 @@ export default function ReceptionistPage() {
 
         <Section id="how-it-works">
           <SectionIntro title={beats.title} />
-          <StageGrid stages={beats.items} />
+          <StageStepper stages={beats.items} visuals={beats.visuals} recordTitle={beats.record.title} recordDate={beats.record.date} stepLabel="Beat" />
         </Section>
 
         <Section surface="white">

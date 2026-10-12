@@ -9,7 +9,8 @@ import { LoopingChat } from "@/components/agent-page/motion/LoopingChat";
 import { DecisionCard } from "@/components/agent-page/DecisionCard";
 import { LaneSplit } from "@/components/agent-page/LaneSplit";
 import { SystemsList } from "@/components/agent-page/FaqList";
-import { FeatureGrid, Section, SectionIntro, StageGrid } from "@/components/agent-page/sections";
+import { FeatureGrid, Section, SectionIntro } from "@/components/agent-page/sections";
+import { StageStepper } from "@/components/agent-page/motion/StageStepper";
 import { Chip, HeroPanel } from "@/components/agent-page/ui";
 import {
   leasingBeats as beats, leasingCta as cta, leasingFeatures as features, leasingHero as hero,
@@ -56,7 +57,7 @@ export default function LeasingPage() {
 
         <Section id="how-it-works">
           <SectionIntro title={beats.title} />
-          <StageGrid stages={beats.items} />
+          <StageStepper stages={beats.items} visuals={beats.visuals} recordTitle={beats.record.title} recordDate={beats.record.date} stepLabel="Beat" />
         </Section>
 
         <Section surface="white">

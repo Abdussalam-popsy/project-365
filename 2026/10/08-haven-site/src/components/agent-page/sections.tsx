@@ -1,5 +1,5 @@
 // Layout building blocks shared by every agent page.
-import type { TitlePart, TitledText } from "@/content/agents/types";
+import type { TitlePart } from "@/content/agents/types";
 import { Reveal } from "../Reveal";
 import { TitleText } from "./TitleText";
 
@@ -52,23 +52,6 @@ export function Split({ text, visual, flip = false }: { text: React.ReactNode; v
       <Reveal delay={0.15} className={flip ? "lg:order-1" : ""}>
         {visual}
       </Reveal>
-    </div>
-  );
-}
-
-/** Numbered stage cards ("01 Intake", "02 Triage"…). */
-export function StageGrid({ stages }: { stages: TitledText[] }) {
-  return (
-    <div className="mt-14 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-      {stages.map((stage, i) => (
-        <Reveal key={stage.title} delay={i * 0.05} className="h-full">
-          <div className="flex h-full flex-col rounded-2xl border border-ink/[0.07] bg-white p-6">
-            <span className="font-mono text-[13px] text-heather">{String(i + 1).padStart(2, "0")}</span>
-            <h3 className="mt-6 text-[20px] tracking-[-0.01em]">{stage.title}</h3>
-            <p className="mt-2 text-[15px] leading-relaxed text-ink/55">{stage.body}</p>
-          </div>
-        </Reveal>
-      ))}
     </div>
   );
 }

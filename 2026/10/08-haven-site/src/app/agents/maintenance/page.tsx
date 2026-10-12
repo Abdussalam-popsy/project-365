@@ -37,7 +37,7 @@ export default function MaintenancePage() {
 
         <Section id="lifecycle">
           <SectionIntro title={stages.title} body={stages.body} />
-          <StageStepper stages={stages.items} visuals={stages.visuals} orderTitle={triage.workOrder.title} />
+          <StageStepper stages={stages.items} visuals={stages.visuals} recordTitle={triage.workOrder.title} recordDate={triage.workOrder.date} />
         </Section>
 
         <StatsBand title={stats.title} body={stats.body} items={stats.items} />
