@@ -15,9 +15,10 @@ export function VoiceDemo() {
 
   return (
     <section id="voice-demo" className="grain relative overflow-hidden bg-ink px-6 py-32 text-white">
-      <div className="absolute top-0 left-1/2 -z-0 size-[700px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-violet/25 blur-[140px]" />
+      {/* Plum glow from the brand's own family (ink → lilac), not the blue-leaning button violet. */}
+      <div className="absolute top-0 left-1/2 -z-0 size-[760px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-plum-800/80 blur-[140px]" />
       <Reveal className="relative mx-auto max-w-[760px] text-center">
-        <Eyebrow className="text-lilac">Voice demo</Eyebrow>
+        <Eyebrow tone="dark">Voice demo</Eyebrow>
         <h2 className="mt-4 text-[40px] leading-[1.05] font-light tracking-[-0.035em] sm:text-[56px]">
           Listen to Maintenance AI take a real call.
         </h2>

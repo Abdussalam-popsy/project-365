@@ -1,6 +1,7 @@
 "use client";
 
 import dynamic from "next/dynamic";
+import { useDevToolsVisible } from "@/lib/devTools";
 
 /** Agentation feedback toolbar, dev only: the import is stripped from production builds. */
 const Toolbar =
@@ -9,5 +10,6 @@ const Toolbar =
     : () => null;
 
 export function DevAgentation() {
-  return <Toolbar appName="Haven site" />;
+  const visible = useDevToolsVisible();
+  return visible ? <Toolbar appName="Haven site" /> : null;
 }

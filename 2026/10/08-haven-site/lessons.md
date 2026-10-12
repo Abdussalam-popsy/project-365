@@ -151,6 +151,17 @@ In the mocks, each item uses `whileInView` with `delay: 0.3 + i * 0.45`. For the
 
 **Nav**: `useMotionValueEvent(scrollY, "change", (y) => setSolid(y > 80))` flips a boolean once you've scrolled 80px; `animate` then fades the background colour in.
 
+Layout: **Platform · Agents ▾ · Customers** on the left, the logo in the middle, **Book a demo** (an email to hello@usehaven.ai) on the right. The links live in `site.ts` (`navLinks`, `agentPages`, `DEMO_URL`), so a new agent is one entry in `agentPages` and shows up in both menus.
+- [`nav/AgentsMenu.tsx`](./src/components/nav/AgentsMenu.tsx): the desktop dropdown. It opens on hover *or* click and closes on Escape, a click outside, or picking a page. Hover and click fight each other: hovering opens the menu a moment before your click lands, and a plain toggle would close it straight away. `openedByHover` (a `useRef`, so changing it doesn't re-render) remembers "the hover just opened this", and that first click is ignored. The panel sits in a wrapper with `pt-3` rather than `mt-3`: padding is part of the hover area, a margin is a gap the mouse would fall through.
+- [`nav/MobileMenu.tsx`](./src/components/nav/MobileMenu.tsx): below 768px (`md:hidden`), a menu button drops a full-width panel with every destination.
+- [`SiteLink.tsx`](./src/components/SiteLink.tsx): links starting with `/` go through Next's `<Link>`, which adds the base path the GitHub Pages copy lives under (`/project-365/2026/10/08-haven-site`). A plain `<a href="/agents/leasing">` would skip it and 404 there. Homepage sections are linked as `/#platform`, not `#platform`, so they also work from an agent page.
+
+Two traps hit while building it:
+1. `className="hidden sm:inline-flex"` on `<Button>` didn't hide it: Button already has `inline-flex`, and the later rule in the CSS file won. Hiding a wrapping `<span className="hidden sm:block">` avoids the fight.
+2. On a phone the page was 431px wide instead of 375px, which pushed the menu button off-screen. The cause was the Agents cards' glow (80px past each card), which stuck out past the right edge. `overflow-x-clip` on the section trims it. `clip` rather than `hidden`, because `hidden` would turn the section into a scroll container.
+
+**Text wrapping** (`globals.css`): every heading gets `text-wrap: balance` (lines of similar length, no lonely last word at any width), and paragraphs and list items get `text-wrap: pretty` (only avoids a single-word last line, cheaper for long text).
+
 **Reveal**: a reusable wrapper. Anything inside it fades/blurs/slides up 24px the first time it enters the viewport (`viewport={{ once: true, margin: "-80px" }}` means "trigger 80px after it enters, only once").
 
 **VoiceDemo**: the 56 waveform heights are computed once at module load with a deterministic formula and `Math.round`. Rounding matters: the server and browser must produce *identical* strings for `style.height`, otherwise React reports a hydration mismatch (we hit this: `85.6785642236443%` vs `85.6786%`).
@@ -207,6 +218,32 @@ Remove `pr-16` from the `<ul>`. What do you see? <details><summary>Answer</summa
 Add the real SVG as a new entry in `marks` (or as an `<img>` from `public/`) under the same name used in `customers`.
 
 </details>
+
+## Agent pages (`/agents/maintenance`, `/agents/leasing`, `/agents/receptionist`)
+
+Each agent gets its own page. The pieces are shared, so Leasing and Receptionist reuse everything Maintenance uses:
+
+```
+src/content/agents/types.ts        ← the shape of a page's content (chips, chat messages, work orders…)
+src/content/agents/maintenance.ts  ← all Maintenance copy and sample data, nothing visual
+src/content/agents/leasing.ts      ← same for Leasing
+src/content/agents/receptionist.ts ← same for Receptionist
+src/content/agents/shared.ts       ← content every page shares (the PMS list)
+src/components/agent-page/          ← reusable sections and mocks
+src/app/agents/maintenance/page.tsx ← picks the sections, in order
+```
+
+- **Route = folder.** Next's App Router turns `src/app/agents/maintenance/page.tsx` into the URL `/agents/maintenance`. No router config.
+- **Copy lives in content files.** To reword something, edit `maintenance.ts`. Components only decide how it looks.
+- **Highlighted headline words** are data: `title: ["Every work order, carried from ", { highlight: "the first text" }, …]`. `AgentHero` renders plain strings as-is and wraps `{ highlight }` pieces in a lilac `<span>`. `typeof part === "string"` is how it tells them apart.
+- **Mocks** (chat bubbles, work-order cards, status chips, the lifecycle diagram) follow the client's screenshots: rounded corners, soft lilac-grey bubbles for the resident, white raised cards for Haven. Chip colours are `red / amber / green / violet / neutral` in `agent-page/ui.tsx`; pass `onDark` on dark backgrounds so the neutral grey stays visible.
+- **Book a demo** on an agent page opens an email with its own subject (`demoUrl("Maintenance Agent demo")`), so Haven can tell which page the request came from.
+- **Client's colours for this style** are tokens in `globals.css`: `page` (`#f6f3f8`, the light background instead of pure white), `tray` (`#ede8f1`, behind the mocks) and `bubble` (`#e6e0e9`, the resident's chat bubbles). Haven's replies stay white.
+- **Receptionist's call log** scrolls forever with no jump: `CallLog` renders the list twice, and the CSS animation `ticker` moves it up by exactly 50%, which is one full copy. At that moment the second copy sits exactly where the first started, so the loop restarts invisibly. The second copy has `aria-hidden` so screen readers only hear the list once.
+- **A hydration bug** showed up as a "1 Issue" badge: the nav menus used React's `useId()` to link each button to its panel (`aria-controls`), and the server and browser produced different ids. The nav appears once per page, so plain fixed ids (`"agents-menu"`, `"mobile-menu"`) do the job and can't disagree.
+- Left out on purpose for now: the client's stats ("[0,000] work orders") and customers table ("[Units]", "[PMS]"), because their numbers are still placeholders.
+
+<details><summary>Predict, change, observe</summary>In `maintenance.ts`, change the Invoiced step's label tone from `"neutral"` to `"green"`. What happens in the hero diagram? <details><summary>Answer</summary>The "Invoiced" label turns soft green, like "Confirmed". The `onDark` swap only applies to neutral chips, so green looks the same on dark as on light. Change it back.</details></details>
 
 ## Run and check
 
@@ -284,12 +321,17 @@ Draw the glow once into a fixed image and only move it with CSS transforms. That
 
 The hero background can be swapped. Every design is kept as a numbered version in [`src/components/hero/versions.tsx`](src/components/hero/versions.tsx), so we can compare them:
 
-- `?hero=v5` and `?hero=v5-light` show the detached-house neighbourhood in its dark and light themes (see "v5 neighbourhood" below). **v5 is the default**, the one real visitors see.
-- v1 to v4 are **archived**: kept in the code, still reachable by link, but hidden from the switcher by default.
+- `?hero=v5` and `?hero=v5-light` show the detached-house neighbourhood in its dark and light themes (see "v5 neighbourhood" below). **v5 is the default**, the one real visitors see, until a new hero design replaces it.
+- **Every version is archived** for now (v1 to v5-light), so the switcher starts clean for the next round of hero designs. Archived versions stay in the code and are still reachable by link.
   - `?hero=v1` shows the signal grid.
   - `?hero=v2` shows the 3D skyline.
   - `?hero=v4` shows the low-rise residential version of the skyline (see "v4 residential skyline" below).
-- A switcher pill in the corner appears in dev, or whenever a `?hero=` link is opened. It lists only the active versions plus an **Archive (5)** button that reveals the rest.
+- A switcher pill in the corner appears in dev, or whenever a `?hero=` link is opened. It lists only the active versions (plus the one you're looking at) and an **Archive** button that reveals the rest.
+
+### Showing and hiding the dev overlays
+All the floating dev tools (hero switcher, perf meter, **Tune**, the feedback toolbar) are **hidden by default**. Press **`** (backtick, the key left of 1) to show them; press it again to hide them. The choice is remembered in your browser. Adding `?tools` to the URL always shows them. Next.js's own "N" badge is switched off in `next.config.ts` (`devIndicators: false`).
+
+How it works ([`src/lib/devTools.ts`](src/lib/devTools.ts)): one module-level `visible` flag, a `keydown` listener installed once, and a `useDevToolsVisible()` hook that each overlay calls. The listener ignores the key while you're typing in a field, so a backtick in a text box doesn't toggle anything. The hook returns `false` on the first render (the server can't read `localStorage`), then the real value after mount, so the server HTML and the first browser render always match.
 
 <details>
 <summary>@file: src/components/hero/HeroVersionPicker.tsx — the Archive toggle, explained</summary>
@@ -819,6 +861,17 @@ Changing a layout slider means rebuilding the whole scene, which disposes it and
 ## Brand: Geist and the two hex codes
 
 [`layout.tsx`](./src/app/layout.tsx) loads Geist with `next/font/google`. That downloads it at build time and serves it from our own site, then exposes it as the CSS variable `--font-geist`. [`globals.css`](./src/app/globals.css) puts that first in `--font-sans`. The client's colours are tokens there: `--color-ink: #1e0f26` (dark background, so `bg-ink` everywhere) and `--color-lilac: #c9b5da` (light accent, `text-lilac`). The plum shades are mixed from those two. The 3D scenes can't read CSS variables, so `createHavenCity.ts`'s `palette` repeats the hex codes. The bright violet `#5740ef` stays for buttons, as the client approved.
+
+**Keep violet off dark backgrounds.** `#5740ef` leans blue, ink and lilac lean red-purple. Used as a big glow on ink, the two read as opposing colours (blue at the top of the section, plum at the bottom). So the dark sections glow with the brand's own family instead: `bg-plum-800/80` behind the Voice demo, and a plum + faint lilac radial gradient in the final CTA, centred at 55% so it has faded out before the footer (also `bg-ink`) begins: no seam. Eyebrows take `tone="dark"` on dark sections, which switches them to lilac.
+
+<details><summary>Why not just pass <code>className="text-lilac"</code>?</summary>
+
+That's what the Voice demo did, and it rendered **violet**. `Eyebrow` already had `text-violet` in its class list, so the element got both. Two classes setting the same property don't follow the order you write them in the `class` attribute; the one that comes later *in the generated CSS file* wins, and here that was `text-violet`. A `tone` prop picks exactly one colour class, so there's nothing to fight.
+</details>
+
+**Stale dev cache.** If colours in `npm run dev` don't match `globals.css`, the dev server may be serving an old compiled stylesheet from `.next/`. Ours showed the *previous* palette (`#0b062a` navy) for days while the live site was correct. Fix: stop the dev server, delete `.next/`, start it again. You can check in the browser console with `getComputedStyle(document.documentElement).getPropertyValue("--color-ink")`.
+
+**"Hear a call" buttons.** The hero and the final CTA both pair "Book a demo" with an outline "Hear a call" button that jumps to `#voice-demo`. The phone is a tiny inline SVG ([`PhoneIcon.tsx`](./src/components/PhoneIcon.tsx)) drawn with `stroke="currentColor"`, so it takes the button's text colour in both themes. In the hero it also gets a frosted backing (`backdrop-blur-sm` plus `bg-ink/40`, or `bg-mist/50` on the light theme), because the street scene keeps moving behind it.
 
 ## v5 neighbourhood (dark and light)
 

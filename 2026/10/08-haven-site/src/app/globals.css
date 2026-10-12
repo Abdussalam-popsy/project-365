@@ -12,10 +12,23 @@
   --color-lilac: #c9b5da;
   --color-mist: #f7f4fa;
   --color-haze: #ebe3f1;
+  /* Agent-page mocks (client's reference): the tray behind them, and the resident's chat bubbles. */
+  --color-tray: #ede8f1;
+  --color-bubble: #e6e0e9;
+  /* Agent-page light background (client's reference), in place of pure white. */
+  --color-page: #f6f3f8;
 }
 
 html {
   scroll-behavior: smooth;
+}
+
+/* Headings wrap into even lines (no lonely last word); body copy only avoids a single-word last line. */
+h1, h2, h3, h4, h5, h6, blockquote {
+  text-wrap: balance;
+}
+p, li, figcaption {
+  text-wrap: pretty;
 }
 
 .grain::after {
@@ -37,7 +50,17 @@ html {
   animation: marquee 60s linear infinite;
 }
 
+/* Receptionist call log: the list is doubled, so moving up by half its height loops seamlessly. */
+@keyframes ticker {
+  from { transform: translateY(0); }
+  to { transform: translateY(-50%); }
+}
+
+.animate-ticker {
+  animation: ticker 40s linear infinite;
+}
+
 @media (prefers-reduced-motion: reduce) {
-  .animate-marquee { animation: none; }
+  .animate-marquee, .animate-ticker { animation: none; }
   html { scroll-behavior: auto; }
 }

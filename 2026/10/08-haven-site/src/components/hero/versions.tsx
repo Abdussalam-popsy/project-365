@@ -47,8 +47,8 @@ export const heroVersions: HeroVersion[] = [
   { id: "v3", label: "Split grid", Layout: SplitHero, archived: true },
   { id: "v3-alt", label: "Centred grid", Backdrop: GridBackdrop, archived: true },
   { id: "v4", label: "Residential", Backdrop: ResidentialBackdrop, archived: true },
-  { id: "v5", label: "Neighbourhood", Backdrop: SuburbBackdrop },
-  { id: "v5-light", label: "Neighbourhood (light)", Backdrop: SuburbBackdropLight, tone: "light" },
+  { id: "v5", label: "Neighbourhood", Backdrop: SuburbBackdrop, archived: true },
+  { id: "v5-light", label: "Neighbourhood (light)", Backdrop: SuburbBackdropLight, tone: "light", archived: true },
 ];
 
 /** The version real visitors see. */

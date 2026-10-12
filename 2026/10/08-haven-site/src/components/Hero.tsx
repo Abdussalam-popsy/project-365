@@ -4,9 +4,11 @@ import { useEffect, useState } from "react";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { hero } from "@/content/site";
 import { Button } from "./Button";
+import { PhoneIcon } from "./PhoneIcon";
 import { HeroPerfMeter } from "./hero/HeroPerfMeter";
 import { HeroVersionPicker } from "./hero/HeroVersionPicker";
 import { useHeroVersion } from "./hero/useHeroVersion";
+import { useDevToolsVisible } from "@/lib/devTools";
 
 const ease = [0.16, 1, 0.3, 1] as const;
 
@@ -14,6 +16,7 @@ export function Hero() {
   const [index, setIndex] = useState(0);
   const reduce = useReducedMotion();
   const { version, select, comparing } = useHeroVersion();
+  const devToolsVisible = useDevToolsVisible();
 
   useEffect(() => {
     if (reduce) return;
@@ -23,12 +26,17 @@ export function Hero() {
 
   const light = version.tone === "light";
   useEffect(() => {
-    document.documentElement.dataset.heroTone = light ? "light" : "dark";
+    const root = document.documentElement;
+    root.dataset.heroTone = light ? "light" : "dark";
+    // Clear it when leaving the homepage, so an agent page doesn't inherit the light hero's solid nav.
+    return () => {
+      delete root.dataset.heroTone;
+    };
   }, [light]);
 
   const Backdrop = version.Backdrop;
   const Layout = version.Layout;
-  const tools = comparing && (
+  const tools = comparing && devToolsVisible && (
     <>
       <HeroVersionPicker current={version} onSelect={select} />
       <HeroPerfMeter />
@@ -85,12 +93,17 @@ export function Hero() {
       </motion.h1>
 
       <motion.div
-        className="mt-10"
+        className="mt-10 flex flex-wrap justify-center gap-3"
         initial={{ opacity: 0, y: 12 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.8, delay: 0.3, ease }}
       >
         <Button>Book a demo</Button>
+        {/* Frosted backing so the label stays readable when a lamp or house drifts behind it. */}
+        <Button variant="outline" href="#voice-demo" className={`backdrop-blur-sm ${light ? "bg-mist/50" : "bg-ink/40"}`}>
+          <PhoneIcon className="mr-2" />
+          Hear a call
+        </Button>
       </motion.div>
 
       <motion.span

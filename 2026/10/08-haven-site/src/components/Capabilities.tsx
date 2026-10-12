@@ -4,7 +4,7 @@ import { Reveal } from "./Reveal";
 
 export function Capabilities() {
   return (
-    <section className="bg-mist px-6 py-32">
+    <section id="platform" className="scroll-mt-28 bg-mist px-6 py-32">
       <div className="mx-auto max-w-[1140px]">
         <Reveal className="max-w-[640px]">
           <Eyebrow>Why Haven</Eyebrow>

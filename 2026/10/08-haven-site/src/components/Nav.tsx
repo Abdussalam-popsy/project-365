@@ -5,6 +5,9 @@ import { motion, useMotionValueEvent, useScroll } from "motion/react";
 import { navLinks } from "@/content/site";
 import { Logo } from "./Logo";
 import { Button } from "./Button";
+import { SiteLink } from "./SiteLink";
+import { AgentsMenu } from "./nav/AgentsMenu";
+import { MobileMenu } from "./nav/MobileMenu";
 
 export function Nav() {
   const { scrollY } = useScroll();
@@ -36,20 +39,23 @@ export function Nav() {
     >
       <nav className="mx-auto grid h-16 max-w-[1240px] grid-cols-[1fr_auto_1fr] items-center px-6 text-white">
         <div className="hidden items-center gap-8 text-[15px] md:flex">
-          {navLinks.map((l) => (
-            <a key={l.href} href={l.href} className="text-white/75 transition-colors hover:text-white">
-              {l.label}
-            </a>
-          ))}
+          <SiteLink href={navLinks.platform.href} className="text-white/75 transition-colors hover:text-white">
+            {navLinks.platform.label}
+          </SiteLink>
+          <AgentsMenu />
+          <SiteLink href={navLinks.customers.href} className="text-white/75 transition-colors hover:text-white">
+            {navLinks.customers.label}
+          </SiteLink>
         </div>
-        <a href="#" className="col-start-1 md:col-start-2" aria-label="Haven home">
+        <SiteLink href="/" className="col-start-1 justify-self-start md:col-start-2 md:justify-self-center" aria-label="Haven home">
           <Logo />
-        </a>
-        <div className="col-start-3 flex items-center justify-end gap-3">
-          <a href="#" className="hidden text-[15px] text-white/75 hover:text-white sm:inline">
-            Log in
-          </a>
-          <Button className="h-10 px-5">Book a demo</Button>
+        </SiteLink>
+        <div className="col-start-3 flex items-center justify-end gap-2">
+          {/* Hidden via a wrapper: a `hidden` class on Button itself loses to Button's own `inline-flex`. */}
+          <span className="hidden sm:block">
+            <Button className="h-10 px-5">Book a demo</Button>
+          </span>
+          <MobileMenu />
         </div>
       </nav>
     </motion.header>
