@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { hero } from "@/content/site";
 import { Button } from "./Button";
+import { PhoneIcon } from "./PhoneIcon";
 import { HeroPerfMeter } from "./hero/HeroPerfMeter";
 import { HeroVersionPicker } from "./hero/HeroVersionPicker";
 import { useHeroVersion } from "./hero/useHeroVersion";
@@ -85,12 +86,17 @@ export function Hero() {
       </motion.h1>
 
       <motion.div
-        className="mt-10"
+        className="mt-10 flex flex-wrap justify-center gap-3"
         initial={{ opacity: 0, y: 12 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.8, delay: 0.3, ease }}
       >
         <Button>Book a demo</Button>
+        {/* Frosted backing so the label stays readable when a lamp or house drifts behind it. */}
+        <Button variant="outline" href="#voice-demo" className={`backdrop-blur-sm ${light ? "bg-mist/50" : "bg-ink/40"}`}>
+          <PhoneIcon className="mr-2" />
+          Hear a call
+        </Button>
       </motion.div>
 
       <motion.span
