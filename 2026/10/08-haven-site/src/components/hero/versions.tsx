@@ -5,6 +5,12 @@ import dynamic from "next/dynamic";
 import { HavenField } from "../HavenField";
 import GridBackdrop from "./GridBackdrop";
 import SplitHero from "./split/SplitHero";
+import DioramaHero from "./DioramaHero";
+
+export type HeroLayoutProps = {
+  tone?: "dark" | "light";
+  onSelect?: (id: string) => void;
+};
 
 export type HeroVersion = {
   id: string;
@@ -12,7 +18,7 @@ export type HeroVersion = {
   /** Swaps only what sits behind the shared centred hero copy. */
   Backdrop?: ComponentType;
   /** Replaces the whole hero section (its own layout and copy placement). */
-  Layout?: ComponentType;
+  Layout?: ComponentType<HeroLayoutProps>;
   /** "light" flips the shared hero copy to dark text and makes the nav solid. */
   tone?: "dark" | "light";
   /** Kept for reference: still opens via `?hero=<id>`, but hidden behind the picker's Archive toggle. */
@@ -20,20 +26,31 @@ export type HeroVersion = {
 };
 
 const CityBackdrop = dynamic(() => import("./CityBackdrop"), { ssr: false });
-const ResidentialBackdrop = dynamic(() => import("./CityBackdrop").then((m) => m.ResidentialBackdrop), {
-  ssr: false,
-});
+const ResidentialBackdrop = dynamic(
+  () => import("./CityBackdrop").then((m) => m.ResidentialBackdrop),
+  {
+    ssr: false,
+  },
+);
 
-const SuburbBackdrop = dynamic(() => import("./SuburbBackdrop"), { ssr: false });
-const SuburbBackdropLight = dynamic(() => import("./SuburbBackdrop").then((m) => m.SuburbBackdropLight), {
+const SuburbBackdrop = dynamic(() => import("./SuburbBackdrop"), {
   ssr: false,
 });
+const SuburbBackdropLight = dynamic(
+  () => import("./SuburbBackdrop").then((m) => m.SuburbBackdropLight),
+  {
+    ssr: false,
+  },
+);
 
 function SignalGridBackdrop() {
   return (
     <>
       <div className="absolute inset-0 bg-[radial-gradient(120%_80%_at_50%_30%,#43234f_0%,#26132f_55%,#1e0f26_80%)]" />
-      <HavenField className="absolute inset-0 size-full" params={{ horizon: 0.66, lineOpacity: 0.3 }} />
+      <HavenField
+        className="absolute inset-0 size-full"
+        params={{ horizon: 0.66, lineOpacity: 0.3 }}
+      />
       <div className="absolute inset-x-0 top-0 h-40 bg-gradient-to-b from-ink/80 to-transparent" />
       <div className="absolute inset-x-0 bottom-[8%] mx-auto h-[38%] max-w-[760px] bg-[radial-gradient(closest-side,rgba(30,15,38,0.75),transparent)]" />
     </>
@@ -42,14 +59,47 @@ function SignalGridBackdrop() {
 
 /** Every hero backdrop we have tried, oldest first. Add new ones at the end. */
 export const heroVersions: HeroVersion[] = [
-  { id: "v1", label: "Signal grid", Backdrop: SignalGridBackdrop, archived: true },
+  {
+    id: "v1",
+    label: "Signal grid",
+    Backdrop: SignalGridBackdrop,
+    archived: true,
+  },
   { id: "v2", label: "Skyline", Backdrop: CityBackdrop, archived: true },
   { id: "v3", label: "Split grid", Layout: SplitHero, archived: true },
-  { id: "v3-alt", label: "Centred grid", Backdrop: GridBackdrop, archived: true },
-  { id: "v4", label: "Residential", Backdrop: ResidentialBackdrop, archived: true },
-  { id: "v5", label: "Neighbourhood", Backdrop: SuburbBackdrop, archived: true },
-  { id: "v5-light", label: "Neighbourhood (light)", Backdrop: SuburbBackdropLight, tone: "light", archived: true },
+  {
+    id: "v3-alt",
+    label: "Centred grid",
+    Backdrop: GridBackdrop,
+    archived: true,
+  },
+  {
+    id: "v4",
+    label: "Residential",
+    Backdrop: ResidentialBackdrop,
+    archived: true,
+  },
+  {
+    id: "v5",
+    label: "Neighbourhood",
+    Backdrop: SuburbBackdrop,
+    archived: true,
+  },
+  {
+    id: "v5-light",
+    label: "Neighbourhood (light)",
+    Backdrop: SuburbBackdropLight,
+    tone: "light",
+    archived: true,
+  },
+  { id: "v6", label: "Diorama · night", Layout: DioramaHero },
+  {
+    id: "v6-light",
+    label: "Diorama · day",
+    Layout: DioramaHero,
+    tone: "light",
+  },
 ];
 
 /** The version real visitors see. */
-export const defaultHeroVersion = "v5";
+export const defaultHeroVersion = "v6";
