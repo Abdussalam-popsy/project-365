@@ -12,6 +12,9 @@
   --color-lilac: #c9b5da;
   --color-mist: #f7f4fa;
   --color-haze: #ebe3f1;
+  /* Agent-page mocks (client's reference): the tray behind them, and the resident's chat bubbles. */
+  --color-tray: #ede8f1;
+  --color-bubble: #e6e0e9;
 }
 
 html {

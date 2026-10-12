@@ -43,7 +43,7 @@ export function DocIcon({ className = "" }: { className?: string }) {
 
 /** The soft rounded tray the client's mocks sit in. */
 export function MockPanel({ children, className = "" }: { children: React.ReactNode; className?: string }) {
-  return <div className={`rounded-[28px] bg-haze/70 p-5 sm:p-8 ${className}`}>{children}</div>;
+  return <div className={`rounded-[28px] bg-tray p-5 sm:p-8 ${className}`}>{children}</div>;
 }
 
 /** A white rounded card used inside mock panels. */

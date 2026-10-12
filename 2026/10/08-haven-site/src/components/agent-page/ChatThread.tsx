@@ -16,7 +16,7 @@ export function ChatThread({ messages }: { messages: ChatMessage[] }) {
         ) : (
           <li key={i} className="max-w-[80%] self-end">
             {m.label && <p className="mb-1 text-right text-[12px] text-ink/45">{m.label}</p>}
-            <p className="rounded-2xl rounded-br-md bg-[#e4dcea] px-4 py-3 text-[16px] leading-snug text-ink">{m.text}</p>
+            <p className="rounded-xl bg-bubble px-4 py-3 text-[16px] leading-snug text-ink">{m.text}</p>
           </li>
         ),
       )}
