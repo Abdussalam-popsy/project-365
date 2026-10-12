@@ -1,4 +1,6 @@
-export const DEMO_URL = "mailto:hello@usehaven.ai?subject=Haven%20demo";
+/** "Book a demo" opens an email; pages can pass their own subject line. */
+export const demoUrl = (subject = "Haven demo") => `mailto:hello@usehaven.ai?subject=${encodeURIComponent(subject)}`;
+export const DEMO_URL = demoUrl();
 
 /** One page per agent, in the order the nav lists them. `href` is site-relative; links add the base path. */
 export const agentPages = [

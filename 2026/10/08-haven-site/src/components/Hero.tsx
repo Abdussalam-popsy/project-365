@@ -29,7 +29,12 @@ export function Hero() {
 
   const light = version.tone === "light";
   useEffect(() => {
-    document.documentElement.dataset.heroTone = light ? "light" : "dark";
+    const root = document.documentElement;
+    root.dataset.heroTone = light ? "light" : "dark";
+    // Clear it when leaving the homepage, so an agent page doesn't inherit the light hero's solid nav.
+    return () => {
+      delete root.dataset.heroTone;
+    };
   }, [light]);
 
   const Backdrop = version.Backdrop;

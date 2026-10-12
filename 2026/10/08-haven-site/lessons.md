@@ -19,7 +19,7 @@ Predict, change, observe: temporarily change `rounded-md` here to `rounded-none`
 
 ## v6: a still image, not a live 3D scene
 
-The current default is the night diorama; the visible Day / Night buttons switch its appearance and `?hero=v6-light` links directly to daylight. This changes the hero and the navbar treatment, not the rest of the site. The artwork carries the realism, while the headline and buttons remain accessible HTML. Old scenes are preserved in Archive. Mobile currently stacks the copy above the desktop artwork; dedicated portrait art is pending.
+The current default is the night diorama; the sun/moon buttons at the artwork’s lower-right switch its appearance and copy and `?hero=v6-light` links directly to daylight. This changes the hero and the navbar treatment, not the rest of the site. The artwork carries the realism, while the headline and buttons remain accessible HTML. Old scenes are preserved in Archive. Mobile currently stacks the copy above the desktop artwork; dedicated portrait art is pending.
 
 <details>
 <summary>@file: src/components/hero/DioramaHero.tsx — explained</summary>
@@ -33,8 +33,8 @@ This file renders both static hero layouts. It has no timer, canvas, animation l
 ```tsx
 export default function DioramaHero({ tone = "dark", onSelect }: HeroLayoutProps) {
   const theme = tone === "light" ? "day" : "night";
-  const images = artwork[theme];
-  const fallback = images.webp[2];
+  const scene = scenes[theme];
+  const fallback = scene.webp[2];
 ```
 
 Destructuring extracts the props, and `tone = "dark"` supplies a fallback when the prop is absent. The ternary chooses `"day"` for light tone and `"night"` otherwise. Bracket lookup selects that theme's arrays. Both formats are ordered small → medium → large: index 0 = 768 px, index 1 = 1200 px, index 2 = 1586 px. These are source-image pixel widths, not layout positions or React keys. `fallback` is the largest WebP.
@@ -47,7 +47,7 @@ function sourceSet(images: StaticImageData[], dimensions = images) {
 }
 ```
 
-`map` converts each image into a string; destructuring extracts `src`, and the arrow returns the template string. `join` combines them into one HTML attribute. For AVIF we pass `images.webp` as `dimensions`, because this Next/Turbopack version reported AVIF import widths as 100 even though Sharp and the decoded files confirm the actual dimensions. The matching WebP metadata provides accurate width descriptors. Both format arrays must therefore stay in the same order.
+`map` converts each image into a string; destructuring extracts `src`, and the arrow returns the template string. `join` combines them into one HTML attribute. For AVIF we pass `scene.webp` as `dimensions`, because this Next/Turbopack version reported AVIF import widths as 100 even though Sharp and the decoded files confirm the actual dimensions. The matching WebP metadata provides accurate width descriptors. Both format arrays must therefore stay in the same order.
 
 ### Follow one image to the screen
 
@@ -60,18 +60,18 @@ section (theme variables and labelled heading)
 ├── picture (decorative artwork)
 │   ├── source (AVIF candidates)
 │   └── img (WebP candidates and fallback)
-└── content
-    ├── intro (lead + Day / Night button group)
-    ├── h1, description
-    ├── Book a demo + Hear a call
-    └── Y Combinator backing
+├── content
+│   ├── lead, h1, description
+│   ├── Book a demo + Hear a call
+│   └── Y Combinator backing
+└── Day / Night icon group (positioned over the artwork)
 ```
 
-An AVIF-capable browser uses `source`; otherwise `img` supplies WebP. It does not need all six files. `loading="eager"` and `fetchPriority="high"` prioritise the hero. Empty `alt` plus `aria-hidden` avoid describing decorative houses to a screen reader; the headline and links remain readable. The fixed headline uses `hero.rotating[3]`: zero-based index 3 is **2am emergencies.**, not the third item. It does not rotate in v6. The primary CTA still uses Button's existing email default, and the secondary link reaches `#voice-demo`.
+An AVIF-capable browser uses `source`; otherwise `img` supplies WebP. It does not need all six files. `loading="eager"` and `fetchPriority="high"` prioritise the hero. Empty `alt` plus `aria-hidden` avoid describing decorative houses to a screen reader; the headline and links remain readable. The selected scene contains its own `prefix`, `headline` and `description` beside the image arrays. `scenes.day.headline` is **work orders moving.**; `scenes.night.headline` is **2am emergencies.**. The same `theme` key chooses the image and copy together, so they cannot drift out of sync. The shared `hero` import supplies only the eyebrow in this layout. There is no automatic cycling or clock check: a selection changes the story, and `aria-live="polite"` on the heading announces that change without moving focus. The primary CTA still uses Button's existing email default, and the secondary link reaches `#voice-demo`.
 
 ### Follow a click through the components
 
-The option array is ordered **Day, Night**. Each object supplies a version ID, visible label, and artwork theme. `as const` preserves literal values; `.map()` renders one native button per entry. `key={option.id}` gives React stable identity, while `aria-pressed={theme === option.theme}` exposes the selected state. Native buttons support Tab, Enter and Space; no custom keyboard simulation is needed. `onSelect && (...)` renders the group only when the parent supplied a callback.
+The option array is ordered **Day, Night**. Each object supplies a version ID, accessible label, and artwork theme. The visible control uses inline SVG: a circle plus rays for Day, a crescent path for Night. `aria-label` preserves each button’s name without visible text, `title` supplies a native hover hint, and `aria-hidden` keeps the decorative SVG from being announced twice. `as const` preserves literal values; `.map()` renders one native button per entry. `key={option.id}` gives React stable identity, while `aria-pressed={theme === option.theme}` exposes the selected state. Native buttons support Tab, Enter and Space; no custom keyboard simulation is needed. `onSelect && (...)` renders the group only when the parent supplied a callback.
 
 Click **Day** → `onClick={() => onSelect(option.id)}` sends `"v6-light"` → the existing `useHeroVersion.select` updates state and the URL → `Hero` passes `tone="light"` into `<Layout tone={version.tone} onSelect={select} />` → the component selects day artwork and the document tone notifies Nav. Both version entries use the same component type, so changing the tone does not unmount the focused button. The hero's section-scoped variables leave lower sections unchanged. There is no separate theme store to fall out of sync with the dev picker. The URL preserves the selection on refresh; there is no site-wide persisted theme preference.
 
@@ -81,9 +81,9 @@ Only the rendered theme's image is requested on the default page. The existing q
 
 ### Predict, change, observe
 
-Temporarily replace `hero.rotating[3]` with `hero.rotating[1]`. Which phrase appears, and does it animate?
+Temporarily change `scenes.day.headline` to `"leasing leads."`. Does the night headline also change?
 
-<details><summary>Answer</summary>It becomes “leasing leads.” and stays still. Changing an array lookup does not create a timer. Restore index 3 afterwards.</details>
+<details><summary>Answer</summary>No. Only the day object changes; selecting Night still reads `scenes.night.headline`. Both scenes stay still because changing a lookup does not create a timer. Restore the daytime headline afterwards.</details>
 </details>
 
 <details>
@@ -103,7 +103,11 @@ At a viewport width of 1440 px, `4.2vw = 60.48px`, which lies inside the 40–72
 
 Below 768 px, the hero becomes a column. The picture is first in the DOM but `order: 1` places the decorative artwork after the copy visually. It is no longer absolute, so it reserves space instead of sitting behind small-screen text. At 390 px wide, its `aspect-ratio: 1.3` reserves `390 / 1.3 = 300px` of height. This is a temporary composition until portrait assets arrive. A short static gradient softens the upper image edge; it isn't recalculated by an animation loop.
 
-The `.intro` flex row can wrap on narrow screens so the theme control never squeezes the eyebrow text. The group uses section colours, 44px minimum button heights, a keyboard outline and `[aria-pressed="true"]` styling. That attribute selector makes accessibility state and visible selection agree. Reduced-motion preferences remove the control's colour transitions. CTA corners, focus outlines and pressed feedback now live in the shared Button component rather than this module. There is no entrance animation that hides the headline while JavaScript loads.
+The mobile hero overrides its desktop minimum with `min-height: 0`, allowing the section to end exactly where the image ends. Previously it forced `100svh`: in the reproduced 390 × 1000 viewport the image ended at 823.19px but the section ended at 1000px, leaving **176.81px** of blank background. This was leftover minimum-height space, not an image margin. Removing that minimum makes the image bottom, hero bottom and next-section top coincide. No negative margin or change to the next section is needed.
+
+The control is a sibling of the copy, absolutely positioned 24px above the hero bottom and `clamp(24px, 3vw, 48px)` from the right. On mobile the hero now ends at the picture, so that same position stays inside the artwork. It does not sit between the eyebrow and headline or add a row of height. Its solid theme-coloured backing keeps the icons readable over either scene without a blur filter. The 20px SVG sits inside a 44 × 44px button, preserving a practical touch target. The group uses a keyboard outline and `[aria-pressed="true"]` styling. That attribute selector makes accessibility state and visible selection agree. Reduced-motion preferences remove the control's colour transitions. CTA corners, focus outlines and pressed feedback now live in the shared Button component rather than this module. There is no entrance animation that hides the headline while JavaScript loads.
+
+The description reserves three lines with `min-height: 4.35em`: `3 × 1.45` (its line height) = `4.35`. At 16px mobile text, that is 69.6px. Shorter theme copy therefore does not pull the CTAs upward, while longer text can still expand naturally.
 
 ### Predict, change, observe
 
@@ -261,6 +265,8 @@ Changing `key` tells React "this is a different element". `AnimatePresence` keep
 
 ### The backdrop
 
+The document-tone effect also returns cleanup: `delete root.dataset.heroTone` removes the attribute when Hero unmounts. This preserves the agent-pages integration: leaving the daylight homepage must not leave its navbar treatment attached to a different route. Prediction: choose Day, then open Maintenance from the nav; once the route mounts, `<html>` no longer has `data-hero-tone`.
+
 For backdrop-based versions, `version.Backdrop` renders inside the shared section's absolute container. `-z-10` + `isolate` keep it behind the centred copy. For full layouts such as v6, `Hero` returns `<Layout />` plus the comparison tools instead; the static image and left-aligned text live in `DioramaHero`.
 
 </details>
@@ -390,6 +396,32 @@ Remove `pr-16` from the `<ul>`. What do you see? <details><summary>Answer</summa
 Add the real SVG as a new entry in `marks` (or as an `<img>` from `public/`) under the same name used in `customers`.
 
 </details>
+
+## Agent pages (`/agents/maintenance`, `/agents/leasing`, `/agents/receptionist`)
+
+Each agent gets its own page. The pieces are shared, so Leasing and Receptionist reuse everything Maintenance uses:
+
+```
+src/content/agents/types.ts        ← the shape of a page's content (chips, chat messages, work orders…)
+src/content/agents/maintenance.ts  ← all Maintenance copy and sample data, nothing visual
+src/content/agents/leasing.ts      ← same for Leasing
+src/content/agents/receptionist.ts ← same for Receptionist
+src/content/agents/shared.ts       ← content every page shares (the PMS list)
+src/components/agent-page/          ← reusable sections and mocks
+src/app/agents/maintenance/page.tsx ← picks the sections, in order
+```
+
+- **Route = folder.** Next's App Router turns `src/app/agents/maintenance/page.tsx` into the URL `/agents/maintenance`. No router config.
+- **Copy lives in content files.** To reword something, edit `maintenance.ts`. Components only decide how it looks.
+- **Highlighted headline words** are data: `title: ["Every work order, carried from ", { highlight: "the first text" }, …]`. `AgentHero` renders plain strings as-is and wraps `{ highlight }` pieces in a lilac `<span>`. `typeof part === "string"` is how it tells them apart.
+- **Mocks** (chat bubbles, work-order cards, status chips, the lifecycle diagram) follow the client's screenshots: rounded corners, soft lilac-grey bubbles for the resident, white raised cards for Haven. Chip colours are `red / amber / green / violet / neutral` in `agent-page/ui.tsx`; pass `onDark` on dark backgrounds so the neutral grey stays visible.
+- **Book a demo** on an agent page opens an email with its own subject (`demoUrl("Maintenance Agent demo")`), so Haven can tell which page the request came from.
+- **Client's colours for this style** are tokens in `globals.css`: `page` (`#f6f3f8`, the light background instead of pure white), `tray` (`#ede8f1`, behind the mocks) and `bubble` (`#e6e0e9`, the resident's chat bubbles). Haven's replies stay white.
+- **Receptionist's call log** scrolls forever with no jump: `CallLog` renders the list twice, and the CSS animation `ticker` moves it up by exactly 50%, which is one full copy. At that moment the second copy sits exactly where the first started, so the loop restarts invisibly. The second copy has `aria-hidden` so screen readers only hear the list once.
+- **A hydration bug** showed up as a "1 Issue" badge: the nav menus used React's `useId()` to link each button to its panel (`aria-controls`), and the server and browser produced different ids. The nav appears once per page, so plain fixed ids (`"agents-menu"`, `"mobile-menu"`) do the job and can't disagree.
+- Left out on purpose for now: the client's stats ("[0,000] work orders") and customers table ("[Units]", "[PMS]"), because their numbers are still placeholders.
+
+<details><summary>Predict, change, observe</summary>In `maintenance.ts`, change the Invoiced step's label tone from `"neutral"` to `"green"`. What happens in the hero diagram? <details><summary>Answer</summary>The "Invoiced" label turns soft green, like "Confirmed". The `onDark` swap only applies to neutral chips, so green looks the same on dark as on light. Change it back.</details></details>
 
 ## Run and check
 

@@ -40,22 +40,17 @@
   padding: clamp(160px, 13vw, 200px) clamp(32px, 6vw, 96px) 80px;
 }
 
-.intro {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: space-between;
-  gap: 16px;
-  max-width: 570px;
-  margin-bottom: 24px;
-}
-
 .lead {
+  margin-bottom: 24px;
   font-size: 15px;
   color: var(--scene-muted);
 }
 
 .themeSwitch {
+  position: absolute;
+  right: clamp(24px, 3vw, 48px);
+  bottom: 24px;
+  z-index: 1;
   display: flex;
   padding: 3px;
   border: 1px solid var(--scene-muted);
@@ -64,9 +59,11 @@
 }
 
 .themeSwitch button {
-  min-width: 60px;
-  min-height: 44px;
-  padding: 8px 12px;
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  padding: 10px;
   border-radius: 6px;
   color: var(--scene-muted);
   font-size: 13px;
@@ -105,6 +102,7 @@
 }
 
 .description {
+  min-height: 4.35em;
   max-width: 370px;
   margin-top: 28px;
   font-size: 18px;
@@ -148,7 +146,7 @@
   .hero {
     display: flex;
     flex-direction: column;
-    min-height: 100svh;
+    min-height: 0;
   }
 
   .content {
