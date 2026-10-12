@@ -8,6 +8,7 @@ import { PhoneIcon } from "./PhoneIcon";
 import { HeroPerfMeter } from "./hero/HeroPerfMeter";
 import { HeroVersionPicker } from "./hero/HeroVersionPicker";
 import { useHeroVersion } from "./hero/useHeroVersion";
+import { useDevToolsVisible } from "@/lib/devTools";
 
 const ease = [0.16, 1, 0.3, 1] as const;
 
@@ -15,6 +16,7 @@ export function Hero() {
   const [index, setIndex] = useState(0);
   const reduce = useReducedMotion();
   const { version, select, comparing } = useHeroVersion();
+  const devToolsVisible = useDevToolsVisible();
 
   useEffect(() => {
     if (reduce) return;
@@ -29,7 +31,7 @@ export function Hero() {
 
   const Backdrop = version.Backdrop;
   const Layout = version.Layout;
-  const tools = comparing && (
+  const tools = comparing && devToolsVisible && (
     <>
       <HeroVersionPicker current={version} onSelect={select} />
       <HeroPerfMeter />

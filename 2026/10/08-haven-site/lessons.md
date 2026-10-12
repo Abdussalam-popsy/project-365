@@ -284,12 +284,17 @@ Draw the glow once into a fixed image and only move it with CSS transforms. That
 
 The hero background can be swapped. Every design is kept as a numbered version in [`src/components/hero/versions.tsx`](src/components/hero/versions.tsx), so we can compare them:
 
-- `?hero=v5` and `?hero=v5-light` show the detached-house neighbourhood in its dark and light themes (see "v5 neighbourhood" below). **v5 is the default**, the one real visitors see.
-- v1 to v4 are **archived**: kept in the code, still reachable by link, but hidden from the switcher by default.
+- `?hero=v5` and `?hero=v5-light` show the detached-house neighbourhood in its dark and light themes (see "v5 neighbourhood" below). **v5 is the default**, the one real visitors see, until a new hero design replaces it.
+- **Every version is archived** for now (v1 to v5-light), so the switcher starts clean for the next round of hero designs. Archived versions stay in the code and are still reachable by link.
   - `?hero=v1` shows the signal grid.
   - `?hero=v2` shows the 3D skyline.
   - `?hero=v4` shows the low-rise residential version of the skyline (see "v4 residential skyline" below).
-- A switcher pill in the corner appears in dev, or whenever a `?hero=` link is opened. It lists only the active versions plus an **Archive (5)** button that reveals the rest.
+- A switcher pill in the corner appears in dev, or whenever a `?hero=` link is opened. It lists only the active versions (plus the one you're looking at) and an **Archive** button that reveals the rest.
+
+### Showing and hiding the dev overlays
+All the floating dev tools (hero switcher, perf meter, **Tune**, the feedback toolbar) are **hidden by default**. Press **`** (backtick, the key left of 1) to show them; press it again to hide them. The choice is remembered in your browser. Adding `?tools` to the URL always shows them. Next.js's own "N" badge is switched off in `next.config.ts` (`devIndicators: false`).
+
+How it works ([`src/lib/devTools.ts`](src/lib/devTools.ts)): one module-level `visible` flag, a `keydown` listener installed once, and a `useDevToolsVisible()` hook that each overlay calls. The listener ignores the key while you're typing in a field, so a backtick in a text box doesn't toggle anything. The hook returns `false` on the first render (the server can't read `localStorage`), then the real value after mount, so the server HTML and the first browser render always match.
 
 <details>
 <summary>@file: src/components/hero/HeroVersionPicker.tsx — the Archive toggle, explained</summary>

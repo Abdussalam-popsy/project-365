@@ -9,6 +9,7 @@ import {
   tuningEnabled,
   visibleTuningGroups,
 } from "@/lib/tuning";
+import { useDevToolsVisible } from "@/lib/devTools";
 
 const decimals = (step: number) => (String(step).split(".")[1] ?? "").length;
 
@@ -19,13 +20,14 @@ export function DevTuner() {
   const [copied, setCopied] = useState(false);
   const [collapsed, setCollapsed] = useState<ReadonlySet<string>>(new Set());
   const [, rerender] = useState(0);
+  const devToolsVisible = useDevToolsVisible();
 
   useEffect(() => {
     setEnabled(tuningEnabled());
     return subscribeTuning(() => rerender((n) => n + 1));
   }, []);
 
-  if (!enabled) return null;
+  if (!enabled || !devToolsVisible) return null;
   const groups = visibleTuningGroups();
   const toggleGroup = (id: string) =>
     setCollapsed((prev) => {
