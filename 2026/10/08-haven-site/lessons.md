@@ -559,7 +559,7 @@ The hero background can be swapped. Every design is kept as a numbered version i
 
 ### Showing and hiding the dev overlays
 
-All the floating dev tools (hero switcher, perf meter, **Tune**, the feedback toolbar) are **hidden by default**. Press **`** (backtick, the key left of 1) to show them; press it again to hide them. The choice is remembered in your browser. Adding `?tools` to the URL always shows them. Next.js's own "N" badge is switched off in `next.config.ts` (`devIndicators: false`).
+All the floating dev tools (hero switcher, perf meter, **Tune**, the feedback toolbar) are **hidden by default**. Press **`** or **§** to show them, and again to hide them. On a US keyboard the key left of 1 types `; on a UK Mac it types § (the ` key sits next to left Shift), so both are accepted, matched by character and by physical key (`e.code` `Backquote` / `IntlBackslash`). The choice is remembered in your browser. Adding `?tools` to the URL always shows them. Next.js's own "N" badge is switched off in `next.config.ts` (`devIndicators: false`).
 
 How it works ([`src/lib/devTools.ts`](src/lib/devTools.ts)): one module-level `visible` flag, a `keydown` listener installed once, and a `useDevToolsVisible()` hook that each overlay calls. The listener ignores the key while you're typing in a field, so a backtick in a text box doesn't toggle anything. The hook returns `false` on the first render (the server can't read `localStorage`), then the real value after mount, so the server HTML and the first browser render always match.
 
