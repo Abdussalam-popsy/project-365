@@ -24,7 +24,7 @@ export function EstimateMock({ estimate }: { estimate: Estimate }) {
 
       <MockCard className="ml-6 flex flex-wrap items-center justify-between gap-3 px-5 py-4 sm:ml-12">
         <p className="text-[14px] text-ink/70">{estimate.approval}</p>
-        <span className="rounded-full bg-violet px-4 py-1.5 text-[13px] font-medium text-white">Approve</span>
+        <span className="rounded-full bg-heather px-4 py-1.5 text-[13px] font-medium text-white">Approve</span>
       </MockCard>
 
       <p className="ml-6 flex items-center gap-2 text-[13px] text-ink/55 sm:ml-12">

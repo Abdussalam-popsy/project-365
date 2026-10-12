@@ -42,11 +42,11 @@ export default function LeasingPage() {
         />
 
         <Section>
-          <SectionIntro eyebrow={why.eyebrow} title={why.title} body={why.body} centered />
+          <SectionIntro title={why.title} body={why.body} centered />
         </Section>
 
         <Section surface="white">
-          <SectionIntro eyebrow={features.eyebrow} title={features.title} />
+          <SectionIntro title={features.title} />
           <FeatureGrid items={features.items} />
         </Section>
 
@@ -56,7 +56,7 @@ export default function LeasingPage() {
         </Section>
 
         <Section surface="white">
-          <SectionIntro eyebrow={stops.eyebrow} title={stops.title} body={stops.body} />
+          <SectionIntro title={stops.title} body={stops.body} />
           <LaneSplit lanes={stops.lanes} />
         </Section>
 

@@ -1,25 +1,33 @@
 import type { ChatMessage, WorkOrder } from "@/content/agents/types";
 import { Chip, DateChip, DocIcon, MockCard } from "./ui";
 
-/** Message bubbles: the other side on the right in soft lilac-grey, Haven on the left as a raised white card. */
+/** One message: the resident's grey bubble on the right, or a raised white card on the left (Haven or another party). */
+export function ChatBubble({ message: m }: { message: ChatMessage }) {
+  return m.from === "them" ? (
+    <>
+      {m.label && <p className="mb-1 text-right text-[12px] text-ink/45">{m.label}</p>}
+      <p className="rounded-xl bg-bubble px-4 py-3 text-[16px] leading-snug text-ink">{m.text}</p>
+    </>
+  ) : (
+    <MockCard className="px-5 py-4">
+      {m.label && <p className="text-[13px] font-medium text-heather/85">{m.label}</p>}
+      <p className="mt-1 text-[16px] leading-snug text-ink">{m.text}</p>
+    </MockCard>
+  );
+}
+
+/** Bubble alignment: the resident on the right, everyone else on the left. */
+export const bubbleSide = (m: ChatMessage) => (m.from === "them" ? "max-w-[80%] self-end" : "max-w-[88%] self-start");
+
+/** A static conversation. */
 export function ChatThread({ messages }: { messages: ChatMessage[] }) {
   return (
     <ul className="flex flex-col gap-4">
-      {messages.map((m, i) =>
-        m.from === "haven" ? (
-          <li key={i} className="max-w-[88%] self-start">
-            <MockCard className="px-5 py-4">
-              {m.label && <p className="text-[13px] font-medium text-plum-800/80">{m.label}</p>}
-              <p className="mt-1 text-[16px] leading-snug text-ink">{m.text}</p>
-            </MockCard>
-          </li>
-        ) : (
-          <li key={i} className="max-w-[80%] self-end">
-            {m.label && <p className="mb-1 text-right text-[12px] text-ink/45">{m.label}</p>}
-            <p className="rounded-xl bg-bubble px-4 py-3 text-[16px] leading-snug text-ink">{m.text}</p>
-          </li>
-        ),
-      )}
+      {messages.map((m, i) => (
+        <li key={i} className={bubbleSide(m)}>
+          <ChatBubble message={m} />
+        </li>
+      ))}
     </ul>
   );
 }

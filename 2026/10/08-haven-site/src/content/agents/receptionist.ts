@@ -32,13 +32,11 @@ export const receptionistCallLog: CallLogEntry[] = [
 ];
 
 export const receptionistAlways = {
-  eyebrow: "Around the clock",
   title: "The line is never busy.",
   body: "Every caller gets a real answer on the first ring: recognised, understood, and either helped or handed to a person. A call at 2am is handled the same way as one on a Tuesday morning.",
 };
 
 export const receptionistFeatures = {
-  eyebrow: "What it does",
   title: "Every caller recognised and looked after.",
   items: [
     { title: "Answers instantly, around the clock", body: "First ring, every time. After-hours calls get the same care as Tuesday morning." },
@@ -51,7 +49,6 @@ export const receptionistFeatures = {
 };
 
 export const receptionistCall = {
-  eyebrow: "A real hand-off",
   title: "Hear it answer the phone.",
   body: [
     "An after-hours leak, picked up on the first ring. The Receptionist confirms who is calling and where, asks the one question that decides how urgent it is, and puts the resident through to your on-call line.",
@@ -82,7 +79,6 @@ export const receptionistBeats = {
 };
 
 export const receptionistStops = {
-  eyebrow: "Where it stops",
   title: "It knows what it shouldn't handle.",
   body: "The Receptionist runs inside the same harness as every Haven agent: its Skills set out what it may do, and anything outside them waits for a person. Emergencies, legal questions and judgment calls are handed off, never improvised.",
   lanes: {

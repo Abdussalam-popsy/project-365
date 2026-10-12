@@ -1,7 +1,7 @@
 // Layout building blocks shared by every agent page.
-import type { TitledText } from "@/content/agents/types";
+import type { TitlePart, TitledText } from "@/content/agents/types";
 import { Reveal } from "../Reveal";
-import { Eyebrow } from "../SectionHeading";
+import { TitleText } from "./TitleText";
 
 type Surface = "mist" | "white" | "ink";
 const surfaces: Record<Surface, string> = {
@@ -20,20 +20,21 @@ export function Section({ id, surface = "mist", children }: { id?: string; surfa
 }
 
 interface IntroProps {
-  eyebrow?: string;
-  title: string;
+  /** Plain text, or pieces with `{ highlight: "…" }` for the accent colour. */
+  title: string | TitlePart[];
   body?: string | string[];
   dark?: boolean;
   centered?: boolean;
 }
 
-/** Eyebrow, heading and one or two paragraphs. */
-export function SectionIntro({ eyebrow, title, body, dark = false, centered = false }: IntroProps) {
+/** Heading and one or two paragraphs. */
+export function SectionIntro({ title, body, dark = false, centered = false }: IntroProps) {
   const paragraphs = body === undefined ? [] : Array.isArray(body) ? body : [body];
   return (
     <Reveal className={centered ? "mx-auto max-w-[760px] text-center" : "max-w-[620px]"}>
-      {eyebrow && <Eyebrow tone={dark ? "dark" : "light"}>{eyebrow}</Eyebrow>}
-      <h2 className={`${eyebrow ? "mt-4" : ""} text-[36px] leading-[1.06] font-light tracking-[-0.035em] sm:text-[48px]`}>{title}</h2>
+      <h2 className="text-[36px] leading-[1.06] font-light tracking-[-0.035em] sm:text-[48px]">
+        <TitleText title={title} dark={dark} />
+      </h2>
       {paragraphs.map((p) => (
         <p key={p} className={`mt-5 text-[17px] leading-relaxed ${dark ? "text-white/60" : "text-ink/60"}`}>
           {p}
@@ -62,7 +63,7 @@ export function StageGrid({ stages }: { stages: TitledText[] }) {
       {stages.map((stage, i) => (
         <Reveal key={stage.title} delay={i * 0.05} className="h-full">
           <div className="flex h-full flex-col rounded-2xl border border-ink/[0.07] bg-white p-6">
-            <span className="font-mono text-[13px] text-violet">{String(i + 1).padStart(2, "0")}</span>
+            <span className="font-mono text-[13px] text-heather">{String(i + 1).padStart(2, "0")}</span>
             <h3 className="mt-6 text-[20px] tracking-[-0.01em]">{stage.title}</h3>
             <p className="mt-2 text-[15px] leading-relaxed text-ink/55">{stage.body}</p>
           </div>

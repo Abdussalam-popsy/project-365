@@ -8,12 +8,13 @@ import { AgentHero } from "@/components/agent-page/AgentHero";
 import { LifecycleVisual } from "@/components/agent-page/LifecycleVisual";
 import { FeatureGrid, Section, SectionIntro, Split, StageGrid } from "@/components/agent-page/sections";
 import { ChatThread, WorkOrderCard } from "@/components/agent-page/ChatThread";
-import { EventLog } from "@/components/agent-page/EventLog";
+import { DispatchLogMotion } from "@/components/agent-page/motion/DispatchLogMotion";
+import { ScheduleThreadMotion } from "@/components/agent-page/motion/ScheduleThreadMotion";
 import { CallTranscript } from "@/components/agent-page/CallTranscript";
 import { HumanLine } from "@/components/agent-page/HumanLine";
 import { FaqList, SystemsList } from "@/components/agent-page/FaqList";
 import { EstimateMock } from "@/components/agent-page/maintenance/EstimateMock";
-import { Chip, MockPanel } from "@/components/agent-page/ui";
+import { MockPanel } from "@/components/agent-page/ui";
 import {
   maintenanceApprovals as approvals, maintenanceCall as call, maintenanceCta as cta, maintenanceDispatch as dispatch,
   maintenanceFaq as faq, maintenanceHero as hero, maintenanceHumanLine as humanLine, maintenanceLifecycle as lifecycle,
@@ -37,7 +38,7 @@ export default function MaintenancePage() {
 
         <Section surface="white">
           <Split
-            text={<SectionIntro eyebrow={triage.eyebrow} title={triage.title} body={triage.body} />}
+            text={<SectionIntro title={triage.title} body={triage.body} />}
             visual={
               <MockPanel className="flex flex-col gap-6">
                 <ChatThread messages={triage.chat} />
@@ -49,25 +50,16 @@ export default function MaintenancePage() {
         </Section>
 
         <Section>
-          <SectionIntro eyebrow={dispatch.eyebrow} title={dispatch.title} body={dispatch.body} />
+          <SectionIntro title={dispatch.title} body={dispatch.body} />
           <div className="mt-14 flex flex-col gap-16">
             <Split
               flip
               text={<BlockText {...dispatch.blocks[0]} />}
-              visual={<EventLog heading={dispatch.log.heading} title={dispatch.log.vendor} date={dispatch.log.date} events={dispatch.log.events} />}
+              visual={<DispatchLogMotion heading={dispatch.log.heading} title={dispatch.log.vendor} date={dispatch.log.date} events={dispatch.log.events} />}
             />
             <Split
               text={<BlockText {...dispatch.blocks[1]} />}
-              visual={
-                <MockPanel className="flex flex-col gap-5">
-                  <div className="flex flex-wrap gap-2">
-                    {dispatch.threadStatus.map((chip) => (
-                      <Chip key={chip.label} chip={chip} />
-                    ))}
-                  </div>
-                  <ChatThread messages={dispatch.thread} />
-                </MockPanel>
-              }
+              visual={<ScheduleThreadMotion messages={dispatch.thread} order={dispatch.threadOrder} />}
             />
           </div>
         </Section>
@@ -76,7 +68,7 @@ export default function MaintenancePage() {
           <Split
             text={
               <>
-                <SectionIntro eyebrow={approvals.eyebrow} title={approvals.title} body={approvals.body} />
+                <SectionIntro title={approvals.title} body={approvals.body} />
                 <ul className="mt-10 flex flex-col">
                   {approvals.cards.map((card) => (
                     <li key={card.title} className="border-t border-ink/10 py-5">
@@ -93,13 +85,13 @@ export default function MaintenancePage() {
 
         <Section id="voice-demo" surface="ink">
           <Split
-            text={<SectionIntro eyebrow={call.eyebrow} title={call.title} body={call.body} dark />}
+            text={<SectionIntro title={call.title} body={call.body} dark />}
             visual={<CallTranscript sample={call.sample} />}
           />
         </Section>
 
         <Section>
-          <SectionIntro eyebrow={humanLine.eyebrow} title={humanLine.title} body={humanLine.body} centered />
+          <SectionIntro title={humanLine.title} body={humanLine.body} centered />
           <HumanLine agent={humanLine.agent} you={humanLine.you} footnote={humanLine.footnote} />
         </Section>
 

@@ -1,6 +1,6 @@
 // Maintenance Agent page copy. Facts and sample data follow the client's reference; the wording is ours.
 import type {
-  CallSample, ChatMessage, Chip, Faq, LifecycleStep, LineColumn, LogEvent, TitlePart, TitledText, WorkOrder,
+  CallSample, ChatMessage, Chip, Faq, LifecycleStep, LineColumn, LogEvent, StatusTimeline, TitlePart, TitledText, WorkOrder,
 } from "./types";
 import { systemsOfRecord } from "./shared";
 
@@ -27,7 +27,7 @@ export const maintenanceLifecycle: LifecycleStep[] = [
 ];
 
 export const maintenanceStages = {
-  title: "Seven stages. One work order the whole way.",
+  title: ["Seven stages. ", { highlight: "One work order" }, " the whole way."] as TitlePart[],
   body: "Most tools let go after intake. Haven stays with the work order through every hand-off, and writes each step back to your PMS as it happens.",
   items: [
     { title: "Intake", body: "Texts, calls and portal tickets answered the moment they arrive. Photos read, repeat reports merged." },
@@ -41,7 +41,6 @@ export const maintenanceStages = {
 };
 
 export const maintenanceTriage = {
-  eyebrow: "Intake and triage",
   title: "Understood before anyone is sent out.",
   body: [
     "Residents describe symptoms, not causes. Haven reads the request, the photos and the unit's history, asks what a seasoned coordinator would ask, and works out the problem, the urgency and the right trade, usually before your team has opened the ticket.",
@@ -75,7 +74,6 @@ export const maintenanceTriage = {
 };
 
 export const maintenanceDispatch = {
-  eyebrow: "Dispatch and scheduling",
   title: "Dispatched, scheduled and confirmed finished.",
   body: "The vendor you would have chosen, reached the way vendors actually respond, and followed through to the end. The work order is assigned in your PMS before anyone is contacted.",
   log: {
@@ -103,20 +101,23 @@ export const maintenanceDispatch = {
     },
   ] as TitledText[],
   thread: [
-    { from: "them", label: "Knox HVAC", text: "I can do Tuesday, 9 to 11." },
-    { from: "them", label: "Resident", text: "Tuesday works for me." },
+    { from: "party", label: "Knox HVAC", text: "I can do Tuesday, 9 to 11." },
+    { from: "them", text: "Tuesday works for me." },
     { from: "haven", label: "Haven · Wednesday 10:02am", text: "Is the job finished, or is more work needed? Reply DONE or MORE." },
-    { from: "them", label: "Knox HVAC", text: "DONE" },
+    { from: "party", label: "Knox HVAC", text: "DONE" },
   ] as ChatMessage[],
-  threadStatus: [
-    { label: "Vendor accepted", tone: "green" },
-    { label: "Scheduled · Tue 9–11am", tone: "violet" },
-    { label: "Resolved", tone: "neutral" },
-  ] as WorkOrder["chips"],
+  /** The work order above the thread; its chip changes as messages arrive (`from` = messages shown so far). */
+  threadOrder: {
+    title: "WO-9002 · No heat",
+    status: [
+      { from: 0, chip: { label: "Vendor accepted", tone: "amber" } },
+      { from: 2, chip: { label: "Scheduled · Tue 9–11am", tone: "green" } },
+      { from: 4, chip: { label: "Resolved", tone: "violet" } },
+    ],
+  } as StatusTimeline,
 };
 
 export const maintenanceApprovals = {
-  eyebrow: "Estimates and invoices",
   title: "Estimates, approvals and invoices, without chasing anyone.",
   body: "When a vendor finds more work, Haven collects a structured estimate and checks it against that property's spending limit.",
   cards: [
@@ -137,7 +138,6 @@ export const maintenanceApprovals = {
 };
 
 export const maintenanceCall = {
-  eyebrow: "After hours",
   title: "Listen to it handle a call.",
   body: [
     "An after-hours no-heat call, from hello to a booked technician. The agent recognises the unit from the caller's number, asks the one question that matters, applies your emergency rule and books within your authority. Nobody waits on hold.",
@@ -161,7 +161,6 @@ export const maintenanceCall = {
 };
 
 export const maintenanceHumanLine = {
-  eyebrow: "The human line",
   title: "Instant where it can be undone. Waiting where it can't.",
   body: "Property management is fiduciary work. The Maintenance Agent moves at machine speed on anything inside your policy, and brings you only the decisions that involve money, risk or judgment.",
   agent: {

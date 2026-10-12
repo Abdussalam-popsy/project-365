@@ -28,17 +28,17 @@ export default function ReceptionistPage() {
         <AgentHero {...hero} demoSubject={meta.demoSubject} visual={<CallLog entries={callLog} />} />
 
         <Section>
-          <SectionIntro eyebrow={always.eyebrow} title={always.title} body={always.body} centered />
+          <SectionIntro title={always.title} body={always.body} centered />
         </Section>
 
         <Section surface="white">
-          <SectionIntro eyebrow={features.eyebrow} title={features.title} />
+          <SectionIntro title={features.title} />
           <FeatureGrid items={features.items} />
         </Section>
 
         <Section id="voice-demo" surface="ink">
           <Split
-            text={<SectionIntro eyebrow={call.eyebrow} title={call.title} body={call.body} dark />}
+            text={<SectionIntro title={call.title} body={call.body} dark />}
             visual={<CallTranscript sample={call.sample} />}
           />
         </Section>
@@ -49,7 +49,7 @@ export default function ReceptionistPage() {
         </Section>
 
         <Section surface="white">
-          <SectionIntro eyebrow={stops.eyebrow} title={stops.title} body={stops.body} />
+          <SectionIntro title={stops.title} body={stops.body} />
           <LaneSplit lanes={stops.lanes} />
         </Section>
 

@@ -31,7 +31,7 @@ export function SystemsList({ live, next }: { live: string[]; next: string[] }) 
       {next.map((name) => (
         <li key={name} className="flex items-center gap-2 rounded-full border border-dashed border-ink/15 px-5 py-2.5 text-[16px] text-ink/50">
           {name}
-          <span className="text-[11px] tracking-[0.1em] text-violet uppercase">Next</span>
+          <span className="text-[11px] tracking-[0.1em] text-heather uppercase">Next</span>
         </li>
       ))}
     </ul>

@@ -19,6 +19,8 @@
   --color-page: #f6f3f8;
   /* Agent-page dark background (client's reference): darker and more neutral than ink. */
   --color-night: #0e0b10;
+  /* Muted plum for agent-page accents and highlighted heading words; the button violet is too saturated here. */
+  --color-heather: #5c3a70;
 }
 
 html {
