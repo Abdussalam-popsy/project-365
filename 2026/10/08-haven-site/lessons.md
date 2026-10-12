@@ -299,7 +299,7 @@ The text has 31 words. Word `i = 10` gets `[10/31, 11/31]` ≈ `[0.323, 0.355]`.
 
 Alternating layout: `i % 2` is `0` for the 1st and 3rd rows and `1` for the 2nd. When it's `1`, the text gets `md:order-2` and the mock gets `md:order-1`, swapping sides on screens ≥ 768px only (`md:` is a media query, not nesting). On mobile they stack in source order.
 
-In the mocks, each item uses `whileInView` with `delay: 0.3 + i * 0.45`. For the 4 transcript lines that's 0.3s, 0.75s, 1.2s, 1.65s, so the call "plays out"; the work-order strip waits for `0.3 + 4 * 0.45 = 2.1s`.
+**The mocks** ([`AgentMocks.tsx`](./src/components/AgentMocks.tsx)) are built from the agent pages' pieces: `MockPanel` (the rounded tray), `MockCard` (white rounded card), `LoopingChat` (grey resident bubbles, Haven's white cards, then the work order) and `Chip`. They replay on the shared `SequenceReveal` loop, so the homepage and the agent pages look and move the same way.
 
 **Learn more buttons.** Maintenance and Leasing have a `link` in `agents` (in `site.ts`); "Coming soon" doesn't. `{"link" in agent && <Button …/>}` only renders the button when that key exists. `in` checks whether an object _has_ a key, and TypeScript then knows `agent.link` is safe to read. The targets are `MAINTENANCE_URL` / `LEASING_URL` at the top of `site.ts` (placeholders, `#`, until the pages exist).
 

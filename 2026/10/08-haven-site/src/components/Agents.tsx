@@ -11,7 +11,7 @@ const mocks = {
 };
 
 export function Agents() {
-  // overflow-x-clip: the mock cards' glow reaches 80px past them, which on phones would make the page scroll sideways.
+  // overflow-x-clip: a safety net so nothing in the mocks can make the page scroll sideways on phones.
   return (
     <section id="agents" className="overflow-x-clip bg-page px-6 pb-32">
       <Reveal className="mx-auto max-w-[720px] text-center">
