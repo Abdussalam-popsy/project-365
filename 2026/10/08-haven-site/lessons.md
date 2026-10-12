@@ -219,6 +219,26 @@ Add the real SVG as a new entry in `marks` (or as an `<img>` from `public/`) und
 
 </details>
 
+## Agent pages (`/agents/maintenance`, …)
+
+Each agent gets its own page. The pieces are shared, so Leasing and Receptionist reuse everything Maintenance uses:
+
+```
+src/content/agents/types.ts        ← the shape of a page's content (chips, chat messages, work orders…)
+src/content/agents/maintenance.ts  ← all Maintenance copy and sample data, nothing visual
+src/components/agent-page/          ← reusable sections and mocks
+src/app/agents/maintenance/page.tsx ← picks the sections, in order
+```
+
+- **Route = folder.** Next's App Router turns `src/app/agents/maintenance/page.tsx` into the URL `/agents/maintenance`. No router config.
+- **Copy lives in content files.** To reword something, edit `maintenance.ts`. Components only decide how it looks.
+- **Highlighted headline words** are data: `title: ["Every work order, carried from ", { highlight: "the first text" }, …]`. `AgentHero` renders plain strings as-is and wraps `{ highlight }` pieces in a lilac `<span>`. `typeof part === "string"` is how it tells them apart.
+- **Mocks** (chat bubbles, work-order cards, status chips, the lifecycle diagram) follow the client's screenshots: rounded corners, soft lilac-grey bubbles for the resident, white raised cards for Haven. Chip colours are `red / amber / green / violet / neutral` in `agent-page/ui.tsx`; pass `onDark` on dark backgrounds so the neutral grey stays visible.
+- **Book a demo** on an agent page opens an email with its own subject (`demoUrl("Maintenance Agent demo")`), so Haven can tell which page the request came from.
+- Left out on purpose for now: the client's stats ("[0,000] work orders") and customers table ("[Units]", "[PMS]"), because their numbers are still placeholders.
+
+<details><summary>Predict, change, observe</summary>In `maintenance.ts`, change the Invoiced step's label tone from `"neutral"` to `"green"`. What happens in the hero diagram? <details><summary>Answer</summary>The "Invoiced" label turns soft green, like "Confirmed". The `onDark` swap only applies to neutral chips, so green looks the same on dark as on light. Change it back.</details></details>
+
 ## Run and check
 
 ```bash
