@@ -17,7 +17,7 @@ export function Process() {
         <ol className="mt-16 grid gap-10 md:grid-cols-4">
           {process.map((p, i) => (
             <Reveal key={p.step} delay={i * 0.08}>
-              <li className="border-t-2 border-violet pt-6">
+              <li className="border-t-2 border-heather pt-6">
                 <span className="text-[13px] text-ink/45 tabular-nums">{p.step}</span>
                 <h3 className="mt-3 text-[22px] tracking-[-0.02em]">{p.title}</h3>
                 <p className="mt-2 text-[15px] leading-relaxed text-ink/55">{p.body}</p>

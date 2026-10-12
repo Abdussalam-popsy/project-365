@@ -19,7 +19,7 @@ export function HeroVersionPicker({ current, onSelect }: HeroVersionPickerProps)
     : [...activeVersions, ...(current.archived ? [current] : [])];
 
   return (
-    <div className="fixed right-20 bottom-4 z-50 flex max-w-[calc(100vw-6rem)] flex-wrap items-center gap-1 rounded-full border border-white/15 bg-ink/80 p-1 text-[12px] text-white/70 backdrop-blur-md">
+    <div className="fixed right-20 bottom-4 z-50 flex max-w-[calc(100vw-6rem)] flex-wrap items-center gap-1 rounded-full border border-white/15 bg-night/80 p-1 text-[12px] text-white/70 backdrop-blur-md">
       <span className="px-2 text-white/40">Hero</span>
       {visible.map((v) => (
         <button
@@ -27,7 +27,7 @@ export function HeroVersionPicker({ current, onSelect }: HeroVersionPickerProps)
           type="button"
           onClick={() => onSelect(v.id)}
           title={v.label}
-          className={`rounded-full px-3 py-1 transition-colors ${v.id === current.id ? "bg-violet text-white" : "hover:bg-white/10"} ${v.archived ? "text-white/40" : ""}`}
+          className={`rounded-full px-3 py-1 transition-colors ${v.id === current.id ? "bg-heather text-white" : "hover:bg-white/10"} ${v.archived ? "text-white/40" : ""}`}
         >
           {v.id} · {v.label}
         </button>

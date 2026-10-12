@@ -4,9 +4,10 @@ import { SiteLink } from "./SiteLink";
 type Variant = "solid" | "outline" | "light";
 
 const styles: Record<Variant, string> = {
-  solid: "bg-violet text-white hover:bg-violet-soft",
+  /** On light backgrounds. On dark ones use `light` (option C: white on dark, heather on light). */
+  solid: "bg-heather text-white hover:bg-heather-hover",
   outline: "border border-current/40 hover:border-current",
-  light: "bg-white text-ink hover:bg-lilac",
+  light: "bg-page text-ink hover:bg-lilac",
 };
 
 export function Button({
@@ -23,7 +24,7 @@ export function Button({
   return (
     <SiteLink
       href={href}
-      className={`inline-flex h-11 items-center justify-center rounded-md px-6 text-[15px] font-medium transition-[color,background-color,border-color,transform] duration-150 ease-out active:scale-[0.98] focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-violet-soft motion-reduce:transition-none motion-reduce:active:scale-100 ${styles[variant]} ${className}`}
+      className={`inline-flex h-11 items-center justify-center rounded-md px-6 text-[15px] font-medium transition-[color,background-color,border-color,transform] duration-150 ease-out active:scale-[0.98] focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-lilac motion-reduce:transition-none motion-reduce:active:scale-100 ${styles[variant]} ${className}`}
     >
       {children}
     </SiteLink>

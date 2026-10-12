@@ -35,7 +35,7 @@ export function MaintenanceMock() {
           <motion.div
             key={i}
             className={`max-w-[85%] px-3.5 py-2.5 text-[14px] leading-snug ${
-              line.from === "haven" ? "self-end bg-violet text-white" : "self-start bg-mist text-ink"
+              line.from === "haven" ? "self-end bg-heather text-white" : "self-start bg-page text-ink"
             }`}
             initial={{ opacity: 0, y: 10 }}
             whileInView={{ opacity: 1, y: 0 }}
@@ -98,7 +98,7 @@ export function LeasingMock() {
               </div>
             </div>
             <div className="text-right">
-              <p className="text-[13px] text-violet">{lead.status}</p>
+              <p className="text-[13px] text-heather">{lead.status}</p>
               <p className="text-[11px] text-ink/45">replied in {lead.time}</p>
             </div>
           </motion.div>
@@ -117,7 +117,7 @@ export function ComingSoonMock() {
         {upcoming.map((item, i) => (
           <motion.span
             key={item}
-            className="border border-dashed border-violet/40 px-3.5 py-2 text-[14px] text-plum-800"
+            className="border border-dashed border-heather/40 px-3.5 py-2 text-[14px] text-plum-800"
             initial={{ opacity: 0, scale: 0.92 }}
             whileInView={{ opacity: 1, scale: 1 }}
             viewport={{ once: true }}

@@ -99,7 +99,7 @@ export default function DioramaHero({
           {scene.description}
         </p>
         <div className={styles.actions}>
-          <Button>
+          <Button variant={theme === "night" ? "light" : "solid"}>
             Book a demo
             <svg
               className="ml-4"

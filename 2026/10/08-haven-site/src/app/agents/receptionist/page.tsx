@@ -61,9 +61,9 @@ export default function ReceptionistPage() {
           </Reveal>
         </Section>
 
-        <FinalCta night title={cta.title} body={cta.body} demoSubject={meta.demoSubject} />
+        <FinalCta title={cta.title} body={cta.body} demoSubject={meta.demoSubject} />
       </main>
-      <Footer night />
+      <Footer />
     </>
   );
 }

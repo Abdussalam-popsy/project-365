@@ -6,6 +6,6 @@ interface EyebrowProps {
 }
 
 export function Eyebrow({ children, tone = "light", className = "" }: EyebrowProps) {
-  const color = tone === "dark" ? "text-lilac" : "text-violet";
+  const color = tone === "dark" ? "text-lilac" : "text-heather";
   return <p className={`text-[13px] font-medium uppercase tracking-[0.14em] ${color} ${className}`}>{children}</p>;
 }

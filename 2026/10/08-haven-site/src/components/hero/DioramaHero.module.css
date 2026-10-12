@@ -1,5 +1,5 @@
 .hero {
-  --scene-background: #101022;
+  --scene-background: #0e0b10;
   --scene-text: #faf8fc;
   --scene-muted: #b5b2c5;
   --scene-accent: #c9b5da;
@@ -15,7 +15,7 @@
   --scene-background: #faf6ee;
   --scene-text: #1e0f26;
   --scene-muted: #645d73;
-  --scene-accent: #5740ef;
+  --scene-accent: #9a77b3;
 }
 
 .artwork {

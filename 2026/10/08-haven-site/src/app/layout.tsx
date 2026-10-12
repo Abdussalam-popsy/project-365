@@ -32,7 +32,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" className={geist.variable}>
-      <body className="bg-mist font-sans text-ink antialiased">
+      <body className="bg-page font-sans text-ink antialiased">
         {children}
         <DevTuner />
         <DevAgentation />

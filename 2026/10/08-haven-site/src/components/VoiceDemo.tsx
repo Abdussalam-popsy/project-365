@@ -14,8 +14,8 @@ export function VoiceDemo() {
   const [playing, setPlaying] = useState(false);
 
   return (
-    <section id="voice-demo" className="grain relative overflow-hidden bg-ink px-6 py-32 text-white">
-      {/* Plum glow from the brand's own family (ink → lilac), not the blue-leaning button violet. */}
+    <section id="voice-demo" className="grain relative overflow-hidden bg-night px-6 py-32 text-white">
+      {/* Plum glow from the brand's own family (ink → lilac), not a blue-leaning violet. */}
       <div className="absolute top-0 left-1/2 -z-0 size-[760px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-plum-800/80 blur-[140px]" />
       <Reveal className="relative mx-auto max-w-[760px] text-center">
         <Eyebrow tone="dark">Voice demo</Eyebrow>
@@ -29,7 +29,7 @@ export function VoiceDemo() {
           type="button"
           onClick={() => setPlaying((p) => !p)}
           aria-label={playing ? "Pause demo call" : "Play demo call"}
-          className="grid size-14 shrink-0 place-items-center bg-violet transition-colors hover:bg-violet-soft"
+          className="grid size-14 shrink-0 place-items-center rounded-full bg-page text-ink transition-colors hover:bg-lilac"
         >
           {playing ? (
             <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor"><rect x="3" y="2" width="3.5" height="12" /><rect x="9.5" y="2" width="3.5" height="12" /></svg>

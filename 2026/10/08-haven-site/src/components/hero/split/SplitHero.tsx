@@ -58,7 +58,7 @@ export default function SplitHero() {
 
   return (
     <section className="bg-ink px-3 pt-[112px] pb-6 text-white sm:px-4">
-      <div className="mx-auto max-w-[1280px] overflow-hidden rounded-xl bg-plum-950 p-3 sm:p-4">
+      <div className="mx-auto max-w-[1280px] overflow-hidden rounded-xl bg-night p-3 sm:p-4">
         <div className="grid border border-white/20 lg:grid-cols-2">
           <div className="px-6 py-8 sm:px-12 sm:py-11">
             <p className="inline-flex items-center gap-2 rounded-lg border border-white/20 py-1 pr-3 pl-2.5 font-mono text-[11px] text-white/80 sm:text-[13px]">

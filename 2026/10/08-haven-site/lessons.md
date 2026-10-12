@@ -1160,9 +1160,26 @@ Changing a layout slider means rebuilding the whole scene, which disposes it and
 
 </details>
 
-## Brand: Geist and the two hex codes
+## Brand: Geist and the colour system
 
-[`layout.tsx`](./src/app/layout.tsx) loads Geist with `next/font/google`. That downloads it at build time and serves it from our own site, then exposes it as the CSS variable `--font-geist`. [`globals.css`](./src/app/globals.css) puts that first in `--font-sans`. The client's colours are tokens there: `--color-ink: #1e0f26` (dark background, so `bg-ink` everywhere) and `--color-lilac: #c9b5da` (light accent, `text-lilac`). The plum shades are mixed from those two. The 3D scenes can't read CSS variables, so `createHavenCity.ts`'s `palette` repeats the hex codes. The bright violet `#5740ef` stays for buttons, as the client approved.
+[`layout.tsx`](./src/app/layout.tsx) loads Geist with `next/font/google`. That downloads it at build time and serves it from our own site, then exposes it as the CSS variable `--font-geist`. [`globals.css`](./src/app/globals.css) puts that first in `--font-sans`.
+
+**The palette** lives in the `@theme` block of `globals.css`, and every colour has one job:
+
+| Group | Token | Hex | Job |
+|---|---|---|---|
+| Darks | `night` | `#0e0b10` | every dark section background (homepage and agent pages) |
+| | `ink` | `#1e0f26` | text on light backgrounds |
+| | `plum-800` | `#43234f` | soft glows on dark |
+| Lights | `page` | `#f6f3f8` | every light section background, and the light button |
+| | `tray` | `#ede8f1` | the tray behind mocks |
+| | `bubble` | `#e6e0e9` | resident chat bubbles |
+| | `blush` | `#efe4f2` | tinted cells |
+| Purples | `lilac` | `#c9b5da` | highlighted words and accents **on dark** |
+| | `orchid` | `#9a77b3` | highlighted words **on light** |
+| | `heather` | `#5c3a70` | labels, small accents, and the primary button **on light** |
+
+**Buttons (option C):** white (`variant="light"`, `bg-page`) on dark backgrounds, heather (`variant="solid"`) on light ones. The old saturated violet `#5740ef` and its friends (`violet-soft`, `mist`, `haze`, `plum-900/950`) were retired in one sweep; the git tag `haven-before-palette` marks the commit just before, to compare or roll back. The 3D scenes (archived heroes) still hard-code their own hex colours, since they can't read CSS variables.
 
 **Keep violet off dark backgrounds.** `#5740ef` leans blue, ink and lilac lean red-purple. Used as a big glow on ink, the two read as opposing colours (blue at the top of the section, plum at the bottom). So the dark sections glow with the brand's own family instead: `bg-plum-800/80` behind the Voice demo, and a plum + faint lilac radial gradient in the final CTA, centred at 55% so it has faded out before the footer (also `bg-ink`) begins: no seam. Eyebrows take `tone="dark"` on dark sections, which switches them to lilac.
 

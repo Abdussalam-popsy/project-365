@@ -7,7 +7,7 @@ const REPEAT = 2;
 export function LogoMarquee() {
   const group = Array.from({ length: REPEAT }, () => customers).flat();
   return (
-    <section className="bg-ink pt-24 pb-24 text-white sm:pt-32">
+    <section className="bg-night pt-24 pb-24 text-white sm:pt-32">
       <p className="mx-auto max-w-[760px] px-6 text-center text-[26px] leading-tight font-light tracking-[-0.02em] text-white/85 sm:text-[34px]">
         Trusted by leading property management companies.
       </p>

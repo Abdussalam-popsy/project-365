@@ -33,8 +33,8 @@ const overlays: Record<SuburbThemeName, { base: string; top: string; centre: str
     centre: "bg-[radial-gradient(closest-side,rgba(30,15,38,0.55),transparent)]",
   },
   light: {
-    base: "bg-mist",
-    top: "from-mist/90",
+    base: "bg-page",
+    top: "from-page/90",
     centre: "bg-[radial-gradient(closest-side,rgba(247,244,250,0.7),transparent)]",
   },
 };

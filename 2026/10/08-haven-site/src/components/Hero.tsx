@@ -56,7 +56,7 @@ export function Hero() {
 
   return (
     <section
-      className={`grain relative isolate flex min-h-[100svh] flex-col items-center justify-center overflow-hidden ${light ? "bg-mist text-ink" : "bg-ink text-white"} px-6 pt-32 pb-20 text-center`}
+      className={`grain relative isolate flex min-h-[100svh] flex-col items-center justify-center overflow-hidden ${light ? "bg-page text-ink" : "bg-night text-white"} px-6 pt-32 pb-20 text-center`}
     >
       <div className="pointer-events-none absolute inset-0 -z-10" aria-hidden>
         {Backdrop && <Backdrop />}
@@ -85,7 +85,7 @@ export function Hero() {
           <AnimatePresence mode="popLayout" initial={false}>
             <motion.span
               key={hero.rotating[index]}
-              className={`absolute inset-x-0 whitespace-nowrap ${light ? "text-violet" : "text-lilac"}`}
+              className={`absolute inset-x-0 whitespace-nowrap ${light ? "text-orchid" : "text-lilac"}`}
               initial={{ y: "100%", opacity: 0, filter: "blur(6px)" }}
               animate={{ y: "0%", opacity: 1, filter: "blur(0px)" }}
               exit={{ y: "-100%", opacity: 0, filter: "blur(6px)" }}
@@ -103,12 +103,12 @@ export function Hero() {
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.8, delay: 0.3, ease }}
       >
-        <Button>Book a demo</Button>
+        <Button variant={light ? "solid" : "light"}>Book a demo</Button>
         {/* Frosted backing so the label stays readable when a lamp or house drifts behind it. */}
         <Button
           variant="outline"
           href="#voice-demo"
-          className={`backdrop-blur-sm ${light ? "bg-mist/50" : "bg-ink/40"}`}
+          className={`backdrop-blur-sm ${light ? "bg-page/50" : "bg-night/40"}`}
         >
           <PhoneIcon className="mr-2" />
           Hear a call

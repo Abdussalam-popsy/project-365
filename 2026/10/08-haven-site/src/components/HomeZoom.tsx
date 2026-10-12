@@ -105,14 +105,14 @@ export function HomeZoom() {
 
   if (still) {
     return (
-      <section aria-hidden className="flex h-[70svh] items-center justify-center bg-ink">
-        <HomeMark className="text-mist" style={{ height }} />
+      <section aria-hidden className="flex h-[70svh] items-center justify-center bg-night">
+        <HomeMark className="text-page" style={{ height }} />
       </section>
     );
   }
 
   return (
-    <section ref={sectionRef} aria-hidden className="relative bg-ink" style={{ height: `${t.runway * 100}svh` }}>
+    <section ref={sectionRef} aria-hidden className="relative bg-night" style={{ height: `${t.runway * 100}svh` }}>
       <div className="sticky top-0 flex h-[100svh] items-center justify-center overflow-hidden">
         <motion.div
           style={{ opacity: glowOpacity }}
@@ -121,11 +121,11 @@ export function HomeZoom() {
         <motion.div
           ref={markRef}
           style={{ y, scale, height, transformOrigin: `${ORIGIN_X}% ${ORIGIN_Y}%` }}
-          className="relative text-mist"
+          className="relative text-page"
         >
           <HomeMark className="h-full" />
         </motion.div>
-        <motion.div style={{ opacity: fill }} className="absolute inset-0 bg-mist" />
+        <motion.div style={{ opacity: fill }} className="absolute inset-0 bg-page" />
       </div>
     </section>
   );

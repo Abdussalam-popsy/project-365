@@ -10,7 +10,7 @@ export function ProblemStatement() {
   const words = problem.split(" ");
 
   return (
-    <section ref={ref} className="bg-mist px-6 py-32 sm:py-44">
+    <section ref={ref} className="bg-page px-6 py-32 sm:py-44">
       <p className="mx-auto max-w-[980px] text-[30px] leading-[1.2] font-light tracking-[-0.025em] sm:text-[44px]">
         {words.map((word, i) => (
           <Word key={i} progress={scrollYProgress} range={[i / words.length, (i + 1) / words.length]}>

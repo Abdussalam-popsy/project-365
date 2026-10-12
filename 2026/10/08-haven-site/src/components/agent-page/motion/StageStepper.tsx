@@ -85,7 +85,7 @@ export function StageStepper({ stages, visuals, recordTitle, recordDate, stepLab
                     className="overflow-hidden"
                   >
                     <p className="max-w-[460px] pb-4 pl-[46px] text-[16px] leading-relaxed text-ink/60">{stage.body}</p>
-                    <div className="mb-[-1px] h-px bg-ink/10">
+                    <div className="mb-[-1px] h-px bg-night/10">
                       <motion.div
                         key={`${active}-${tick}-${running}`}
                         className="h-px origin-left bg-heather"
@@ -105,7 +105,7 @@ export function StageStepper({ stages, visuals, recordTitle, recordDate, stepLab
       <MockPanel className="lg:sticky lg:top-32">
         <div className="mb-5 flex gap-1.5" aria-hidden>
           {stages.map((stage, i) => (
-            <span key={stage.title} className={`h-1 flex-1 rounded-full transition-colors duration-500 ${i <= active ? "bg-heather/70" : "bg-ink/10"}`} />
+            <span key={stage.title} className={`h-1 flex-1 rounded-full transition-colors duration-500 ${i <= active ? "bg-heather/70" : "bg-night/10"}`} />
           ))}
         </div>
         <MockCard className="px-5 py-5">

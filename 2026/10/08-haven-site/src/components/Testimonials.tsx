@@ -11,10 +11,10 @@ export function Testimonials() {
         </Reveal>
         <div className="mt-14 grid gap-6 md:grid-cols-2">
           {testimonials.map((t, i) => (
-            <Reveal key={t.name} delay={i * 0.1} className="flex flex-col justify-between border border-ink/10 bg-mist p-10">
+            <Reveal key={t.name} delay={i * 0.1} className="flex flex-col justify-between border border-ink/10 bg-page p-10">
               <p className="text-[24px] leading-[1.3] font-light tracking-[-0.02em] sm:text-[28px]">“{t.quote}”</p>
               <div className="mt-10 flex items-center gap-3">
-                <span className="grid size-10 place-items-center bg-plum-900 text-[13px] font-medium text-lilac">
+                <span className="grid size-10 place-items-center bg-plum-800 text-[13px] font-medium text-lilac">
                   {t.name.split(" ").map((n) => n[0]).join("")}
                 </span>
                 <div>

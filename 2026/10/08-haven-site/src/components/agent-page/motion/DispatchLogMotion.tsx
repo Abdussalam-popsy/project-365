@@ -11,15 +11,15 @@ const dotTones: Record<ChipTone, string> = {
   amber: "bg-[#c99a4b]",
   green: "bg-[#6aa07c]",
   violet: "bg-heather",
-  neutral: "bg-ink/25",
+  neutral: "bg-night/25",
 };
 
 /** Grey placeholder bars, standing in for a row that hasn't happened yet. */
 function SkeletonRow({ wide }: { wide: boolean }) {
   return (
     <span className="flex items-center gap-2.5 py-[3px]" aria-hidden>
-      <span className="h-2 w-9 rounded-full bg-ink/[0.07]" />
-      <span className={`h-2 rounded-full bg-ink/[0.07] ${wide ? "w-40" : "w-28"}`} />
+      <span className="h-2 w-9 rounded-full bg-night/[0.07]" />
+      <span className={`h-2 rounded-full bg-night/[0.07] ${wide ? "w-40" : "w-28"}`} />
     </span>
   );
 }
@@ -60,7 +60,7 @@ export function DispatchLogMotion({ heading, title, date, events }: DispatchLogM
                   return (
                     <li key={event.text} className="relative flex min-h-[20px] items-baseline justify-between gap-4 text-[14px]">
                       <span
-                        className={`absolute top-[7px] -left-[24px] size-[7px] rounded-full ring-4 ring-white transition-colors duration-500 ${shown ? dotTones[event.tone ?? "neutral"] : "bg-ink/10"}`}
+                        className={`absolute top-[7px] -left-[24px] size-[7px] rounded-full ring-4 ring-white transition-colors duration-500 ${shown ? dotTones[event.tone ?? "neutral"] : "bg-night/10"}`}
                         aria-hidden
                       />
                       <AnimatePresence mode="wait" initial={false}>
