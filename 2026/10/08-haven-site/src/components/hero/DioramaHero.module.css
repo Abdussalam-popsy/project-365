@@ -96,9 +96,16 @@
   text-wrap: initial;
 }
 
+/* The rotating words (RotatingWords) sit on their own line in the scene's accent colour. */
 .heading span {
   display: block;
   color: var(--scene-accent);
+}
+
+/* …except the visible prefix, which stays inline and in the heading colour. */
+.heading .prefix {
+  display: inline;
+  color: inherit;
 }
 
 .description {
