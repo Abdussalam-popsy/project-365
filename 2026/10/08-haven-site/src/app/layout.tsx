@@ -10,10 +10,19 @@ const geist = Geist({
   display: "swap",
 });
 
+const title = "Haven AI | AI Workers for Property Management";
+const description =
+  "Haven trains and manages custom AI workers that answer every maintenance call and leasing lead, around the clock.";
+
 export const metadata: Metadata = {
-  title: "Haven AI | AI Workers for Property Management",
-  description:
-    "Haven trains and manages custom AI workers that answer every maintenance call and leasing lead, around the clock.",
+  // Link previews need absolute image URLs. The base path (/project-365/…) is added by Next on top of this.
+  // When the site moves to its own domain, change this (or set NEXT_PUBLIC_SITE_ORIGIN).
+  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_ORIGIN ?? "https://abdussalam-popsy.github.io"),
+  title,
+  description,
+  // The preview image itself is src/app/opengraph-image.jpg (1200×630), picked up automatically for every page.
+  openGraph: { type: "website", siteName: "Haven", title, description },
+  twitter: { card: "summary_large_image", title, description },
 };
 
 export default function RootLayout({
