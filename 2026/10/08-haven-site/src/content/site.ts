@@ -21,7 +21,7 @@ export const announcement = {
 /** Homepage sections, written with a leading "/" so they also work from the agent pages. */
 export const navLinks = {
   platform: { label: "Platform", href: "/#platform" },
-  customers: { label: "Customers", href: "/#testimonials" },
+  customers: { label: "Customers", href: "/#customers" },
 };
 
 export const hero = {
