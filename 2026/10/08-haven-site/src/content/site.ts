@@ -105,9 +105,16 @@ export const testimonials = [
   },
 ];
 
-export const footerLinks = [
-  { heading: "Product", links: ["Maintenance AI", "Leasing AI", "Voice demo"] },
-  { heading: "Company", links: ["About", "Blog", "Careers"] },
-  { heading: "Legal", links: ["Privacy", "Terms"] },
-  { heading: "Social", links: ["LinkedIn", "X"] },
+/**
+ * Footer columns. A link without an `href` is shown as plain text until the client gives us its URL, so nothing
+ * on the page is a dead "#" link. TODO(client): URLs for About, Blog, Careers, Privacy, Terms, LinkedIn and X.
+ */
+export const footerLinks: { heading: string; links: { label: string; href?: string }[] }[] = [
+  {
+    heading: "Product",
+    links: [...agentPages.map((page) => ({ label: page.label, href: page.href })), { label: "Voice demo", href: "/#voice-demo" }],
+  },
+  { heading: "Company", links: [{ label: "About" }, { label: "Blog" }, { label: "Careers" }] },
+  { heading: "Legal", links: [{ label: "Privacy" }, { label: "Terms" }] },
+  { heading: "Social", links: [{ label: "LinkedIn" }, { label: "X" }] },
 ];

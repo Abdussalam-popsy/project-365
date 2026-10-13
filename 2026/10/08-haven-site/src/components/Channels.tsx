@@ -5,8 +5,7 @@ import { channels, channelsIntro } from "@/content/channels";
 import { AutoStepper } from "./agent-page/motion/AutoStepper";
 import { MockPanel } from "./agent-page/ui";
 import { channelIcons, channelMocks } from "./channels/ChannelVisuals";
-import { Eyebrow } from "./SectionHeading";
-import { Reveal } from "./Reveal";
+import { SectionIntro } from "./SectionHeading";
 
 const ease = [0.16, 1, 0.3, 1] as const;
 const CHANNEL_MS = 6500;
@@ -16,13 +15,7 @@ export function Channels() {
   return (
     <section id="platform" className="scroll-mt-28 bg-page px-6 pb-32">
       <div className="mx-auto max-w-[1140px] border-t border-ink/10 pt-24">
-        <Reveal className="max-w-[640px]">
-          <Eyebrow>{channelsIntro.eyebrow}</Eyebrow>
-          <h2 className="mt-4 text-[40px] leading-[1.05] font-light tracking-[-0.035em] text-balance sm:text-[52px]">
-            {channelsIntro.title}
-          </h2>
-          <p className="mt-5 text-[17px] leading-relaxed text-ink/55 sm:text-lg">{channelsIntro.body}</p>
-        </Reveal>
+        <SectionIntro eyebrow={channelsIntro.eyebrow} title={channelsIntro.title} body={channelsIntro.body} />
 
         <AutoStepper
           items={channels}

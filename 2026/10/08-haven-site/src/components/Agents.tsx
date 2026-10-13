@@ -1,6 +1,6 @@
 import { agents } from "@/content/site";
 import { Button } from "./Button";
-import { Eyebrow } from "./SectionHeading";
+import { Eyebrow, SectionIntro } from "./SectionHeading";
 import { Reveal } from "./Reveal";
 import { MaintenanceMock, LeasingMock, ComingSoonMock } from "./AgentMocks";
 
@@ -14,14 +14,7 @@ export function Agents() {
   // overflow-x-clip: a safety net so nothing in the mocks can make the page scroll sideways on phones.
   return (
     <section id="agents" className="overflow-x-clip bg-page px-6 pb-32">
-      <Reveal className="mx-auto max-w-[720px] text-center">
-        <h2 className="text-[40px] leading-[1.05] font-light tracking-[-0.035em] sm:text-[56px]">
-          Agents that work while you sleep.
-        </h2>
-        <p className="mt-5 text-lg text-ink/55 sm:text-xl">
-          Every request answered. Every lead followed up. No resident left waiting.
-        </p>
-      </Reveal>
+      <SectionIntro title="Agents that work while you sleep." body="Every request answered. Every lead followed up. No resident left waiting." align="center" />
 
       <div className="mx-auto mt-28 flex max-w-[1140px] flex-col gap-20 md:gap-32">
         {agents.map((agent, i) => {

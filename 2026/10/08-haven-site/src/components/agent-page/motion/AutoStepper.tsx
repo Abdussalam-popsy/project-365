@@ -33,7 +33,7 @@ function TimerButton({ progress, playing, onToggle }: { progress: MotionValue<nu
     <button
       type="button"
       onClick={onToggle}
-      aria-label={playing ? "Pause" : "Play"}
+      aria-label={playing ? "Pause autoplay" : "Play autoplay"}
       className="absolute right-4 bottom-4 z-10 grid size-10 place-items-center rounded-full bg-white text-heather shadow-[0_8px_20px_-10px_rgba(30,15,38,0.45)] transition-transform hover:scale-105 sm:right-5 sm:bottom-5"
     >
       <svg viewBox="0 0 40 40" className="absolute inset-0 -rotate-90" aria-hidden>

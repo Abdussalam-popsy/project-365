@@ -2,10 +2,9 @@
 
 import { useEffect, useState } from "react";
 import { outcomesIntro } from "@/content/outcomes";
-import { TitleText } from "./agent-page/TitleText";
 import { OutcomesCalendar } from "./outcomes/OutcomesCalendar";
 import { SectionGlow } from "./SectionGlow";
-import { Eyebrow } from "./SectionHeading";
+import { SectionIntro } from "./SectionHeading";
 import { Reveal } from "./Reveal";
 
 /** Phones are too narrow for four calendar columns, so they get the one-column day view instead. */
@@ -30,13 +29,7 @@ export function Outcomes() {
       {/* Plum glow behind the calendar. Adjust it with the Glow editor (dev tools). */}
       <SectionGlow id="outcomes" />
       <div className="relative mx-auto max-w-[920px]">
-        <Reveal className="mx-auto max-w-[720px] text-center">
-          <Eyebrow tone="dark">{outcomesIntro.eyebrow}</Eyebrow>
-          <h2 className="mt-4 text-[40px] leading-[1.05] font-light tracking-[-0.035em] text-balance sm:text-[56px]">
-            <TitleText title={outcomesIntro.title} dark />
-          </h2>
-          <p className="mt-5 text-[17px] leading-relaxed text-white/60 sm:text-lg">{outcomesIntro.body}</p>
-        </Reveal>
+        <SectionIntro eyebrow={outcomesIntro.eyebrow} title={outcomesIntro.title} body={outcomesIntro.body} align="center" dark />
 
         <Reveal delay={0.15} className="mock-compact mt-14">
           <OutcomesCalendar key={phone ? "day" : "team"} layout={phone ? "day" : "team"} />

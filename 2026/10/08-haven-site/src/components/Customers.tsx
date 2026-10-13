@@ -3,9 +3,8 @@
 import { useEffect, useRef, useState } from "react";
 import { customers, customersCta, customersIntro, type Customer } from "@/content/customers";
 import { Chip, MockCard } from "./agent-page/ui";
-import { TitleText } from "./agent-page/TitleText";
 import { Button } from "./Button";
-import { Eyebrow } from "./SectionHeading";
+import { SectionIntro } from "./SectionHeading";
 import { Reveal } from "./Reveal";
 
 /** Soft gradient behind each card's mock, all from the site palette. */
@@ -120,19 +119,13 @@ export function Customers() {
   return (
     <section id="customers" className="scroll-mt-28 overflow-x-clip bg-page py-32">
       <div className="mx-auto max-w-[1140px] px-6 xl:px-0">
-        <Reveal className="flex flex-wrap items-end justify-between gap-8">
-          <div className="max-w-[720px]">
-            <Eyebrow>{customersIntro.eyebrow}</Eyebrow>
-            <h2 className="mt-4 text-[40px] leading-[1.05] font-light tracking-[-0.035em] text-balance sm:text-[52px]">
-              <TitleText title={customersIntro.title} />
-            </h2>
-            <p className="mt-5 max-w-[600px] text-[17px] leading-relaxed text-ink/55 sm:text-lg">{customersIntro.body}</p>
-          </div>
+        <div className="flex flex-wrap items-end justify-between gap-8">
+          <SectionIntro eyebrow={customersIntro.eyebrow} title={customersIntro.title} body={customersIntro.body} />
           <div className="hidden gap-2 sm:flex">
             <Arrow dir="prev" disabled={edges.start} onClick={() => step(-1)} />
             <Arrow dir="next" disabled={edges.end} onClick={() => step(1)} />
           </div>
-        </Reveal>
+        </div>
       </div>
 
       <Reveal delay={0.15}>
