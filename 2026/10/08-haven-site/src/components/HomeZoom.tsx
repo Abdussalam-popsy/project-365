@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState, type CSSProperties } from "react";
 import { motion, useMotionValue, useReducedMotion, useScroll, useTransform } from "motion/react";
 import { useTuning } from "@/lib/tuning";
+import { SectionGlow } from "./SectionGlow";
 
 const MARK_W = 45.2281;
 const MARK_H = 56.2437;
@@ -21,7 +22,7 @@ export const homeZoomTuning = {
   zoomEnd: { label: "Zoom ends", min: 0.3, max: 1, step: 0.01, value: 0.8 },
   curve: { label: "Zoom ease (1 = even)", min: 1, max: 3, step: 0.05, value: 2 },
   fill: { label: "White fade length", min: 0.02, max: 0.3, step: 0.01, value: 0.1 },
-  glow: { label: "Glow strength", min: 0, max: 1, step: 0.01, value: 0.45 },
+  glow: { label: "Glow strength", min: 0, max: 1, step: 0.01, value: 1 },
 };
 
 const clamp01 = (v: number) => Math.min(1, Math.max(0, v));
@@ -112,12 +113,12 @@ export function HomeZoom() {
   }
 
   return (
-    <section ref={sectionRef} aria-hidden className="relative bg-night" style={{ height: `${t.runway * 100}svh` }}>
+    <section ref={sectionRef} id="home-zoom" aria-hidden className="relative bg-night" style={{ height: `${t.runway * 100}svh` }}>
       <div className="sticky top-0 flex h-[100svh] items-center justify-center overflow-hidden">
-        <motion.div
-          style={{ opacity: glowOpacity }}
-          className="pointer-events-none absolute top-1/2 left-1/2 size-[min(90vw,900px)] -translate-x-1/2 -translate-y-1/2 rounded-full bg-[radial-gradient(closest-side,rgba(201,181,218,0.5),transparent)]"
-        />
+        {/* Plum glow behind the H, from the same family as the other dark sections. Tune it with the Glow editor. */}
+        <motion.div style={{ opacity: glowOpacity }} className="absolute inset-0">
+          <SectionGlow id="zoom" />
+        </motion.div>
         <motion.div
           ref={markRef}
           style={{ y, scale, height, transformOrigin: `${ORIGIN_X}% ${ORIGIN_Y}%` }}

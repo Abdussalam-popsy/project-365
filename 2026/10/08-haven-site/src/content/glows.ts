@@ -22,7 +22,7 @@ export interface GlowValues {
   accentOffsetY: number;
 }
 
-export type GlowId = "closing" | "voice" | "outcomes";
+export type GlowId = "closing" | "voice" | "outcomes" | "zoom";
 
 export const glows: Record<GlowId, GlowValues> = {
   /** The closing call to action, faded out before the footer. */
@@ -67,13 +67,29 @@ export const glows: Record<GlowId, GlowValues> = {
     accentSize: 58,
     accentOffsetY: 21,
   },
+  /** The logo zoom under the hero: a plum glow behind the H, fading out as it zooms. */
+  zoom: {
+    background: "#0e0b10",
+    x: 50,
+    y: 50,
+    width: 40,
+    height: 55,
+    color: "#43234f",
+    strength: 1,
+    accent: "#c9b5da",
+    accentStrength: 0,
+    accentSize: 58,
+    accentOffsetY: 21,
+  },
 };
 
 /** Which section each glow belongs to (its element id), and the name the editor shows. */
-export const glowSections: Record<GlowId, { sectionId: string; label: string }> = {
+export const glowSections: Record<GlowId, { sectionId: string; label: string; jumpTo?: ScrollLogicalPosition }> = {
   closing: { sectionId: "book-a-demo", label: "Closing CTA" },
   voice: { sectionId: "voice-demo", label: "Voice demo" },
   outcomes: { sectionId: "outcomes", label: "Outcomes" },
+  // Jump to the top of the zoom: further down, the glow has already faded out.
+  zoom: { sectionId: "home-zoom", label: "Logo zoom", jumpTo: "start" },
 };
 
 /** "#43234f" + 0.95 → "rgba(67,35,79,0.95)". */
