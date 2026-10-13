@@ -5,10 +5,13 @@ import { LogoMarquee } from "@/components/LogoMarquee";
 import { HomeZoom } from "@/components/HomeZoom";
 import { ProblemStatement } from "@/components/ProblemStatement";
 import { Agents } from "@/components/Agents";
+import { Channels } from "@/components/Channels";
+import { FirmContext } from "@/components/FirmContext";
+import { Decisions } from "@/components/Decisions";
+import { Outcomes } from "@/components/Outcomes";
+import { Customers } from "@/components/Customers";
 import { VoiceDemo } from "@/components/VoiceDemo";
-import { Capabilities } from "@/components/Capabilities";
 import { Testimonials } from "@/components/Testimonials";
-import { Process } from "@/components/Process";
 import { FinalCta } from "@/components/FinalCta";
 import { Footer } from "@/components/Footer";
 
@@ -23,10 +26,13 @@ export default function Page() {
         <HomeZoom />
         <ProblemStatement />
         <Agents />
+        <Channels />
         <VoiceDemo />
-        <Capabilities />
+        <FirmContext />
+        <Decisions />
+        <Outcomes />
+        <Customers />
         <Testimonials />
-        <Process />
         <FinalCta />
       </main>
       <Footer />

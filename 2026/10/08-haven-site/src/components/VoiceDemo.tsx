@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { motion } from "motion/react";
+import { SectionGlow } from "./SectionGlow";
 import { Eyebrow } from "./SectionHeading";
 import { Reveal } from "./Reveal";
 
@@ -15,8 +16,8 @@ export function VoiceDemo() {
 
   return (
     <section id="voice-demo" className="grain relative overflow-hidden bg-night px-6 py-32 text-white">
-      {/* Plum glow from the brand's own family (ink → lilac), not a blue-leaning violet. */}
-      <div className="absolute top-0 left-1/2 -z-0 size-[760px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-plum-800/80 blur-[140px]" />
+      {/* Plum glow from the brand's own family (ink → lilac). Adjust it with the Glow editor (dev tools). */}
+      <SectionGlow id="voice" />
       <Reveal className="relative mx-auto max-w-[760px] text-center">
         <Eyebrow tone="dark">Voice demo</Eyebrow>
         <h2 className="mt-4 text-[40px] leading-[1.05] font-light tracking-[-0.035em] sm:text-[56px]">

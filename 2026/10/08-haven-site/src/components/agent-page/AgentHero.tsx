@@ -39,7 +39,7 @@ export function AgentHero({ eyebrow, title, body, demoSubject, secondary, visual
             </Button>
           </div>
         </motion.div>
-        <div>{visual}</div>
+        <div className="mock-compact">{visual}</div>
       </div>
     </section>
   );

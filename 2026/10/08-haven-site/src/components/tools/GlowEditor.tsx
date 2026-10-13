@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
-import { ctaGlow, type GlowValues } from "@/content/ctaGlow";
+import { glowSections, glows, type GlowId, type GlowValues } from "@/content/glows";
 import { useDevToolsVisible } from "@/lib/devTools";
 import { resetGlow, setGlow, setGlowEditing, useGlow } from "@/lib/glowStore";
 import { tuningEnabled } from "@/lib/tuning";
@@ -49,26 +49,32 @@ const groups: { title: string; color?: { key: ColorKey; label: string }; sliders
 const round = (n: number) => Math.round(n * 100) / 100;
 const decimals = (step: number) => (String(step).split(".")[1] ?? "").length;
 
+const glowIds = Object.keys(glowSections) as GlowId[];
+
 /**
- * A small "Closing glow" button on the real pages (dev tools only) that opens an editor for the closing
- * section's gradient. Edits apply live to the actual section, so you see it in context with the footer,
- * on any screen size; on phones the panel docks to the bottom. Copy values → paste into src/content/ctaGlow.ts.
+ * A small "Glow editor" button on the real pages (dev tools only) that opens an editor for the dark sections'
+ * gradients: pick one at the top when the page has several. Edits apply live to the actual section, so you see
+ * it in context, on any screen size; on phones the panel docks to the bottom. Copy values → paste into
+ * src/content/glows.ts under that glow's name.
  */
 export function GlowEditor() {
   const visible = useDevToolsVisible();
   const pathname = usePathname();
-  const { values } = useGlow();
   const [open, setOpen] = useState(false);
-  const [hasSection, setHasSection] = useState(false);
+  const [present, setPresent] = useState<GlowId[]>([]);
+  const [current, setCurrent] = useState<GlowId>("closing");
   const [copied, setCopied] = useState(false);
+  const { values } = useGlow(current);
 
-  // Only offer the editor on pages that have the closing section.
+  // Only offer the glows whose sections are on this page.
   useEffect(() => {
-    setHasSection(Boolean(document.getElementById("book-a-demo")));
+    const found = glowIds.filter((id) => document.getElementById(glowSections[id].sectionId));
+    setPresent(found);
+    setCurrent((c) => (found.includes(c) ? c : (found[0] ?? c)));
   }, [pathname]);
 
-  const active = visible && hasSection && tuningEnabled();
-  useEffect(() => setGlowEditing(active && open), [active, open]);
+  const active = visible && present.length > 0 && tuningEnabled();
+  useEffect(() => setGlowEditing(active && open ? current : null), [active, open, current]);
   if (!active) return null;
 
   const output = JSON.stringify(values, null, 2);
@@ -81,8 +87,13 @@ export function GlowEditor() {
       // Clipboard blocked: the values are also shown below to select by hand.
     }
   };
-  const changed = (key: keyof GlowValues) => values[key] !== ctaGlow[key];
-  const jump = () => document.getElementById("book-a-demo")?.scrollIntoView({ behavior: "smooth", block: "center" });
+  const changed = (key: keyof GlowValues) => values[key] !== glows[current][key];
+  const jump = (id: GlowId = current) =>
+    document.getElementById(glowSections[id].sectionId)?.scrollIntoView({ behavior: "smooth", block: "center" });
+  const pick = (id: GlowId) => {
+    setCurrent(id);
+    jump(id);
+  };
 
   if (!open)
     return (
@@ -94,15 +105,15 @@ export function GlowEditor() {
         }}
         className="fixed bottom-4 left-4 z-[60] rounded-full border border-white/15 bg-night/90 px-4 py-2 text-[13px] text-white/85 backdrop-blur-md hover:bg-night"
       >
-        Closing glow
+        Glow editor
       </button>
     );
 
   return (
     <div className="fixed inset-x-3 bottom-20 z-[60] flex max-h-[42vh] flex-col rounded-2xl border border-white/15 bg-night/95 text-white shadow-[0_24px_60px_-20px_rgba(0,0,0,0.7)] backdrop-blur-xl sm:inset-x-auto sm:bottom-4 sm:left-4 sm:max-h-[75vh] sm:w-[320px]">
       <div className="flex items-center gap-2 border-b border-white/10 px-4 py-3">
-        <p className="mr-auto text-[14px]">Closing glow</p>
-        <button type="button" onClick={jump} className="rounded-full px-2.5 py-1 text-[12px] text-white/60 hover:bg-white/10 hover:text-white">
+        <p className="mr-auto text-[14px]">Glow · {glowSections[current].label}</p>
+        <button type="button" onClick={() => jump()} className="rounded-full px-2.5 py-1 text-[12px] text-white/60 hover:bg-white/10 hover:text-white">
           Jump to section
         </button>
         <button type="button" onClick={() => setOpen(false)} aria-label="Close glow editor" className="grid size-7 place-items-center rounded-full text-white/60 hover:bg-white/10 hover:text-white">
@@ -111,6 +122,20 @@ export function GlowEditor() {
       </div>
 
       <div className="flex flex-col gap-5 overflow-y-auto px-4 py-4">
+        {present.length > 1 && (
+          <div className="flex rounded-xl border border-white/10 p-1 text-[12px]">
+            {present.map((id) => (
+              <button
+                key={id}
+                type="button"
+                onClick={() => pick(id)}
+                className={`flex-1 rounded-lg px-2 py-1.5 transition-colors ${id === current ? "bg-page text-ink" : "text-white/60 hover:text-white"}`}
+              >
+                {glowSections[id].label}
+              </button>
+            ))}
+          </div>
+        )}
         <p className="text-[12px] text-white/45">Drag on the section itself to move the glow.</p>
         {groups.map((group) => (
           <section key={group.title}>
@@ -124,7 +149,7 @@ export function GlowEditor() {
                     <input
                       type="color"
                       value={values[group.color.key]}
-                      onChange={(e) => setGlow({ [group.color!.key]: e.target.value })}
+                      onChange={(e) => setGlow(current, { [group.color!.key]: e.target.value })}
                       className="size-7 cursor-pointer rounded-md border border-white/15 bg-transparent"
                     />
                   </span>
@@ -142,7 +167,7 @@ export function GlowEditor() {
                     max={s.max}
                     step={s.step}
                     value={values[s.key]}
-                    onChange={(e) => setGlow({ [s.key]: round(Number(e.target.value)) })}
+                    onChange={(e) => setGlow(current, { [s.key]: round(Number(e.target.value)) })}
                     className="mt-1 w-full accent-lilac"
                   />
                 </label>
@@ -157,7 +182,7 @@ export function GlowEditor() {
         <button type="button" onClick={copy} className="flex-1 rounded-[10px] bg-page py-2 text-[13px] font-medium text-ink hover:bg-lilac">
           {copied ? "Copied" : "Copy values"}
         </button>
-        <button type="button" onClick={resetGlow} className="rounded-[10px] border border-white/20 px-4 py-2 text-[13px] text-white/80 hover:border-white/50">
+        <button type="button" onClick={() => resetGlow(current)} className="rounded-[10px] border border-white/20 px-4 py-2 text-[13px] text-white/80 hover:border-white/50">
           Reset
         </button>
       </div>

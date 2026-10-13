@@ -29,10 +29,10 @@ html {
 
 /* Headings wrap into even lines (no lonely last word); body copy only avoids a single-word last line. */
 h1, h2, h3, h4, h5, h6, blockquote {
-  text-wrap: balance;
+  text-wrap-style: balance;
 }
 p, li, figcaption {
-  text-wrap: pretty;
+  text-wrap-style: pretty;
 }
 
 .grain::after {
@@ -75,4 +75,12 @@ p, li, figcaption {
 @media (prefers-reduced-motion: reduce) {
   .animate-marquee, .animate-ticker { animation: none; }
   html { scroll-behavior: auto; }
+}
+
+/* Product mocks on phones: shrink the whole mock (type, padding, gaps) as one so it reads alongside its
+   heading instead of filling the screen. `zoom` reflows layout, so the space it frees is really freed. */
+@utility mock-compact {
+  @media (width < 40rem) {
+    zoom: 0.8;
+  }
 }

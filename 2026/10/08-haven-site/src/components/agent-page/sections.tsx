@@ -49,7 +49,7 @@ export function Split({ text, visual, flip = false }: { text: React.ReactNode; v
   return (
     <div className="grid items-center gap-12 lg:grid-cols-2 lg:gap-20">
       <div className={flip ? "lg:order-2" : ""}>{text}</div>
-      <Reveal delay={0.15} className={flip ? "lg:order-1" : ""}>
+      <Reveal delay={0.15} className={`mock-compact ${flip ? "lg:order-1" : ""}`}>
         {visual}
       </Reveal>
     </div>
