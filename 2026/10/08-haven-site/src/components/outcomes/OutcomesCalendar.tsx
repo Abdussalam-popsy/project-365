@@ -1,7 +1,7 @@
 "use client";
 
 import { AnimatePresence, motion, useTransform, type MotionValue } from "motion/react";
-import { outcomes, outcomesNote, workingHours, type Outcome } from "@/content/outcomes";
+import { outcomes, workingHours, type Outcome } from "@/content/outcomes";
 import { MINUTES, agentColour, clockLabel, hourLabel, lanes, useSampleDay } from "./sampleDay";
 
 const ease = [0.16, 1, 0.3, 1] as const;
@@ -194,7 +194,6 @@ export function OutcomesCalendar({ layout }: { layout: CalendarLayout }) {
         <div aria-hidden className="pointer-events-none absolute inset-x-0 top-0 h-8 bg-gradient-to-b from-[#141016] to-transparent" />
         <div aria-hidden className="pointer-events-none absolute inset-x-0 bottom-0 h-8 bg-gradient-to-t from-[#141016] to-transparent" />
       </div>
-      <p className="mt-3 border-t border-white/[0.07] px-1 pt-3 text-[12px] text-white/35">{outcomesNote}</p>
     </div>
   );
 }

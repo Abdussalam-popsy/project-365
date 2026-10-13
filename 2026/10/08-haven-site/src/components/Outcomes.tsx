@@ -2,46 +2,12 @@
 
 import { useEffect, useState } from "react";
 import { outcomesIntro } from "@/content/outcomes";
-import { useDevToolsVisible } from "@/lib/devTools";
 import { TitleText } from "./agent-page/TitleText";
 import { OutcomesCalendar } from "./outcomes/OutcomesCalendar";
-import { OutcomesStrip } from "./outcomes/OutcomesStrip";
 import { Eyebrow } from "./SectionHeading";
 import { Reveal } from "./Reveal";
 
-// Three takes on the sample day, compared on the real page (dev tools: press § or `). The default is
-// what visitors see; the choice is remembered per browser while we decide.
-const variants = [
-  { id: "team", label: "Team vs Haven" },
-  { id: "day", label: "Day view" },
-  { id: "strip", label: "Strip + feed" },
-] as const;
-type Variant = (typeof variants)[number]["id"];
-const DEFAULT_VARIANT: Variant = "team";
-const STORAGE_KEY = "haven-outcomes-variant";
-
-function useOutcomesVariant(): [Variant, (v: Variant) => void] {
-  const [variant, setVariant] = useState<Variant>(DEFAULT_VARIANT);
-  useEffect(() => {
-    try {
-      const saved = localStorage.getItem(STORAGE_KEY);
-      if (variants.some((v) => v.id === saved)) setVariant(saved as Variant);
-    } catch {
-      // Storage blocked: stay on the default.
-    }
-  }, []);
-  const choose = (v: Variant) => {
-    setVariant(v);
-    try {
-      localStorage.setItem(STORAGE_KEY, v);
-    } catch {
-      // Storage blocked: the choice lasts for this page view.
-    }
-  };
-  return [variant, choose];
-}
-
-/** Phones are too narrow for four calendar columns, so the team layout falls back to the day view there. */
+/** Phones are too narrow for four calendar columns, so they get the one-column day view instead. */
 function usePhone() {
   const [phone, setPhone] = useState(false);
   useEffect(() => {
@@ -56,10 +22,7 @@ function usePhone() {
 
 /** Outcomes, around the clock: a sample day of what the agents get done, no stats. */
 export function Outcomes() {
-  const [variant, setVariant] = useOutcomesVariant();
-  const devTools = useDevToolsVisible();
   const phone = usePhone();
-  const layout = variant === "team" && phone ? "day" : variant;
 
   return (
     <section id="outcomes" className="grain relative overflow-hidden bg-night px-6 py-32 text-white">
@@ -73,25 +36,8 @@ export function Outcomes() {
           <p className="mt-5 text-[17px] leading-relaxed text-white/60 sm:text-lg">{outcomesIntro.body}</p>
         </Reveal>
 
-        {devTools && (
-          <div className="mt-10 flex justify-center">
-            <div className="inline-flex rounded-xl border border-white/15 bg-white/[0.04] p-1 text-[13px]">
-              {variants.map((v) => (
-                <button
-                  key={v.id}
-                  type="button"
-                  onClick={() => setVariant(v.id)}
-                  className={`rounded-lg px-3 py-1.5 transition-colors ${variant === v.id ? "bg-page text-ink" : "text-white/60 hover:text-white"}`}
-                >
-                  {v.label}
-                </button>
-              ))}
-            </div>
-          </div>
-        )}
-
-        <Reveal delay={0.15} className={`mock-compact ${devTools ? "mt-6" : "mt-14"}`}>
-          {layout === "strip" ? <OutcomesStrip /> : <OutcomesCalendar key={layout} layout={layout} />}
+        <Reveal delay={0.15} className="mock-compact mt-14">
+          <OutcomesCalendar key={phone ? "day" : "team"} layout={phone ? "day" : "team"} />
         </Reveal>
       </div>
     </section>

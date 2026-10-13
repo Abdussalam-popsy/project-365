@@ -64,7 +64,5 @@ export const outcomes: Outcome[] = [
   { minute: at(23, 25), duration: 30, agent: "Receptionist", text: "Message taken, team notified", place: "Austin, TX" },
 ];
 
-/** The team's working hours, so the strip can shade everything outside them. */
+/** The team's working hours: the "Your team" column's only block. */
 export const workingHours = { start: at(8, 0), end: at(18, 0) };
-
-export const outcomesNote = "A sample day, for illustration.";
