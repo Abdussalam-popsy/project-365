@@ -6,6 +6,7 @@ import { HavenField } from "../HavenField";
 import GridBackdrop from "./GridBackdrop";
 import SplitHero from "./split/SplitHero";
 import DioramaHero from "./DioramaHero";
+import LiveDiorama from "./live/LiveDiorama";
 
 export type HeroLayoutProps = {
   tone?: "dark" | "light";
@@ -99,6 +100,7 @@ export const heroVersions: HeroVersion[] = [
     Layout: DioramaHero,
     tone: "light",
   },
+  { id: "v7", label: "Haven at work", Layout: LiveDiorama },
 ];
 
 /** The version real visitors see. */
