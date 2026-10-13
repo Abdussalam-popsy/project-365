@@ -102,7 +102,7 @@ export function StageStepper({ stages, visuals, recordTitle, recordDate, stepLab
         })}
       </ol>
 
-      <MockPanel className="lg:sticky lg:top-32">
+      <MockPanel className="mock-compact lg:sticky lg:top-32">
         <div className="mb-5 flex gap-1.5" aria-hidden>
           {stages.map((stage, i) => (
             <span key={stage.title} className={`h-1 flex-1 rounded-full transition-colors duration-500 ${i <= active ? "bg-heather/70" : "bg-night/10"}`} />
