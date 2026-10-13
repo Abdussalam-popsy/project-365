@@ -17,11 +17,12 @@ export const homeZoomTuning = {
   enterScale: { label: "Size as it scrolls in", min: 0.4, max: 1, step: 0.01, value: 0.8 },
   size: { label: "H height, desktop (px)", min: 80, max: 320, step: 1, value: 180 },
   offsetY: { label: "Pinned position, up/down (px)", min: -240, max: 240, step: 1, value: 0 },
-  runway: { label: "Scroll length (screens)", min: 1.6, max: 5, step: 0.1, value: 2.8 },
+  runway: { label: "Scroll length (screens)", min: 1.6, max: 5, step: 0.1, value: 2.4 },
   zoomStart: { label: "Zoom starts (0–1 of pinned scroll)", min: 0, max: 0.5, step: 0.01, value: 0.06 },
-  zoomEnd: { label: "Zoom ends", min: 0.3, max: 1, step: 0.01, value: 0.8 },
+  zoomEnd: { label: "Zoom ends", min: 0.3, max: 1, step: 0.01, value: 0.84 },
   curve: { label: "Zoom ease (1 = even)", min: 1, max: 3, step: 0.05, value: 2 },
   fill: { label: "White fade length", min: 0.02, max: 0.3, step: 0.01, value: 0.1 },
+  handoff: { label: "Hand-off fade to the problem statement", min: 0.02, max: 0.3, step: 0.01, value: 0.08 },
   glow: { label: "Glow strength", min: 0, max: 1, step: 0.01, value: 1 },
 };
 
@@ -102,6 +103,12 @@ export function HomeZoom() {
     return ramp(s / range, zoomEnd - fill * 0.6, zoomEnd + fill * 0.4);
   });
 
+  // The last screen of the zoom overlaps the problem statement, which is already pinned underneath; the zoom
+  // fades out over it, so the paragraph is on screen as soon as the white settles instead of a screen later.
+  const handoff = useTransform([scrolled, scrollRange, tuneTick], ([s, range]: number[]) =>
+    1 - ramp(s / range, 1 - tRef.current.handoff, 1),
+  );
+
   const height = `clamp(96px, 16vw, ${t.size}px)`;
 
   if (still) {
@@ -113,8 +120,14 @@ export function HomeZoom() {
   }
 
   return (
-    <section ref={sectionRef} id="home-zoom" aria-hidden className="relative bg-night" style={{ height: `${t.runway * 100}svh` }}>
-      <div className="sticky top-0 flex h-[100svh] items-center justify-center overflow-hidden">
+    <section
+      ref={sectionRef}
+      id="home-zoom"
+      aria-hidden
+      className="pointer-events-none relative z-10"
+      style={{ height: `${t.runway * 100}svh`, marginBottom: "-100svh" }}
+    >
+      <motion.div style={{ opacity: handoff }} className="sticky top-0 flex h-[100svh] items-center justify-center overflow-hidden bg-night">
         {/* Plum glow behind the H, from the same family as the other dark sections. Tune it with the Glow editor. */}
         <motion.div style={{ opacity: glowOpacity }} className="absolute inset-0">
           <SectionGlow id="zoom" />
@@ -127,7 +140,7 @@ export function HomeZoom() {
           <HomeMark className="h-full" />
         </motion.div>
         <motion.div style={{ opacity: fill }} className="absolute inset-0 bg-page" />
-      </div>
+      </motion.div>
     </section>
   );
 }

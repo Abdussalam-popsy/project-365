@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { AnimatePresence, motion } from "motion/react";
-import { agentPages } from "@/content/site";
+import { listedAgentPages } from "@/content/site";
 import { SiteLink } from "../SiteLink";
 import { Chevron } from "./icons";
 
@@ -96,7 +96,7 @@ export function AgentsMenu() {
             transition={{ duration: 0.22, ease }}
           >
             <ul className="w-[320px] rounded-2xl border border-lilac/15 bg-night/95 p-2 shadow-[0_24px_60px_-20px_rgba(0,0,0,0.6)] backdrop-blur-xl">
-              {agentPages.map((page) => (
+              {listedAgentPages.map((page) => (
                 <li key={page.id}>
                   <SiteLink
                     href={page.href}

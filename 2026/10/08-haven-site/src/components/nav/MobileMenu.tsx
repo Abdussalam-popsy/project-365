@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { AnimatePresence, motion } from "motion/react";
-import { agentPages, navLinks } from "@/content/site";
+import { listedAgentPages, navLinks } from "@/content/site";
 import { Button } from "../Button";
 import { SiteLink } from "../SiteLink";
 import { MenuIcon } from "./icons";
@@ -52,7 +52,7 @@ export function MobileMenu() {
                 {navLinks.platform.label}
               </SiteLink>
               <p className="px-4 pt-3 pb-1 text-[12px] font-medium tracking-[0.14em] text-lilac/70 uppercase">Agents</p>
-              {agentPages.map((page) => (
+              {listedAgentPages.map((page) => (
                 <SiteLink key={page.id} href={page.href} onClick={close} className={`${rowClass} pl-6`}>
                   {page.label}
                 </SiteLink>

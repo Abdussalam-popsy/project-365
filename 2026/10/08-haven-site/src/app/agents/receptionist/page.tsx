@@ -18,7 +18,8 @@ import {
 } from "@/content/agents/receptionist";
 import { systemsOfRecord as systems } from "@/content/agents/shared";
 
-export const generateMetadata = agentMetadata(meta);
+// Unlisted for now (see `agentPages` in content/site.ts): live at its URL, hidden from the nav and search.
+export const generateMetadata = agentMetadata({ ...meta, noindex: true });
 
 export default function ReceptionistPage() {
   return (

@@ -40,8 +40,9 @@ export function ProblemStatement() {
   const ref = useRef<HTMLDivElement>(null);
   // The section is taller than the screen and its content is pinned while you scroll through it. Words light
   // up over the first part of that scroll; the rest holds the finished paragraph, so it can be read in full
-  // before the page moves on.
-  const { scrollYProgress } = useScroll({ target: ref, offset: ["start 0.6", "end end"] });
+  // before the page moves on. The H zoom above overlaps this section's first screen and fades out over it, so
+  // the reveal starts once the section is pinned and visible.
+  const { scrollYProgress } = useScroll({ target: ref, offset: ["start 0.1", "end end"] });
   const paragraphs = problem.map((p) => p.flatMap(tokensOf));
   const total = paragraphs.reduce((n, p) => n + p.length, 0);
   let index = 0;
