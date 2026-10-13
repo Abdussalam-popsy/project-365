@@ -192,7 +192,6 @@ export function OutcomesCalendar({ layout }: { layout: CalendarLayout }) {
           )}
         </motion.div>
         <div aria-hidden className="pointer-events-none absolute inset-x-0 top-0 h-8 bg-gradient-to-b from-[#141016] to-transparent" />
-        <div aria-hidden className="pointer-events-none absolute inset-x-0 bottom-0 h-8 bg-gradient-to-t from-[#141016] to-transparent" />
       </div>
     </div>
   );

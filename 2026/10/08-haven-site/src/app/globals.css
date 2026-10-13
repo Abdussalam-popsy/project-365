@@ -27,12 +27,16 @@ html {
   scroll-behavior: smooth;
 }
 
-/* Headings wrap into even lines (no lonely last word); body copy only avoids a single-word last line. */
-h1, h2, h3, h4, h5, h6, blockquote {
-  text-wrap-style: balance;
-}
-p, li, figcaption {
-  text-wrap-style: pretty;
+/* Headings wrap into even lines (no lonely last word); body copy only avoids a single-word last line.
+   In the base layer so utilities such as `truncate` still win: the CSS build folds these into the
+   `text-wrap` shorthand, which would otherwise reset `white-space: nowrap`. */
+@layer base {
+  h1, h2, h3, h4, h5, h6, blockquote {
+    text-wrap-style: balance;
+  }
+  p, li, figcaption {
+    text-wrap-style: pretty;
+  }
 }
 
 .grain::after {
