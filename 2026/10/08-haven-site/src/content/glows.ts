@@ -73,7 +73,7 @@ export const glows: Record<GlowId, GlowValues> = {
     x: 50,
     y: 50,
     width: 40,
-    height: 55,
+    height: 43,
     color: "#43234f",
     strength: 1,
     accent: "#c9b5da",
