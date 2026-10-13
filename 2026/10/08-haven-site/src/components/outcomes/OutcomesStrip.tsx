@@ -1,29 +1,11 @@
 "use client";
 
-import { useRef, useState } from "react";
-import { AnimatePresence, motion, useAnimationFrame, useInView, useMotionValue, useReducedMotion, useTransform } from "motion/react";
-import { outcomes, outcomesNote, workingHours, type OutcomeAgent } from "@/content/outcomes";
+import { AnimatePresence, motion, useTransform } from "motion/react";
+import { outcomes, outcomesNote, workingHours } from "@/content/outcomes";
+import { MINUTES, agentColour as laneColour, clockLabel, lanes, useSampleDay } from "./sampleDay";
 
 const ease = [0.16, 1, 0.3, 1] as const;
-const DAY_MS = 32000;
 const FEED_SIZE = 5;
-const MINUTES = 24 * 60;
-/** A long frame (a backgrounded tab) shouldn't skip the clock ahead by hours. */
-const MAX_FRAME_MS = 100;
-
-const lanes: OutcomeAgent[] = ["Maintenance", "Leasing", "Receptionist"];
-const laneColour: Record<OutcomeAgent, { text: string; dot: string }> = {
-  Maintenance: { text: "text-lilac", dot: "bg-lilac" },
-  Leasing: { text: "text-[#a9d4b8]", dot: "bg-[#a9d4b8]" },
-  Receptionist: { text: "text-[#e6c88f]", dot: "bg-[#e6c88f]" },
-};
-
-function clockLabel(minute: number) {
-  const m = Math.floor(minute) % MINUTES;
-  const h = Math.floor(m / 60);
-  const mm = String(m % 60).padStart(2, "0");
-  return `${h % 12 === 0 ? 12 : h % 12}:${mm}${h < 12 ? "am" : "pm"}`;
-}
 
 const pct = (minute: number) => `${(minute / MINUTES) * 100}%`;
 const at = (k: number) => outcomes[((k % outcomes.length) + outcomes.length) % outcomes.length];
@@ -74,31 +56,8 @@ function DayStrip({ passed, playhead }: { passed: number; playhead: React.ReactN
  * A sample day playing on a loop: the clock runs through 24 hours, each outcome drops onto its agent's lane
  * as its time passes and slides into the feed. Only runs on screen; reduced motion shows the finished day.
  */
-export function OutcomesDay() {
-  const ref = useRef<HTMLDivElement>(null);
-  const inView = useInView(ref, { amount: 0.3 });
-  const reduce = useReducedMotion();
-  const elapsed = useRef(0);
-  const minute = useMotionValue(reduce ? MINUTES - 1 : 0);
-  const [{ passed, total }, setProgress] = useState(() =>
-    reduce ? { passed: outcomes.length, total: outcomes.length } : { passed: 0, total: 0 },
-  );
-
-  const last = useRef({ passed, total });
-
-  useAnimationFrame((_, delta) => {
-    if (reduce || !inView) return;
-    elapsed.current += Math.min(delta, MAX_FRAME_MS);
-    const day = Math.floor(elapsed.current / DAY_MS);
-    const now = ((elapsed.current % DAY_MS) / DAY_MS) * MINUTES;
-    minute.set(now);
-    const nextPassed = outcomes.filter((o) => o.minute <= now).length;
-    const nextTotal = day * outcomes.length + nextPassed;
-    if (nextTotal !== last.current.total || nextPassed !== last.current.passed) {
-      last.current = { passed: nextPassed, total: nextTotal };
-      setProgress(last.current);
-    }
-  });
+export function OutcomesStrip() {
+  const { ref, minute, passed, total, reduce } = useSampleDay();
 
   const clock = useTransform(minute, clockLabel);
   const left = useTransform(minute, (m) => pct(m));
