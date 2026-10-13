@@ -1,7 +1,6 @@
 "use client";
 
-import { firmFeatures, firmIntro, scopes } from "@/content/firmContext";
-import { FeatureGrid } from "./agent-page/FeatureGrid";
+import { firmIntro, scopes } from "@/content/firmContext";
 import { AutoStepper } from "./agent-page/motion/AutoStepper";
 import { TitleText } from "./agent-page/TitleText";
 import { FirmContextCard } from "./firm/FirmContextCard";
@@ -25,7 +24,6 @@ export function FirmContext() {
 
         <AutoStepper items={scopes} stepMs={SCOPE_MS} showTimer renderVisual={(active) => <FirmContextCard depth={active} />} />
 
-        <FeatureGrid items={firmFeatures} />
       </div>
     </section>
   );

@@ -41,6 +41,11 @@ export const firmRules: FirmRule[] = [
 
 export const firmCard = { title: "What the agent knows", record: "WO-9002 · Unit B" };
 
+/**
+ * Parked (2026-10-13): the 3×2 FeatureGrid under the firm-context stepper was removed because it repeated
+ * the stepper without adding anything to look at. Kept here in case it comes back; to restore, render
+ * `<FeatureGrid items={firmFeatures} />` after the AutoStepper in components/FirmContext.tsx.
+ */
 export const firmFeatures: TitledText[] = [
   { title: "Autonomy, per Skill", body: "Observe, suggest, ask before acting or act alone, set for each thing the agent does." },
   { title: "Vendors, by trade and property", body: "Who to call first, what counts as after hours, when to call instead of text." },
