@@ -101,3 +101,4 @@ a DNS cutover from Webflow (see the `web-domain-launch` skill).
 - "Dana Price" (the owner name in the email mock, which is invented)
 - Real US city names in the Outcomes calendar, now that its "sample day" footnote has been removed
 - URLs for About, Blog, Careers, Privacy, Terms, LinkedIn and X (the footer shows them as plain text for now)
+- The "Top 50 AI startups" article URL (the announcement bar hides "Read the article" until `announcement.href` is set)

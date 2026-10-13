@@ -12,10 +12,10 @@ export const agentPages = [
 export const MAINTENANCE_URL = "/agents/maintenance";
 export const LEASING_URL = "/agents/leasing";
 
-export const announcement = {
+/** The bar above the nav. The link only shows once `href` is set. TODO(client): the article URL. */
+export const announcement: { text: string; linkLabel: string; href?: string } = {
   text: "Haven recognized among Top 50 AI startups in Real Estate",
   linkLabel: "Read the article",
-  href: "#",
 };
 
 /** Homepage sections, written with a leading "/" so they also work from the agent pages. */
