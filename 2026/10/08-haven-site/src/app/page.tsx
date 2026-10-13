@@ -6,9 +6,7 @@ import { HomeZoom } from "@/components/HomeZoom";
 import { ProblemStatement } from "@/components/ProblemStatement";
 import { Agents } from "@/components/Agents";
 import { VoiceDemo } from "@/components/VoiceDemo";
-import { Capabilities } from "@/components/Capabilities";
 import { Testimonials } from "@/components/Testimonials";
-import { Process } from "@/components/Process";
 import { FinalCta } from "@/components/FinalCta";
 import { Footer } from "@/components/Footer";
 
@@ -24,9 +22,7 @@ export default function Page() {
         <ProblemStatement />
         <Agents />
         <VoiceDemo />
-        <Capabilities />
         <Testimonials />
-        <Process />
         <FinalCta />
       </main>
       <Footer />

@@ -88,13 +88,6 @@ export const agents = [
   },
 ] as const;
 
-export const capabilities = [
-  { title: "Easy to integrate", body: "Connects to your existing tools. No migrations, no disruption." },
-  { title: "Multi-channel", body: "Meets residents and prospects on phone, SMS and email." },
-  { title: "Tailored to your portfolio", body: "Understands the nuances of your properties and residents." },
-  { title: "Workflow aware", body: "Follows your policies, vendors and processes every time." },
-];
-
 export const testimonials = [
   {
     quote:
@@ -108,13 +101,6 @@ export const testimonials = [
     name: "Brock Forkey",
     role: "Owner, Real Capital Group",
   },
-];
-
-export const process = [
-  { step: "01", title: "Discover", body: "We learn your workflows, systems and challenges." },
-  { step: "02", title: "Configure", body: "We tailor Haven's AI workers to your policies and integrate with your stack." },
-  { step: "03", title: "Launch", body: "Your AI workers start handling calls and leads immediately." },
-  { step: "04", title: "Optimize", body: "We keep refining performance from real-world results." },
 ];
 
 export const footerLinks = [
