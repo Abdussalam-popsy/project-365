@@ -8,6 +8,7 @@ import { Agents } from "@/components/Agents";
 import { Channels } from "@/components/Channels";
 import { FirmContext } from "@/components/FirmContext";
 import { Decisions } from "@/components/Decisions";
+import { Outcomes } from "@/components/Outcomes";
 import { VoiceDemo } from "@/components/VoiceDemo";
 import { Testimonials } from "@/components/Testimonials";
 import { FinalCta } from "@/components/FinalCta";
@@ -28,6 +29,7 @@ export default function Page() {
         <VoiceDemo />
         <FirmContext />
         <Decisions />
+        <Outcomes />
         <Testimonials />
         <FinalCta />
       </main>
