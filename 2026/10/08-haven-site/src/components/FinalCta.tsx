@@ -1,6 +1,6 @@
 import { demoUrl } from "@/content/site";
 import { Button } from "./Button";
-import { CtaGlow } from "./CtaGlow";
+import { SectionGlow } from "./SectionGlow";
 import { PhoneIcon } from "./PhoneIcon";
 import { Reveal } from "./Reveal";
 
@@ -21,8 +21,8 @@ export function FinalCta({
 }: FinalCtaProps) {
   return (
     <section id="book-a-demo" className="grain grain-fade-bottom relative overflow-hidden bg-night px-6 py-36 text-center text-white">
-      {/* Plum and a touch of lilac, faded out before the footer starts. Adjust it with the "Closing glow" dev tool on any page. */}
-      <CtaGlow />
+      {/* Plum and a touch of lilac, faded out before the footer starts. Adjust it with the Glow editor (dev tools) on any page. */}
+      <SectionGlow id="closing" />
       <Reveal className="relative mx-auto max-w-[820px]">
         <h2 className="text-[44px] leading-[1.03] font-light tracking-[-0.035em] sm:text-[68px]">
           {title}

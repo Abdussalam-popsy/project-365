@@ -1,23 +1,23 @@
 "use client";
 
 import { useRef } from "react";
-import { glowBackground } from "@/content/ctaGlow";
+import { glowBackground, type GlowId } from "@/content/glows";
 import { setGlow, useGlow } from "@/lib/glowStore";
 
 /**
- * The closing section's background glow. Visitors get the values in src/content/ctaGlow.ts. In dev, the
- * "Closing glow" editor (dev tools, § or `) edits it live, and while that editor is open you can click or drag
- * on the section itself to move the glow.
+ * A dark section's background glow. Visitors get the values in src/content/glows.ts. In dev, the Glow editor
+ * (dev tools, § or `) edits it live, and while the editor has this glow open you can click or drag on the
+ * section itself to move it.
  */
-export function CtaGlow() {
-  const { values, editing } = useGlow();
+export function SectionGlow({ id }: { id: GlowId }) {
+  const { values, editing } = useGlow(id);
   const layer = useRef<HTMLDivElement>(null);
   const dragging = useRef(false);
 
   const moveTo = (clientX: number, clientY: number) => {
     const rect = layer.current?.getBoundingClientRect();
     if (!rect) return;
-    setGlow({
+    setGlow(id, {
       x: Math.round(Math.min(100, Math.max(0, ((clientX - rect.left) / rect.width) * 100))),
       y: Math.round(Math.min(130, Math.max(-20, ((clientY - rect.top) / rect.height) * 100))),
     });
