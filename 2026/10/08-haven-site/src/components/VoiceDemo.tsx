@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { motion } from "motion/react";
 import { SectionGlow } from "./SectionGlow";
-import { Eyebrow } from "./SectionHeading";
+import { SectionIntro } from "./SectionHeading";
 import { Reveal } from "./Reveal";
 
 const BAR_COUNT = 56;
@@ -18,12 +18,7 @@ export function VoiceDemo() {
     <section id="voice-demo" className="grain relative overflow-hidden bg-night px-6 py-32 text-white">
       {/* Plum glow from the brand's own family (ink → lilac). Adjust it with the Glow editor (dev tools). */}
       <SectionGlow id="voice" />
-      <Reveal className="relative mx-auto max-w-[760px] text-center">
-        <Eyebrow tone="dark">Voice demo</Eyebrow>
-        <h2 className="mt-4 text-[40px] leading-[1.05] font-light tracking-[-0.035em] sm:text-[56px]">
-          Listen to Maintenance AI take a real call.
-        </h2>
-      </Reveal>
+      <SectionIntro eyebrow="Voice demo" title="Listen to Maintenance AI take a real call." align="center" dark className="relative" />
 
       <Reveal delay={0.15} className="relative mx-auto mt-16 flex max-w-[760px] items-center gap-6 rounded-2xl border border-white/15 bg-white/[0.04] p-5 backdrop-blur">
         <button
