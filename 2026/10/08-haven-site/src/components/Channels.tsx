@@ -27,6 +27,7 @@ export function Channels() {
         <AutoStepper
           items={channels}
           stepMs={CHANNEL_MS}
+          showTimer
           marker={(i, open) => (
             <span
               className={`grid size-[26px] shrink-0 place-items-center rounded-lg transition-colors ${open ? "bg-heather text-white" : "bg-tray text-ink/40"}`}
@@ -37,7 +38,7 @@ export function Channels() {
           renderVisual={(active) => {
             const Mock = channelMocks[channels[active].id];
             return (
-              <MockPanel className="mock-compact min-h-[390px] lg:sticky lg:top-32">
+              <MockPanel className="mock-compact min-h-[430px] pb-[72px] sm:pb-[76px]">
                 <AnimatePresence mode="wait" initial={false}>
                   <motion.div
                     key={active}
