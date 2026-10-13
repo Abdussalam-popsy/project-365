@@ -25,10 +25,11 @@ export function StageStepper({ stages, visuals, recordTitle, recordDate, stepLab
   return (
     <AutoStepper
       items={stages}
+      showTimer
       renderVisual={(active) => {
         const visual = visuals[active];
         return (
-          <MockPanel className="mock-compact">
+          <MockPanel className="mock-compact pb-[72px] sm:pb-[76px]">
             <div className="mb-5 flex gap-1.5" aria-hidden>
               {stages.map((stage, i) => (
                 <span key={stage.title} className={`h-1 flex-1 rounded-full transition-colors duration-500 ${i <= active ? "bg-heather/70" : "bg-night/10"}`} />
