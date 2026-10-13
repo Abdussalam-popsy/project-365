@@ -76,3 +76,11 @@ p, li, figcaption {
   .animate-marquee, .animate-ticker { animation: none; }
   html { scroll-behavior: auto; }
 }
+
+/* Product mocks on phones: shrink the whole mock (type, padding, gaps) as one so it reads alongside its
+   heading instead of filling the screen. `zoom` reflows layout, so the space it frees is really freed. */
+@utility mock-compact {
+  @media (width < 40rem) {
+    zoom: 0.8;
+  }
+}
