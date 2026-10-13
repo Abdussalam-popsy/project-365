@@ -89,7 +89,7 @@ export function GlowEditor() {
   };
   const changed = (key: keyof GlowValues) => values[key] !== glows[current][key];
   const jump = (id: GlowId = current) =>
-    document.getElementById(glowSections[id].sectionId)?.scrollIntoView({ behavior: "smooth", block: "center" });
+    document.getElementById(glowSections[id].sectionId)?.scrollIntoView({ behavior: "smooth", block: glowSections[id].jumpTo ?? "center" });
   const pick = (id: GlowId) => {
     setCurrent(id);
     jump(id);
@@ -123,13 +123,13 @@ export function GlowEditor() {
 
       <div className="flex flex-col gap-5 overflow-y-auto px-4 py-4">
         {present.length > 1 && (
-          <div className="flex rounded-xl border border-white/10 p-1 text-[12px]">
+          <div className="grid grid-cols-2 gap-1 rounded-xl border border-white/10 p-1 text-[12px]">
             {present.map((id) => (
               <button
                 key={id}
                 type="button"
                 onClick={() => pick(id)}
-                className={`flex-1 rounded-lg px-2 py-1.5 transition-colors ${id === current ? "bg-page text-ink" : "text-white/60 hover:text-white"}`}
+                className={`rounded-lg px-2 py-1.5 transition-colors ${id === current ? "bg-page text-ink" : "text-white/60 hover:text-white"}`}
               >
                 {glowSections[id].label}
               </button>

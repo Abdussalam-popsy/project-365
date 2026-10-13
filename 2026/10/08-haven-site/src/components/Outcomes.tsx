@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { outcomesIntro } from "@/content/outcomes";
 import { TitleText } from "./agent-page/TitleText";
 import { OutcomesCalendar } from "./outcomes/OutcomesCalendar";
+import { SectionGlow } from "./SectionGlow";
 import { Eyebrow } from "./SectionHeading";
 import { Reveal } from "./Reveal";
 
@@ -26,7 +27,8 @@ export function Outcomes() {
 
   return (
     <section id="outcomes" className="grain relative overflow-hidden bg-night px-6 py-32 text-white">
-      <div className="absolute bottom-0 left-1/2 size-[720px] -translate-x-1/2 translate-y-1/2 rounded-full bg-plum-800/60 blur-[140px]" />
+      {/* Plum glow behind the calendar. Adjust it with the Glow editor (dev tools). */}
+      <SectionGlow id="outcomes" />
       <div className="relative mx-auto max-w-[920px]">
         <Reveal className="mx-auto max-w-[720px] text-center">
           <Eyebrow tone="dark">{outcomesIntro.eyebrow}</Eyebrow>
