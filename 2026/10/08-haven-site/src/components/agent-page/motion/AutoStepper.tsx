@@ -66,9 +66,10 @@ function TimerButton({ progress, playing, onToggle }: { progress: MotionValue<nu
 
 /**
  * A list as an auto-advancing accordion: one item open at a time (so only one description is on screen),
- * a progress line under it, and a visual beside it for that item. Loops while on screen; clicking an item
- * jumps to it, hovering one (mouse only) holds it. One timer drives the line and the optional ring, and
- * pausing keeps its place. Reduced motion: no auto-advance.
+ * a progress line under it, and a visual beside it for that item. Loops while on screen. Items open on click
+ * only (hover was too twitchy): a click opens that item and holds it there, so it doesn't move on mid-read;
+ * autoplay picks up again once the section has left the screen, or from the timer button. One timer drives
+ * the line and the optional ring, and pausing keeps its place. Reduced motion: no auto-advance.
  */
 export function AutoStepper({ items, renderVisual, marker = numberMarker, stepMs = 3800, showTimer = false }: AutoStepperProps) {
   const ref = useRef<HTMLDivElement>(null);
@@ -76,7 +77,6 @@ export function AutoStepper({ items, renderVisual, marker = numberMarker, stepMs
   const progress = useMotionValue(0);
   const [active, setActive] = useState(0);
   const [inView, setInView] = useState(false);
-  const [hovering, setHovering] = useState(false);
   const [userPaused, setUserPaused] = useState(false);
   const [tick, setTick] = useState(0);
 
@@ -88,7 +88,12 @@ export function AutoStepper({ items, renderVisual, marker = numberMarker, stepMs
     return () => observer.disconnect();
   }, []);
 
-  const running = !reduce && inView && !hovering && !userPaused;
+  // A click holds the open item until the section scrolls away; coming back starts the loop again.
+  useEffect(() => {
+    if (!inView) setUserPaused(false);
+  }, [inView]);
+
+  const running = !reduce && inView && !userPaused;
 
   // Run the timer from wherever it is, so a pause picks up where it left off.
   useEffect(() => {
@@ -104,16 +109,17 @@ export function AutoStepper({ items, renderVisual, marker = numberMarker, stepMs
     return () => controls.stop();
   }, [running, active, tick, stepMs, items.length, progress]);
 
-  const select = (i: number) => {
+  const choose = (i: number) => {
     progress.set(0);
     setActive(i);
     setTick((t) => t + 1);
+    setUserPaused(true);
   };
   const lineScale = useTransform(progress, (p) => (reduce ? 1 : p));
 
   return (
     <div ref={ref} className="mt-14 grid items-start gap-10 lg:grid-cols-[1fr_1.05fr] lg:gap-16">
-      <ol className="border-t border-ink/10" onPointerLeave={() => setHovering(false)}>
+      <ol className="border-t border-ink/10">
         {items.map((item, i) => {
           const open = i === active;
           return (
@@ -121,17 +127,15 @@ export function AutoStepper({ items, renderVisual, marker = numberMarker, stepMs
               <button
                 type="button"
                 aria-expanded={open}
-                onClick={() => select(i)}
-                onPointerEnter={(e) => {
-                  if (e.pointerType !== "mouse") return;
-                  setHovering(true);
-                  if (!open) select(i);
-                }}
-                onFocus={() => !open && select(i)}
-                className="flex w-full items-center gap-5 py-4 text-left"
+                onClick={() => choose(i)}
+                className="group flex w-full cursor-pointer items-center gap-5 py-4 text-left"
               >
                 {marker(i, open)}
-                <span className={`text-[20px] tracking-[-0.01em] transition-colors ${open ? "text-ink" : "text-ink/45"}`}>{item.title}</span>
+                <span
+                  className={`text-[20px] tracking-[-0.01em] transition-colors ${open ? "text-ink" : "text-ink/45 group-hover:text-ink/70"}`}
+                >
+                  {item.title}
+                </span>
               </button>
               <AnimatePresence initial={false}>
                 {open && (
