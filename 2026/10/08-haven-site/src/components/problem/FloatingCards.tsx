@@ -8,7 +8,7 @@ function Float({ children, delay, className }: { children: React.ReactNode; dela
   const reduce = useReducedMotion();
   return (
     <motion.div
-      className={`pointer-events-none absolute hidden w-[250px] xl:block ${className}`}
+      className={`pointer-events-none absolute hidden w-[210px] min-[1400px]:block ${className}`}
       animate={reduce ? undefined : { y: [0, -10, 0] }}
       transition={{ duration: 6, repeat: Infinity, ease: "easeInOut", delay }}
       aria-hidden
@@ -19,7 +19,8 @@ function Float({ children, delay, className }: { children: React.ReactNode; dela
 }
 
 /**
- * Two small mock cards either side of the problem statement (wide screens only): the 2am emergency
+ * Two small mock cards either side of the problem statement, only on screens wide enough for them to sit
+ * beside the 760px text column without covering it: the 2am emergency
  * on the left, the leads coming in on the right. Decorative, so hidden from screen readers.
  */
 export function FloatingCards() {

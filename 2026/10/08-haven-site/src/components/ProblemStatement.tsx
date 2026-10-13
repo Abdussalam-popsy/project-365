@@ -24,6 +24,11 @@ function tokensOf(part: ProblemPart): Token[] {
 }
 
 /** Final colour of each word once revealed: ink, the light-section highlight purple, or a soft grey for the closing line. */
+/** How tall the section is: one screen of pinned content plus the scroll it takes to read it. */
+const SECTION_HEIGHT = "260vh";
+/** Share of the scroll that reveals the words; after it the full paragraph holds on screen. */
+const REVEAL_END = 0.72;
+
 const toneClass: Record<Tone, string> = { base: "text-ink", accent: "text-orchid", muted: "text-ink/40" };
 
 /**
@@ -33,35 +38,40 @@ const toneClass: Record<Tone, string> = { base: "text-ink", accent: "text-orchid
  */
 export function ProblemStatement() {
   const ref = useRef<HTMLDivElement>(null);
-  const { scrollYProgress } = useScroll({ target: ref, offset: ["start 0.8", "end 0.45"] });
+  // The section is taller than the screen and its content is pinned while you scroll through it. Words light
+  // up over the first part of that scroll; the rest holds the finished paragraph, so it can be read in full
+  // before the page moves on.
+  const { scrollYProgress } = useScroll({ target: ref, offset: ["start 0.6", "end end"] });
   const paragraphs = problem.map((p) => p.flatMap(tokensOf));
   const total = paragraphs.reduce((n, p) => n + p.length, 0);
   let index = 0;
 
   return (
-    <section ref={ref} className="relative overflow-hidden bg-page px-6 py-32 sm:py-44">
-      <div
-        className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle,rgba(30,15,38,0.09)_1px,transparent_1.2px)] [mask-image:radial-gradient(ellipse_at_center,black_35%,transparent_75%)] bg-[size:22px_22px]"
-        aria-hidden
-      />
-      <div className="relative mx-auto max-w-[1240px]">
-        <FloatingCards />
-        <div className="mx-auto flex max-w-[760px] flex-col gap-8 text-[28px] leading-[1.25] font-light tracking-[-0.02em] sm:text-[40px]">
-          {paragraphs.map((tokens, p) => (
-            <p key={p}>
-              {tokens.map((token) => {
-                const i = index++;
-                const range: [number, number] = [i / total, (i + 1) / total];
-                return (
-                  <Reveal key={i} progress={scrollYProgress} range={range} className={`mr-[0.25em] whitespace-nowrap ${toneClass[token.tone]}`}>
-                    {token.icon && <ProblemIcon name={token.icon} />}
-                    {token.icon && " "}
-                    {token.text}
-                  </Reveal>
-                );
-              })}
-            </p>
-          ))}
+    <section ref={ref} className="relative bg-page" style={{ height: SECTION_HEIGHT }}>
+      <div className="sticky top-0 flex h-[100svh] items-center overflow-hidden px-6">
+        <div
+          className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle,rgba(30,15,38,0.09)_1px,transparent_1.2px)] [mask-image:radial-gradient(ellipse_at_center,black_35%,transparent_75%)] bg-[size:22px_22px]"
+          aria-hidden
+        />
+        <div className="relative mx-auto w-full max-w-[1240px]">
+          <FloatingCards />
+          <div className="mx-auto flex max-w-[760px] flex-col gap-8 text-[28px] leading-[1.25] font-light tracking-[-0.02em] sm:text-[40px]">
+            {paragraphs.map((tokens, p) => (
+              <p key={p}>
+                {tokens.map((token) => {
+                  const i = index++;
+                  const range: [number, number] = [(i / total) * REVEAL_END, ((i + 1) / total) * REVEAL_END];
+                  return (
+                    <Reveal key={i} progress={scrollYProgress} range={range} className={`mr-[0.25em] whitespace-nowrap ${toneClass[token.tone]}`}>
+                      {token.icon && <ProblemIcon name={token.icon} />}
+                      {token.icon && " "}
+                      {token.text}
+                    </Reveal>
+                  );
+                })}
+              </p>
+            ))}
+          </div>
         </div>
       </div>
     </section>
