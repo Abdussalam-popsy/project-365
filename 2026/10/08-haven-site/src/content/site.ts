@@ -94,12 +94,14 @@ export const testimonials = [
       "The Haven team worked closely with us to customise the work order setup in AppFolio to fit our needs perfectly. A huge upgrade from our previous call center.",
     name: "Darus Trutna",
     role: "Founder & CEO, Rentor.com",
+    agents: ["Maintenance"],
   },
   {
     quote:
       "We first purchased the Maintenance AI and have now added leasing. We can't wait for more to come. The ROI is crazy.",
     name: "Brock Forkey",
     role: "Owner, Real Capital Group",
+    agents: ["Maintenance", "Leasing"],
   },
 ];
 
