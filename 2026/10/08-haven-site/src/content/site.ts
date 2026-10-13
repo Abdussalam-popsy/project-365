@@ -2,12 +2,19 @@
 export const demoUrl = (subject = "Haven demo") => `mailto:hello@usehaven.ai?subject=${encodeURIComponent(subject)}`;
 export const DEMO_URL = demoUrl();
 
-/** One page per agent, in the order the nav lists them. `href` is site-relative; links add the base path. */
+/**
+ * One page per agent, in the order the nav lists them. `href` is site-relative; links add the base path.
+ * `listed: false` keeps a page live at its URL but out of the nav and search results. Receptionist is
+ * unlisted until the client is ready to talk about it; flip it to `true` to bring it back.
+ */
 export const agentPages = [
-  { id: "receptionist", label: "Receptionist", href: "/agents/receptionist", blurb: "Every call answered on the first ring." },
-  { id: "leasing", label: "Leasing", href: "/agents/leasing", blurb: "Every prospect answered in seconds." },
-  { id: "maintenance", label: "Maintenance", href: "/agents/maintenance", blurb: "Work orders from first text to paid invoice." },
+  { id: "receptionist", label: "Receptionist", href: "/agents/receptionist", blurb: "Every call answered on the first ring.", listed: false },
+  { id: "leasing", label: "Leasing", href: "/agents/leasing", blurb: "Every prospect answered in seconds.", listed: true },
+  { id: "maintenance", label: "Maintenance", href: "/agents/maintenance", blurb: "Work orders from first text to paid invoice.", listed: true },
 ] as const;
+
+/** The agent pages the nav and footer link to. */
+export const listedAgentPages = agentPages.filter((page) => page.listed);
 
 export const MAINTENANCE_URL = "/agents/maintenance";
 export const LEASING_URL = "/agents/leasing";
@@ -112,7 +119,7 @@ export const testimonials = [
 export const footerLinks: { heading: string; links: { label: string; href?: string }[] }[] = [
   {
     heading: "Product",
-    links: [...agentPages.map((page) => ({ label: page.label, href: page.href })), { label: "Voice demo", href: "/#voice-demo" }],
+    links: [...listedAgentPages.map((page) => ({ label: page.label, href: page.href })), { label: "Voice demo", href: "/#voice-demo" }],
   },
   { heading: "Company", links: [{ label: "About" }, { label: "Blog" }, { label: "Careers" }] },
   { heading: "Legal", links: [{ label: "Privacy" }, { label: "Terms" }] },
