@@ -1,5 +1,15 @@
-/** "Book a demo" opens an email; pages can pass their own subject line. */
-export const demoUrl = (subject = "Haven demo") => `mailto:hello@usehaven.ai?subject=${encodeURIComponent(subject)}`;
+const CALENDLY_URL = "https://calendly.com/d/d3z9-w8g-n3r/haven-demo";
+
+/**
+ * "Book a demo" opens Haven's Calendly. Pages can pass a label (e.g. "Maintenance Agent demo"); it is sent as
+ * `utm_content`, which Calendly stores on the booking, so Haven can see which page each demo came from.
+ */
+export const demoUrl = (source?: string) => {
+  const url = new URL(CALENDLY_URL);
+  url.searchParams.set("utm_source", "website");
+  if (source) url.searchParams.set("utm_content", source.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, ""));
+  return url.toString();
+};
 export const DEMO_URL = demoUrl();
 
 /**

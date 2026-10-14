@@ -8,7 +8,7 @@ export const maintenanceMeta = {
   title: "Maintenance Agent | Haven",
   description:
     "Haven's Maintenance Agent carries every work order from the first text to the paid invoice, inside your PMS and by your rules.",
-  demoSubject: "Maintenance Agent demo",
+  demoSource: "Maintenance Agent demo",
 };
 
 export const maintenanceHero = {

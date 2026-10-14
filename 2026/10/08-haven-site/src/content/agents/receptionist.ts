@@ -5,7 +5,7 @@ export const receptionistMeta = {
   title: "Receptionist Agent | Haven",
   description:
     "Haven's Receptionist answers every call to your office on the first ring, knows who is calling, and handles it or gets it to the right person.",
-  demoSubject: "Receptionist Agent demo",
+  demoSource: "Receptionist Agent demo",
 };
 
 export const receptionistHero = {
