@@ -1,5 +1,5 @@
 import { customersCta, customersIntro } from "@/content/customers";
-import { customerLogos } from "@/content/site";
+import { customerLogos, logoWidth } from "@/content/customerLogos";
 import { Button } from "./Button";
 import { SectionIntro } from "./SectionHeading";
 import { Reveal } from "./Reveal";
@@ -21,10 +21,10 @@ export function Customers() {
             {customerLogos.map((logo) => (
               <li key={logo.name} className="group grid h-[120px] place-items-center bg-page px-6 sm:h-[150px]">
                 <img
-                  src={logo.src}
+                  src={logo.image.src}
                   alt={logo.name}
                   height={logo.height}
-                  width={Math.round(logo.height * logo.ratio)}
+                  width={logoWidth(logo)}
                   loading="lazy"
                   decoding="async"
                   draggable={false}

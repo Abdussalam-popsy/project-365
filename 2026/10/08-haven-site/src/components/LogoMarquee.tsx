@@ -1,4 +1,4 @@
-import { customerLogos } from "@/content/site";
+import { customerLogos, logoWidth } from "@/content/customerLogos";
 
 /** Copies of the list per group, so one group is wider than very wide screens. */
 const REPEAT = 2;
@@ -19,10 +19,10 @@ export function LogoMarquee() {
                 <li key={i}>
                   {/* Logo files are white; opacity dims them to match the section's muted tone. */}
                   <img
-                    src={logo.src}
+                    src={logo.image.src}
                     alt={copy === 0 && i < customerLogos.length ? logo.name : ""}
                     height={logo.height}
-                    width={Math.round(logo.height * logo.ratio)}
+                    width={logoWidth(logo)}
                     loading="lazy"
                     decoding="async"
                     draggable={false}
