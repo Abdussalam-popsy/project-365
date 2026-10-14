@@ -43,29 +43,6 @@ export const hero = {
   sub: "Custom AI workers that handle the repetitive work eating into your team's time.",
 };
 
-/**
- * Customer logos for the marquee: white-on-transparent files in public/logos/customers.
- * `height` is set per logo so wide wordmarks and stacked badges carry similar visual weight;
- * `ratio` is the file's width ÷ height, used to reserve space before it loads.
- * PNG where the source was too small to vectorise cleanly.
- */
-export type CustomerLogo = { name: string; src: string; ratio: number; height: number };
-
-export const customerLogos: CustomerLogo[] = [
-  { name: "Guide Property Services", src: "/logos/customers/svg/guide-property-services.svg", ratio: 3.28, height: 34 },
-  { name: "American Property Management", src: "/logos/customers/svg/american-property-management.svg", ratio: 1.28, height: 52 },
-  { name: "Evernest", src: "/logos/customers/svg/evernest.svg", ratio: 3.73, height: 32 },
-  { name: "HBR Rentals", src: "/logos/customers/svg/hbr-rentals.svg", ratio: 1, height: 54 },
-  { name: "ResiHome", src: "/logos/customers/svg/resihome.svg", ratio: 8.28, height: 22 },
-  { name: "GRIT Property Group", src: "/logos/customers/svg/grit-property-group.svg", ratio: 1.13, height: 54 },
-  { name: "Fresno Management Company", src: "/logos/customers/svg/fresno-management.svg", ratio: 3.79, height: 34 },
-  { name: "Location Rentals", src: "/logos/customers/svg/location-rentals.svg", ratio: 5.88, height: 28 },
-  { name: "Pro X Property Management", src: "/logos/customers/svg/prox-property-management.svg", ratio: 2.79, height: 38 },
-  { name: "GC Realty & Development", src: "/logos/customers/png/gc-realty.png", ratio: 3.21, height: 34 },
-  { name: "Alpine LA Properties", src: "/logos/customers/svg/alpine-la-properties.svg", ratio: 2.3, height: 42 },
-  { name: "Titan Property Management", src: "/logos/customers/png/titan-property-management.png", ratio: 2, height: 44 },
-];
-
 /** One piece of the problem statement: plain words, a phrase led by an animated icon, or a muted closing line. */
 export type ProblemPart = string | { icon: "moon" | "call" | "stack"; text: string } | { muted: string };
 
