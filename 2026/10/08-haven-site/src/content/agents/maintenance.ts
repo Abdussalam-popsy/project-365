@@ -50,15 +50,14 @@ export const maintenanceStages = {
   ] as StageVisual[],
 };
 
-/** Stats band under the stages. The client's figures are still placeholders, shown in brackets like their mock. */
+/** Stats band under the stages: the client's figures. */
 export const maintenanceStats = {
   title: ["The maintenance line, ", { highlight: "by the numbers." }] as TitlePart[],
   body: "Across every firm running the Maintenance Agent.",
   items: [
-    { value: "[0,000]", label: "Work orders handled in the last 30 days" },
-    { value: "[0]%", label: "Dispatched without a person touching them" },
-    { value: "[0] min", label: "Median time to first response, after hours" },
-    { value: "[0]%", label: "Residents who confirmed the fix" },
+    { value: "80", unit: "%", label: "faster work order triage" },
+    { value: "36", unit: "min", label: "to dispatch a work order" },
+    { value: "73", unit: "%", label: "of work orders accepted and scheduled same day" },
   ] as Stat[],
 };
 

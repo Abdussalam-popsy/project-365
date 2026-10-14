@@ -112,5 +112,7 @@ export interface StageVisual {
 
 export interface Stat {
   value: string;
+  /** Shown smaller and tinted after the value, e.g. "%" or "min". */
+  unit?: string;
   label: string;
 }
