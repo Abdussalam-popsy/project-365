@@ -7,7 +7,7 @@ import { Reveal } from "./Reveal";
 interface FinalCtaProps {
   title?: string;
   body?: string;
-  demoSubject?: string;
+  demoSource?: string;
   /** Where "Hear a call" jumps to; null hides it on pages without a call sample. */
   callHref?: string | null;
 }
@@ -16,7 +16,7 @@ interface FinalCtaProps {
 export function FinalCta({
   title = "Future-proof your property management business.",
   body = "Hand the repetitive work to Haven, and spend your time growing your portfolio.",
-  demoSubject,
+  demoSource,
   callHref = "#voice-demo",
 }: FinalCtaProps) {
   return (
@@ -31,7 +31,7 @@ export function FinalCta({
           {body}
         </p>
         <div className="mt-10 flex justify-center gap-3">
-          <Button variant="light" href={demoUrl(demoSubject)}>
+          <Button variant="light" href={demoUrl(demoSource)}>
             Book a demo
           </Button>
           {callHref && (

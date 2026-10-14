@@ -27,7 +27,7 @@ export default function ReceptionistPage() {
       <AnnouncementBar />
       <Nav />
       <main>
-        <AgentHero {...hero} demoSubject={meta.demoSubject} visual={<CallLog entries={callLog} />} />
+        <AgentHero {...hero} demoSource={meta.demoSource} visual={<CallLog entries={callLog} />} />
 
         <Section>
           <SectionIntro title={always.title} body={always.body} centered />
@@ -62,7 +62,7 @@ export default function ReceptionistPage() {
           </Reveal>
         </Section>
 
-        <FinalCta title={cta.title} body={cta.body} demoSubject={meta.demoSubject} />
+        <FinalCta title={cta.title} body={cta.body} demoSource={meta.demoSource} />
       </main>
       <Footer />
     </>

@@ -29,7 +29,7 @@ Use the generic `web-design` plugin skills for process. This file holds what is 
   - `orchid` #9a77b3: highlighted words on light
   - `heather` #5c3a70: labels, eyebrows and the primary button on light
   - `tray` #ede8f1 behind mocks, `bubble` #e6e0e9 for residents' chat bubbles
-- **Buttons:** white on dark, heather on light, 10px radius. "Book a demo" is `mailto:hello@usehaven.ai` (not Calendly).
+- **Buttons:** white on dark, heather on light, 10px radius. "Book a demo" opens Haven's Calendly (`demoUrl` in `src/content/site.ts`); agent pages tag it with `utm_content` via `demoSource`.
 - **Mocks:** a rounded tray, white cards with one soft shadow, status chips, chat bubbles. Pieces live in
   `src/components/agent-page/ui.tsx`. On phones mocks shrink with the `mock-compact` utility (80%).
 - **Headings never leave an orphan word:** text-wrap rules sit in `@layer base` in `globals.css`. Don't
