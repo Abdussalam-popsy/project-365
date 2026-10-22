@@ -28,7 +28,7 @@ export default function LeasingPage() {
       <main>
         <AgentHero
           {...hero}
-          demoSubject={meta.demoSubject}
+          demoSource={meta.demoSource}
           visual={
             <HeroPanel>
               <LoopingChat
@@ -72,7 +72,7 @@ export default function LeasingPage() {
           </Reveal>
         </Section>
 
-        <FinalCta title={cta.title} body={cta.body} demoSubject={meta.demoSubject} callHref={null} />
+        <FinalCta title={cta.title} body={cta.body} demoSource={meta.demoSource} callHref={null} />
       </main>
       <Footer />
     </>

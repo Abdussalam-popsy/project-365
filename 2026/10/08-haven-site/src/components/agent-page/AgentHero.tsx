@@ -13,14 +13,14 @@ interface AgentHeroProps {
   eyebrow: string;
   title: TitlePart[];
   body: string;
-  demoSubject: string;
+  demoSource: string;
   secondary: { label: string; href: string };
   /** The illustration on the right (stacks under the text on small screens). */
   visual: React.ReactNode;
 }
 
 /** Dark split hero: big headline with lilac highlights, two buttons, and a visual beside it. */
-export function AgentHero({ eyebrow, title, body, demoSubject, secondary, visual }: AgentHeroProps) {
+export function AgentHero({ eyebrow, title, body, demoSource, secondary, visual }: AgentHeroProps) {
   return (
     <section className="grain relative overflow-hidden bg-night px-6 pt-40 pb-24 text-white sm:pt-48 sm:pb-32">
       <div className="mx-auto grid max-w-[1240px] items-center gap-14 lg:grid-cols-[1.05fr_1fr] lg:gap-16">
@@ -31,7 +31,7 @@ export function AgentHero({ eyebrow, title, body, demoSubject, secondary, visual
           </h1>
           <p className="mt-7 max-w-[540px] text-lg leading-relaxed text-white/60 sm:text-xl">{body}</p>
           <div className="mt-10 flex flex-wrap gap-3">
-            <Button variant="light" href={demoUrl(demoSubject)}>
+            <Button variant="light" href={demoUrl(demoSource)}>
               Book a demo
             </Button>
             <Button variant="outline" href={secondary.href}>

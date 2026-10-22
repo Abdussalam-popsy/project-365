@@ -5,7 +5,7 @@ export const leasingMeta = {
   title: "Leasing Agent | Haven",
   description:
     "Haven's Leasing Agent answers every prospect in seconds, qualifies them against your criteria, books tours and keeps applications moving.",
-  demoSubject: "Leasing Agent demo",
+  demoSource: "Leasing Agent demo",
 };
 
 export const leasingHero = {

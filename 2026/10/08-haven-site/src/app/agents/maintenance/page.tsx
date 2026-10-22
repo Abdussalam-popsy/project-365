@@ -33,7 +33,7 @@ export default function MaintenancePage() {
       <AnnouncementBar />
       <Nav />
       <main>
-        <AgentHero {...hero} demoSubject={meta.demoSubject} visual={<LifecycleVisual steps={lifecycle} />} />
+        <AgentHero {...hero} demoSource={meta.demoSource} visual={<LifecycleVisual steps={lifecycle} />} />
 
         <Section id="lifecycle">
           <SectionIntro title={stages.title} body={stages.body} />
@@ -111,7 +111,7 @@ export default function MaintenancePage() {
           <FaqSplit title="Questions, answered." items={faq} />
         </Section>
 
-        <FinalCta title={cta.title} body={cta.body} demoSubject={meta.demoSubject} />
+        <FinalCta title={cta.title} body={cta.body} demoSource={meta.demoSource} />
       </main>
       <Footer />
     </>
