@@ -1,0 +1,19 @@
+/* Cheat sheet rows, used by the full page and by the popup (panel.css): a filter box, then one card per group with "what you see" on the left and the technique name on the right. */
+.search{width:min(320px,100%);border:1px solid var(--line);border-radius:8px;background:var(--surface);color:var(--fg);font:400 .9rem var(--sans);padding:8px 12px}
+.search:focus{outline:2px solid var(--accent);outline-offset:1px}
+.how{margin:0;font-size:.95rem}
+.group{gap:10px}
+.group h2{margin:0;font:600 .75rem var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--accent)}
+.techs{list-style:none;margin:0;padding:0;display:flex;flex-direction:column}
+.tech{display:grid;grid-template-columns:1fr 260px;gap:16px;padding:12px 0;border-top:1px solid var(--line)}
+.tech:first-child{border-top:0;padding-top:4px}
+.what p,.what ul{margin:0;font-size:.95rem}
+.what ul{padding-left:18px}
+.what .idea{color:var(--muted);font-style:italic;margin-bottom:4px}
+.see-label{font:600 .72rem var(--mono);letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+.what code{font:500 .84rem var(--mono);background:var(--code);border:1px solid var(--line);border-radius:4px;padding:0 4px;white-space:nowrap}
+.name{display:flex;flex-direction:column;align-items:flex-start;gap:4px}
+.pill{background:var(--accent-soft);color:var(--accent);font-weight:600;border-radius:7px;padding:3px 10px;font-size:.92rem}
+.ex{font-size:.82rem;color:var(--muted)}
+.empty{color:var(--muted);margin:0}
+@media (max-width:680px){.tech{grid-template-columns:1fr;gap:6px}}

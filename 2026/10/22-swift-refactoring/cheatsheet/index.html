@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>Cheat Sheet · Swift Refactoring</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap">
+  <link rel="stylesheet" href="../styles.css">
+  <link rel="stylesheet" href="cheatsheet.css">
+</head>
+<body>
+<div class="wrap">
+  <a class="crumb" href="../">← Swift Refactoring</a>
+  <header>
+    <div>
+      <h1>What changed → technique name</h1>
+      <p class="sub" id="total"></p>
+    </div>
+    <input class="search" id="q" type="search" placeholder="Filter, e.g. private(set)" aria-label="Filter techniques" autocomplete="off" spellcheck="false">
+  </header>
+  <p class="how">Compare Before and After, find the row that describes the difference, take the name.</p>
+  <div id="groups" style="display:contents"></div>
+  <p class="empty" id="empty" hidden>No technique matches that.</p>
+</div>
+
+<script src="../shared.js"></script>
+<script src="techniques.js"></script>
+<script src="render.js"></script>
+<script src="cheatsheet.js"></script>
+</body>
+</html>

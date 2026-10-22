@@ -1,0 +1,14 @@
+{
+  "name": "swift-refactoring",
+  "tags": [
+    "swift",
+    "refactoring",
+    "learning",
+    "quiz",
+    "vanilla"
+  ],
+  "template": "vanilla",
+  "language": "javascript",
+  "description": "Swift refactoring practice: spot-the-technique drill, write-it-yourself workshop and a cheat sheet, each with copy-to-Claude feedback",
+  "status": "local"
+}

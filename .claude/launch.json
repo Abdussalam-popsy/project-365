@@ -12,6 +12,12 @@
       "runtimeExecutable": "npm",
       "runtimeArgs": ["--prefix", "2026/10/08-haven-site", "run", "dev", "--", "--port", "3000"],
       "port": 3000
+    },
+    {
+      "name": "swift-refactoring",
+      "runtimeExecutable": "python3",
+      "runtimeArgs": ["-m", "http.server", "5391", "--directory", "2026/10/22-swift-refactoring"],
+      "port": 5391
     }
   ]
 }

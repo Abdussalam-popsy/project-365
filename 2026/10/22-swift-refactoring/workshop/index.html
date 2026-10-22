@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>Refactoring Workshop · Swift Refactoring</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap">
+  <link rel="stylesheet" href="../styles.css">
+  <link rel="stylesheet" href="workshop.css">
+  <link rel="stylesheet" href="../cheatsheet/cheatsheet.css">
+  <link rel="stylesheet" href="../panel.css">
+</head>
+<body>
+<div class="wrap">
+  <a class="crumb" href="../">← Swift Refactoring</a>
+  <header>
+    <div>
+      <h1>Refactoring Workshop</h1>
+      <p class="sub">Write the After yourself. The help fades out level by level.</p>
+    </div>
+    <div class="seg" role="group" aria-label="Level">
+      <button id="lv-1" data-level="1" aria-pressed="true">Level 1: fill words</button>
+      <button id="lv-2" data-level="2" aria-pressed="false">Level 2: fill lines</button>
+      <button id="lv-3" data-level="3" aria-pressed="false">Level 3: write it (Monopoly)</button>
+    </div>
+  </header>
+
+  <div class="progress"><span id="count"></span><div class="bar"><i id="bar"></i></div><span id="score"></span></div>
+
+  <section class="card" id="ex">
+    <div class="qhead"><h2 id="tech"></h2><span class="tag" id="lvtag"></span></div>
+    <p class="task" id="task"></p>
+    <div class="recipe" id="recipe"><b>Recipe</b><span id="recipeText"></span></div>
+    <p class="note" id="note" hidden></p>
+    <div class="panes">
+      <div class="pane"><h3>Before</h3><pre id="before"></pre></div>
+      <div class="pane after"><h3 id="afterTitle">After: fill the blanks</h3><pre id="after"></pre><textarea class="editor" id="editor" spellcheck="false" autocapitalize="off" autocomplete="off" hidden aria-label="Write the After code"></textarea></div>
+    </div>
+    <ul class="checks" id="checks" hidden></ul>
+    <div class="hint" id="hint" hidden></div>
+    <div class="feedback" id="feedback" hidden></div>
+    <div class="model" id="model" hidden><h3>Model answer</h3><pre id="modelCode"></pre></div>
+    <div class="row">
+      <button class="btn" id="hintBtn">Show a hint</button>
+      <button class="btn" id="revealBtn">Show answer</button>
+      <button class="btn" id="mineBtn" hidden>Mine is equivalent, count it</button>
+      <span class="spacer"></span>
+      <button class="btn primary" id="checkBtn">Check</button>
+      <button class="btn primary" id="nextBtn" hidden>Next exercise</button>
+    </div>
+  </section>
+
+  <section class="card results" id="results" hidden>
+    <h2>Level finished</h2>
+    <div class="big" id="final"></div>
+    <p class="sub" id="verdict"></p>
+    <ul class="list" id="summary"></ul>
+    <div class="row">
+      <button class="btn primary" id="retryBtn">Redo the ones I struggled with</button>
+      <button class="btn" id="restartBtn">Restart this level</button>
+      <button class="btn" id="copyBtn">Copy results for Claude</button>
+      <span class="copystatus" id="copyStatus" hidden></span>
+    </div>
+    <textarea class="copybox" id="copyBox" readonly hidden aria-label="Results to paste into Claude"></textarea>
+  </section>
+</div>
+<script src="../shared.js"></script>
+<script src="exercises.js"></script>
+<script src="../cheatsheet/techniques.js"></script>
+<script src="../cheatsheet/render.js"></script>
+<script src="../panel.js"></script>
+<script src="workshop.js"></script>
+</body>
+</html>

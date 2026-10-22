@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>Swift Refactoring</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap">
+  <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="home.css">
+  <link rel="stylesheet" href="cheatsheet/cheatsheet.css">
+  <link rel="stylesheet" href="panel.css">
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div>
+      <h1>Swift Refactoring</h1>
+      <p class="sub">Practice the 14 refactoring techniques until you can name and write them without thinking.</p>
+    </div>
+  </header>
+
+  <ul class="pages" id="pages"></ul>
+
+  <p class="tip"><b>Getting feedback:</b> finish a round, press <b>Copy results for Claude</b>, and paste it into a chat. It includes what you missed and the code you wrote. On any page, press <b>?</b> or the <b>Cheat sheet</b> button for the cheat sheet and the answers you've given so far.</p>
+</div>
+
+<script src="shared.js"></script>
+<script src="pages.js"></script>
+<script src="cheatsheet/techniques.js"></script>
+<script src="cheatsheet/render.js"></script>
+<script src="panel.js"></script>
+<script>
+  $("pages").innerHTML = PAGES.map(p =>
+    '<li><a class="card page" href="' + esc(p.href) + '">'
+    + '<span class="tag">' + esc(p.kind) + '</span>'
+    + '<h2>' + esc(p.title) + '</h2>'
+    + '<p>' + esc(p.blurb) + '</p>'
+    + '<span class="foot"><span class="tag">' + esc(p.meta) + '</span><span class="go">Open →</span></span>'
+    + '</a></li>').join("");
+  mountReferencePanel();
+</script>
+</body>
+</html>
