@@ -1,19 +1,63 @@
-/* Cheat sheet rows, used by the full page and by the popup (panel.css): a filter box, then one card per group with "what you see" on the left and the technique name on the right. */
+/* Cheat sheet, used by the full page and by the popup (panel.css). Styled like the spreadsheet:
+   dark header row, each group's rows tinted its own colour, technique name bold in its own column.
+   When the box is narrow (popup, phones) each row stacks: technique on top, what you see underneath. */
+:root{
+  --cs-head:#2f3e4e; --cs-head-fg:#ffffff;
+  --tone-vanished:#fdecea; --tone-vanished-ink:#b3261e;
+  --tone-appeared:#e8f5e9; --tone-appeared-ink:#1e7a34;
+  --tone-locked:#e3f2fd;   --tone-locked-ink:#1565c0;
+  --tone-changed:#fff8e1;  --tone-changed-ink:#a35f00;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --cs-head:#0c1017; --cs-head-fg:#e7e9f0;
+  --tone-vanished:#2e1b1d; --tone-vanished-ink:#ff8a80;
+  --tone-appeared:#16281b; --tone-appeared-ink:#7fd99a;
+  --tone-locked:#15243a;   --tone-locked-ink:#8cc2ff;
+  --tone-changed:#2d2615;  --tone-changed-ink:#ffcf6b;
+}}
+:root[data-theme="dark"]{
+  --cs-head:#0c1017; --cs-head-fg:#e7e9f0;
+  --tone-vanished:#2e1b1d; --tone-vanished-ink:#ff8a80;
+  --tone-appeared:#16281b; --tone-appeared-ink:#7fd99a;
+  --tone-locked:#15243a;   --tone-locked-ink:#8cc2ff;
+  --tone-changed:#2d2615;  --tone-changed-ink:#ffcf6b;
+}
+
 .search{width:min(320px,100%);border:1px solid var(--line);border-radius:8px;background:var(--surface);color:var(--fg);font:400 .9rem var(--sans);padding:8px 12px}
 .search:focus{outline:2px solid var(--accent);outline-offset:1px}
 .how{margin:0;font-size:.95rem}
-.group{gap:10px}
-.group h2{margin:0;font:600 .75rem var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--accent)}
-.techs{list-style:none;margin:0;padding:0;display:flex;flex-direction:column}
-.tech{display:grid;grid-template-columns:1fr 260px;gap:16px;padding:12px 0;border-top:1px solid var(--line)}
-.tech:first-child{border-top:0;padding-top:4px}
-.what p,.what ul{margin:0;font-size:.95rem}
+.empty{color:var(--muted);margin:0}
+
+/* The table sits in a container so it can switch layout by its own width, not the window's. */
+.cs-box{container-type:inline-size;border:1px solid var(--line);border-radius:12px;overflow:hidden;background:var(--surface)}
+.cs{width:100%;border-collapse:collapse;font-size:.95rem}
+.cs thead th{background:var(--cs-head);color:var(--cs-head-fg);text-align:left;font:600 .78rem var(--sans);letter-spacing:.02em;padding:10px 14px}
+
+.tone-vanished{--tone:var(--tone-vanished);--ink:var(--tone-vanished-ink)}
+.tone-appeared{--tone:var(--tone-appeared);--ink:var(--tone-appeared-ink)}
+.tone-locked{--tone:var(--tone-locked);--ink:var(--tone-locked-ink)}
+.tone-changed{--tone:var(--tone-changed);--ink:var(--tone-changed-ink)}
+
+.cs .band th{background:var(--tone);color:var(--ink);text-align:left;font:600 .74rem var(--mono);letter-spacing:.08em;text-transform:uppercase;padding:12px 14px 6px;border-top:2px solid var(--ink)}
+.cs .tech td{background:var(--tone);padding:9px 14px;vertical-align:top;border-top:1px solid color-mix(in srgb, var(--ink) 18%, transparent)}
+.cs .tech .what{width:52%}
+.cs .tech .name{width:24%;font-weight:700;color:var(--fg);font-size:1rem}
+.cs .tech .ex{color:var(--muted);font-size:.85rem}
+
+.what p,.what ul{margin:0}
 .what ul{padding-left:18px}
 .what .idea{color:var(--muted);font-style:italic;margin-bottom:4px}
-.see-label{font:600 .72rem var(--mono);letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
-.what code{font:500 .84rem var(--mono);background:var(--code);border:1px solid var(--line);border-radius:4px;padding:0 4px;white-space:nowrap}
-.name{display:flex;flex-direction:column;align-items:flex-start;gap:4px}
-.pill{background:var(--accent-soft);color:var(--accent);font-weight:600;border-radius:7px;padding:3px 10px;font-size:.92rem}
-.ex{font-size:.82rem;color:var(--muted)}
-.empty{color:var(--muted);margin:0}
-@media (max-width:680px){.tech{grid-template-columns:1fr;gap:6px}}
+.see-label{font:600 .7rem var(--mono);letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+.what code{font:500 .84rem var(--mono);background:var(--surface);border:1px solid color-mix(in srgb, var(--ink) 25%, transparent);border-radius:4px;padding:0 4px;white-space:nowrap}
+
+/* Narrow: drop the header row, stack each row as technique → what you see → example, with a coloured edge. */
+@container (max-width:620px){
+  .cs thead{display:none}
+  .cs, .cs tbody, .cs tr, .cs td, .cs th{display:block;width:auto}
+  .cs .band th{padding:12px 14px 4px;border-top-width:3px}
+  .cs .tech{display:flex;flex-direction:column;gap:2px;background:var(--tone);padding:9px 14px;border-left:4px solid var(--ink);border-top:1px solid color-mix(in srgb, var(--ink) 18%, transparent)}
+  .cs .tech td{padding:0;border:0;background:none}
+  .cs .tech .name{order:-1;width:auto}
+  .cs .tech .what{width:auto}
+  .cs .tech .ex:empty{display:none}
+}

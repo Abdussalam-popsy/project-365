@@ -45,6 +45,23 @@ Trace one value: in `let total = 2`, the loop finds `let` → `m[3]="let"` → i
 </details>
 
 <details>
+<summary>@file: theme.js + the top bar in shared.js — explained</summary>
+
+[theme.js](./theme.js) · [shared.js](./shared.js)
+
+**Two files, two moments.** `theme.js` is loaded in `<head>`, before any CSS paints. It reads your saved choice from `localStorage` and sets `<html data-theme="dark">`. If it ran at the end of the page like the other scripts, you'd see a flash of light mode first. The toggle button is in `shared.js`, which runs after the page exists, because a button needs the page there to attach to.
+
+**How the colours switch.** `styles.css` already has a block for `:root[data-theme="dark"]` with dark values for every token. Setting the attribute is the whole switch: every `var(--bg)` on the page updates at once.
+
+**`currentTheme()`** returns the attribute if you've picked one, or otherwise asks the browser `matchMedia("(prefers-color-scheme: dark)")`, i.e. your Mac's appearance. The button shows where a click takes you: the sun in dark mode, the moon in light mode.
+
+**`try { localStorage... } catch`.** In a private window, saving can throw an error. The `catch` means the theme still switches for this visit; it just isn't remembered.
+
+**`mountTopbar()`** builds `<div class="topbar">`, moves the page's existing `← Swift Refactoring` link into it, and adds `#topActions` on the right. [panel.js](./panel.js) then puts the Cheat sheet button at the start of `#topActions` with `insertAdjacentHTML("afterbegin", …)`, so it sits left of the theme toggle.
+
+</details>
+
+<details>
 <summary>@file: drill/drill.js — explained</summary>
 
 [Open the file](./drill/drill.js). Data in [drill/questions.js](./drill/questions.js).
@@ -83,7 +100,11 @@ Trace one value: in `let total = 2`, the loop finds `let` → `m[3]="let"` → i
 
 This file only *builds* HTML; it doesn't put it anywhere. That's why both the full [Cheat Sheet page](./cheatsheet/cheatsheet.js) and the popup can use it: each one decides where the HTML goes.
 
-`cheatsheetHTML()` loops over `GROUPS` in order, and for each group `.filter`s the techniques that belong to it. So the order of the groups on screen comes from `GROUPS`, not from the order of rows.
+`cheatsheetHTML()` builds one `<table>`, laid out like the spreadsheet. It loops over `GROUPS` in order and gives each group its own `<tbody class="group tone-vanished">` (a table can have several `tbody`s, one per section). Each section starts with a full-width band row (`colspan="3"`) naming the group, then one row per technique, which it gets with `.filter`. So the order on screen comes from `GROUPS`, not from the order of rows.
+
+**Colours.** [cheatsheet.css](./cheatsheet/cheatsheet.css) sets `.tone-locked{--tone:...; --ink:...}`. Every cell inside that `tbody` reads `var(--tone)` for its background and `var(--ink)` for the band text, so one class colours a whole group. The light values are the spreadsheet's own fills, e.g. `#e3f2fd` for the "locked" blue.
+
+**Narrow layout.** `.cs-box` has `container-type:inline-size`, and `@container (max-width:620px)` restacks the table. Unlike `@media`, it measures the *box* rather than the window. That matters because the popup is 480px wide even on a big screen: there the table stacks, while the full page beside it stays a table.
 
 Each row stores a lowercase `data-search` string. `filterCheatsheet(root, query)` hides rows whose string doesn't `.includes()` what you typed, then hides any group left with no visible rows (`:not([hidden])`). It takes a `root` element so the popup's filter box only filters the popup, not some other copy of the sheet.
 
@@ -93,6 +114,8 @@ Each row stores a lowercase `data-search` string. `filterCheatsheet(root, query)
 <summary>@file: panel.js — explained</summary>
 
 [Open the file](./panel.js). Styles in [panel.css](./panel.css).
+
+**The button.** It lives in the top bar (see the theme section above), not floating over the page.
 
 **Why a `<dialog>`.** `dialog.showModal()` gives you a popup that sits on top of everything, dims the page behind it (the `::backdrop`), traps Tab inside, and closes on Esc, all built into the browser. `panel.css` sets `margin:0 0 0 auto` so it's pinned to the right edge instead of centred.
 

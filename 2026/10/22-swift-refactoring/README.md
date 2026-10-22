@@ -10,7 +10,7 @@
 
 Open `index.html` directly in a browser. No build step.
 
-On every page, the **Cheat sheet** button (or the `?` key) opens a side panel with the cheat sheet. On the Drill and Workshop it also has a **Your answers** tab showing what you've answered this round.
+Every page has a top bar with a light/dark toggle (your choice is remembered). The **Cheat sheet** button there (or the `?` key) opens a side panel with the cheat sheet. On the Drill and Workshop it also has a **Your answers** tab showing what you've answered this round.
 
 ## Adding a new exercise
 
