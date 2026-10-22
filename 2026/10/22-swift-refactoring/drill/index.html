@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>Refactoring Drill · Swift Refactoring</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap">
+  <link rel="stylesheet" href="../styles.css">
+  <link rel="stylesheet" href="drill.css">
+  <link rel="stylesheet" href="../cheatsheet/cheatsheet.css">
+  <link rel="stylesheet" href="../panel.css">
+</head>
+<body>
+<div class="wrap">
+  <a class="crumb" href="../">← Swift Refactoring</a>
+  <header>
+    <div>
+      <h1>Refactoring Drill</h1>
+      <p class="sub">Spot what changed between Before and After, then name the technique.</p>
+    </div>
+    <div class="controls">
+      <div class="seg" role="group" aria-label="Question set">
+        <button id="set-10" data-set="10" aria-pressed="false">Quick 10</button>
+        <button id="set-1" data-set="1" aria-pressed="false">Round 1</button>
+        <button id="set-2" data-set="2" aria-pressed="false">Round 2</button>
+        <button id="set-all" data-set="all" aria-pressed="true">All</button>
+      </div>
+      <label class="toggle"><input type="checkbox" id="exam"> Exam mode (<span id="optCount"></span> options)</label>
+    </div>
+  </header>
+
+  <div class="progress"><span id="count"></span><div class="bar"><i id="bar"></i></div><span id="score">0 correct</span></div>
+
+  <section class="card" id="quiz">
+    <div class="qhead"><h2>Which refactoring technique is demonstrated?</h2><span class="tag" id="qtag"></span></div>
+    <p class="note" id="note" hidden></p>
+    <div class="panes">
+      <div class="pane"><h3>Before</h3><pre id="before"></pre></div>
+      <div class="pane after"><h3>After</h3><pre id="after"></pre></div>
+    </div>
+    <div class="opts" id="opts"></div>
+    <div class="hint" id="hint" hidden></div>
+    <div class="feedback" id="feedback" hidden></div>
+    <div class="row">
+      <button class="btn" id="hintBtn">Show hint</button>
+      <button class="btn" id="diffBtn" hidden>Highlight what changed</button>
+      <span class="spacer"></span>
+      <button class="btn primary" id="checkBtn" disabled>Check answer</button>
+      <button class="btn primary" id="nextBtn" hidden>Next question</button>
+    </div>
+  </section>
+
+  <section class="card results" id="results" hidden>
+    <h2>Round finished</h2>
+    <div class="big" id="final"></div>
+    <p class="sub" id="verdict"></p>
+    <ul class="missed" id="missed"></ul>
+    <div class="row">
+      <button class="btn primary" id="retryMissed">Retry the ones I missed</button>
+      <button class="btn" id="restart">Start again (shuffled)</button>
+      <button class="btn" id="copyBtn">Copy results for Claude</button>
+      <span class="copystatus" id="copyStatus" hidden></span>
+    </div>
+    <textarea class="copybox" id="copyBox" readonly hidden aria-label="Results to paste into Claude"></textarea>
+  </section>
+</div>
+<script src="../shared.js"></script>
+<script src="questions.js"></script>
+<script src="../cheatsheet/techniques.js"></script>
+<script src="../cheatsheet/render.js"></script>
+<script src="../panel.js"></script>
+<script src="drill.js"></script>
+</body>
+</html>

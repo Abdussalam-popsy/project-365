@@ -292,5 +292,22 @@
     "language": "typescript",
     "description": "",
     "status": "local"
+  },
+  {
+    "date": "2026-10-22",
+    "name": "swift-refactoring",
+    "path": "2026/10/22-swift-refactoring",
+    "url": "",
+    "tags": [
+      "swift",
+      "refactoring",
+      "learning",
+      "quiz",
+      "vanilla"
+    ],
+    "template": "vanilla",
+    "language": "javascript",
+    "description": "Swift refactoring practice: spot-the-technique drill, write-it-yourself workshop and a cheat sheet, each with copy-to-Claude feedback",
+    "status": "local"
   }
 ]
