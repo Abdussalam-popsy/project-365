@@ -1,10 +1,9 @@
-/* Reference popup: floating button bottom-right, side panel on the right (full screen on phones). Rows come from cheatsheet/cheatsheet.css. */
-.has-ref .wrap{padding-bottom:96px}
+/* Reference popup: a "Cheat sheet" button in the top bar opens a side panel on the right (full screen on phones). Rows come from cheatsheet/cheatsheet.css. */
 
-.ref-fab{position:fixed;right:max(16px,env(safe-area-inset-right,0px));bottom:max(16px,env(safe-area-inset-bottom,0px));z-index:10;display:inline-flex;align-items:center;gap:8px;border:1px solid var(--accent);background:var(--accent);color:var(--surface);border-radius:999px;padding:10px 16px;font:600 .88rem var(--sans);cursor:pointer;box-shadow:0 6px 20px rgb(0 0 0 / .18)}
-.ref-fab kbd{font:600 .72rem var(--mono);border:1px solid currentColor;border-radius:4px;padding:0 5px;opacity:.75}
-.ref-fab:focus-visible{outline:2px solid var(--fg);outline-offset:3px}
-@media (hover:none){.ref-fab kbd{display:none}}
+.ref-open{display:inline-flex;align-items:center;gap:8px;height:36px;padding:0 12px}
+.ref-open:hover{border-color:var(--accent);color:var(--accent)}
+.ref-open kbd{font:600 .72rem var(--mono);border:1px solid var(--line);border-radius:4px;padding:0 5px;color:var(--muted)}
+@media (hover:none){.ref-open kbd{display:none}}
 
 .ref{margin:0 0 0 auto;width:min(480px,100vw);height:100dvh;max-height:none;max-width:none;padding:0;border:0;border-left:1px solid var(--line);background:var(--bg);color:var(--fg)}
 .ref[open]{display:flex;flex-direction:column;animation:ref-in .2s ease-out}
@@ -27,10 +26,7 @@
 
 .ref-body{flex:1;overflow-y:auto;overscroll-behavior:contain;padding:16px}
 .ref-body > div{display:flex;flex-direction:column;gap:12px}
-.ref-groups{display:flex;flex-direction:column;gap:12px}
 .ref .search{width:100%}
-.ref .group{padding:14px 16px}
-.ref .tech{grid-template-columns:1fr;gap:6px}
 
 /* "Your answers" list */
 .ref-answers{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px}

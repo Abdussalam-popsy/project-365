@@ -1,4 +1,4 @@
-// The reference popup: a floating "Cheat sheet" button that opens a side panel on any page.
+// The reference popup: a "Cheat sheet" button in the top bar (see mountTopbar in shared.js) that opens a side panel.
 // Tab 1 is the cheat sheet. Tab 2, "Your answers", appears when the page passes a `history` function.
 //
 //   mountReferencePanel();                          // cheat sheet only
@@ -11,10 +11,10 @@ function mountReferencePanel(options = {}){
   const history = options.history || null;
   let tab = "cheat";
 
-  document.body.classList.add("has-ref");
+  $("topActions").insertAdjacentHTML("afterbegin",
+    '<button class="btn ref-open" id="refOpen" type="button" aria-haspopup="dialog" aria-controls="ref">Cheat sheet<kbd>?</kbd></button>');
   document.body.insertAdjacentHTML("beforeend",
-    '<button class="ref-fab" id="refOpen" aria-haspopup="dialog" aria-controls="ref">Cheat sheet<kbd>?</kbd></button>'
-    + '<dialog class="ref" id="ref" aria-label="Reference">'
+    '<dialog class="ref" id="ref" aria-label="Reference">'
     +   '<div class="ref-head">'
     +     (history
           ? '<div class="ref-tabs" role="tablist">'
@@ -27,7 +27,7 @@ function mountReferencePanel(options = {}){
     +   '<div class="ref-body">'
     +     '<div id="refCheat">'
     +       '<input class="search" id="refQ" type="search" placeholder="Filter, e.g. private(set)" aria-label="Filter techniques" autocomplete="off" spellcheck="false">'
-    +       '<div class="ref-groups" id="refGroups">' + cheatsheetHTML() + '</div>'
+    +       '<div class="cs-box" id="refGroups">' + cheatsheetHTML() + '</div>'
     +       '<p class="empty" id="refEmpty" hidden>No technique matches that.</p>'
     +     '</div>'
     +     '<div id="refHistory" hidden></div>'

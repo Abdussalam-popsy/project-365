@@ -1,8 +1,14 @@
 // What changed → technique name. From refactoring-spot-the-difference.xlsx.
-// group: which section it sits in · idea: optional one-line principle · see: what you spot in the code
+// group: which section it sits in (a GROUPS name) · idea: optional one-line principle · see: what you spot in the code
 // example: optional pointer back to the Week 2 quiz
 
-const GROUPS = ["Something vanished", "Something appeared", "Something got locked", "Something changed"];
+// tone picks the row colour, matching the spreadsheet: red, green, blue, amber.
+const GROUPS = [
+  { name: "Something vanished", tone: "vanished" },
+  { name: "Something appeared", tone: "appeared" },
+  { name: "Something got locked", tone: "locked" },
+  { name: "Something changed", tone: "changed" },
+];
 
 const TECHNIQUES = [
   { group: "Something vanished", technique: "Inline method",
