@@ -18,6 +18,12 @@
       "runtimeExecutable": "python3",
       "runtimeArgs": ["-m", "http.server", "5391", "--directory", "2026/10/22-swift-refactoring"],
       "port": 5391
+    },
+    {
+      "name": "co6210-test-drill",
+      "runtimeExecutable": "python3",
+      "runtimeArgs": ["-m", "http.server", "5392", "--directory", "2026/10/26-co6210-test-drill"],
+      "port": 5392
     }
   ]
 }

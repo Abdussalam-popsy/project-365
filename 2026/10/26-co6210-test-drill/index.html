@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>CO6210 Test Drill</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400&family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=JetBrains+Mono:wght@500&display=swap">
+  <script src="theme.js"></script>
+  <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="home.css">
+</head>
+<body>
+<div class="route"></div><div class="route"></div>
+<div class="wrap">
+  <header>
+    <div class="eyebrow">CO6210 · Design Thinking for Innovation</div>
+    <h1>Test <em>drill</em></h1>
+    <p class="lede" id="lede"></p>
+    <div class="when">In-class test · Tue 27 Oct · 11:30 · CWE204 PC lab</div>
+  </header>
+
+  <section>
+    <div class="label">Pages</div>
+    <ul class="pages" id="pages"></ul>
+  </section>
+
+  <section>
+    <div class="label">The numbers they love to ask</div>
+    <div class="cheats" id="cheats"></div>
+  </section>
+
+  <p class="tip"><b>Getting feedback:</b> finish a round, press <b>Copy results for Claude</b>, and paste it into a chat. It lists your score by topic and every question you missed.</p>
+</div>
+
+<script src="shared.js"></script>
+<script src="questions.js"></script>
+<script src="notes/facts.js"></script>
+<script src="pages.js"></script>
+<script>
+  mountTopbar();
+  $("#lede").textContent = QUESTIONS.length + " multiple-choice questions from Weeks 1 to 3. "
+    + QUESTIONS.filter(q => q.lec).length + " are Richard's own slide questions; the rest test the facts, standards and words he flagged.";
+  $("#pages").innerHTML = PAGES.map(p =>
+    '<li><a class="page" href="' + esc(p.href) + '">'
+    + '<span class="tag">' + esc(p.kind) + '</span>'
+    + '<h2>' + esc(p.title) + '</h2>'
+    + '<p>' + esc(p.blurb) + '</p>'
+    + '<span class="foot"><span class="tag">' + esc(p.meta()) + '</span><span class="go">Open →</span></span>'
+    + '</a></li>').join("");
+  $("#cheats").innerHTML = CHEATS.map(c => '<div class="cheat"><b>' + esc(c.title) + '</b><p>' + esc(c.text) + '</p></div>').join("");
+</script>
+</body>
+</html>

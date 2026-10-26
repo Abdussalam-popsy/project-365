@@ -1,0 +1,122 @@
+// Revision facts. CHEATS = the quick numbers on the home page; FACTS = the key points per topic on the notes page.
+// Every fact comes from the question bank's explanations, so the two never disagree. Topic names match TOPIC_ORDER.
+
+const CHEATS = [
+  { title: "ISO 9241-11", text: "Specified users, goals, context. Effectiveness, efficiency, satisfaction. Not errors, not learnability." },
+  { title: "HCD principle 1", text: "Users, tasks and environments. The loop exits only when requirements are met." },
+  { title: "WCAG AA", text: "4.5 : 1 text, 3 : 1 large text. Targets 44 × 44. AA is what laws ask for. Latest is 2.2." },
+  { title: "People", text: "1 in 6 (WHO). Cognitive is largest (13.9%). 0 of 4,063 pilots were average." },
+  { title: "Testing", text: "5 users ≈ 85%. 15 users = three rounds of five. SUS out of 100, ~68 average." },
+  { title: "Sprints", text: "GV: 5 days, Map Sketch Decide Prototype Test. AJ&Smart 2.0: 4 days, whole team for 2." },
+];
+
+const FACTS = {
+  "Usability": [
+    "ISO 9241-11: the extent to which specified users can achieve specified goals with effectiveness, efficiency and satisfaction in a specified context of use.",
+    "Not in the definition: number of errors, accessibility, learnability. These are the decoys.",
+    "Effectiveness = did they complete the task correctly. Efficiency = time and effort. Satisfaction = how it felt.",
+    "You cannot say which design is most usable without knowing the users, goals and context.",
+    "UX starts before anyone opens the product (expectation, reputation) and continues after. Usability sits inside it.",
+    "Spool's $300 Million Button: the form worked; a wrong assumption about users (that they had accounts) was the problem.",
+    "Users who have no choice (staff) still deserve a usable system. They just cannot escape a bad one.",
+  ],
+  "HCD lifecycle": [
+    "ISO 9241-210 order: understand and specify the context of use → specify user requirements → produce design solutions → evaluate against requirements.",
+    "The only way out of the loop: evaluation shows the design meets the user requirements.",
+    "If it fails, iterate back to any earlier activity, not only the last one. Wrong requirements? Go back to requirements or context of use.",
+    "Principle 1, word for word: based on an explicit understanding of users, tasks and environments.",
+    "Other principles: users involved throughout; driven and refined by user-centred evaluation; iterative; addresses the whole user experience; multidisciplinary team.",
+    "Waterfall's weakness: problems are found too late, when changes cost the most.",
+  ],
+  "Mental models": [
+    "A mental model is the picture in someone's head of how a system works, learned from other systems.",
+    "A design can be correct and still fail because it does not match what people expect (Transfer moved into Money Tools).",
+    "Thermostat example: people treat it like a tap; it works like a switch.",
+  ],
+  "Red routes": [
+    "Red routes are the few critical journeys that must always be fast and easy.",
+    "Use them to choose what to build well when you cannot build everything.",
+    "The red route picks the task; a journey map zooms into each step of it.",
+  ],
+  "Stakeholders": [
+    "ISO 9241-210: a stakeholder has a right, share, claim or interest in a system.",
+    "Every user is a stakeholder, but not every stakeholder is a user (e.g. an IT security lead who approves it).",
+    "Someone booking for a parent is both a user and a stakeholder. The client is just one stakeholder.",
+  ],
+  "Accessibility": [
+    "Minto (2017): the degree to which an interactive system is available to as many people as possible.",
+    "WHO 2023: about 1 in 6 people (1.3 billion) have a significant disability. Many are invisible.",
+    "CDC 2022: cognitive is the largest disability group in US adults (13.9%).",
+    "Access needs can be permanent, temporary (broken wrist) or situational (holding a rail, bright sun).",
+    "Think about it from the start, at every step. It is everyone's job, not only the developer's.",
+    "Passing an automatic checker is not enough: test with disabled people (usable accessibility).",
+  ],
+  "Inclusive design": [
+    "Microsoft's three principles: recognise exclusion, learn from diversity, solve for one and extend to many.",
+    "Captions and on-screen announcements started for Deaf people and now help everyone.",
+    "US Air Force, 1950: of 4,063 pilots, none were average on all ten sizes. The average user does not exist.",
+    "It is not designing for the lowest common denominator; it raises the baseline for everyone.",
+  ],
+  "POUR & WCAG": [
+    "Perceivable: alt text, captions, contrast; never colour alone.",
+    "Operable: keyboard support, enough time, big targets.",
+    "Understandable: plain words, consistent behaviour, errors that say how to fix them.",
+    "Robust: keeps working across browsers, devices, zoom and assistive tech.",
+    "WCAG is written by the W3C. Levels A, AA (what laws ask for), AAA.",
+    "AA contrast: 4.5 : 1 normal text, 3 : 1 large text. Latest version: 2.2 (2023). 2.0 became ISO/IEC 40500 in 2012.",
+  ],
+  "Laws of UX": [
+    "Hick's law: more choices, slower decisions (200-country drop-down, 9 pricing plans).",
+    "Fitts' law: small, far-away or crowded targets take longer to hit. Tap targets at least 44 × 44.",
+    "Jakob's law: people expect your site to work like the others they use.",
+    "Miller's law: we hold about 7 ± 2 things in memory. Chunk it or show it again.",
+    "Law of proximity: things close together seem to belong together.",
+    "Aesthetic-usability effect: good-looking designs are seen as easier to use.",
+  ],
+  "Heuristics": [
+    "Nielsen's ten usability heuristics (1994): rules of thumb used by experts, no users needed.",
+    "#1 Visibility of system status: show it is working (spinner, \"Paying...\").",
+    "#3 User control and freedom: back, undo, an emergency exit.",
+    "#6 Recognition rather than recall.",
+  ],
+  "Gestalt": [
+    "Proximity: close together = a group.",
+    "Similarity: things that look the same seem to do the same.",
+    "Common region: things in the same box read as one group.",
+    "Figure and ground: one thing in front, the rest behind (a dimmed pop-up).",
+  ],
+  "Personas": [
+    "Introduced by Alan Cooper in the 1980s: a made-up person based on research who stands for a group of real users.",
+    "Must-haves (Travis 2009): name, photo, a goal quote, needs and pain points, a typical day. Hobbies are usually not needed.",
+    "GOV.UK personas: Ashleigh (partially sighted, screen reader), Christopher (rheumatoid arthritis), Pawel (Asperger's), Ron (older, several conditions).",
+  ],
+  "Design thinking": [
+    "Stanford d.school five stages: Empathise, Define, Ideate, Prototype, Test.",
+    "Double Diamond (Design Council, 2005): Discover, Define | Develop, Deliver. A problem statement sits between the diamonds.",
+    "Mapping to ISO 9241-210: context of use = Empathise; requirements = Define; design solutions = Ideate + Prototype; evaluate = Test.",
+    "Empathise: watch, ask, try. Ask about feelings and real past events, not features.",
+    "Problem statement: user (specific) needs (a verb) because (a surprising insight from research). User story: As a ... I want to ... so that ...",
+    "Ideas: quantity first, no judging yet, draw don't talk. Crazy 8s = eight ideas in eight minutes, alone. Dot vote: explain, don't defend.",
+    "Tim Brown (IDEO): desirability (do people want it), feasibility (can we build it), viability (does it work as a business).",
+    "A journey map shows the steps of a scenario and how the user feels at each one.",
+  ],
+  "Prototyping": [
+    "Paper: cheap to change and people criticise it honestly.",
+    "Wireframe: grey boxes, simple clicks (low to mid). Mockup: full colour, barely clickable. Interactive prototype: full colour and clickable.",
+    "When testing paper, the person \"being the computer\" swaps screens and says nothing.",
+  ],
+  "Testing": [
+    "5 users find about 85% of problems (Nielsen, 2000). With 15, run three rounds of five and fix in between.",
+    "SUS (Brooke, 1996): ten statements, five-point scale, a score out of 100 for satisfaction. About 68 is average.",
+    "Qualitative = what people say and do and why. Quantitative = numbers (completion, time), needs more people.",
+    "Guerrilla testing is quick and cheap, but the people may not be like your users.",
+    "When the team disagrees, test both prototypes with users and compare on clear measures.",
+  ],
+  "Sprints & crits": [
+    "Google Ventures sprint (Knapp et al., 2016): Map, Sketch, Decide (Wednesday), Prototype, Test with five users on Friday.",
+    "AJ&Smart Sprint 2.0: four days, the whole team only for the first two.",
+    "A sprint lowers the risk of building the wrong thing.",
+    "Crit (15 to 30 min): owner shows, listens and writes down, never defends; facilitator keeps time; reviewers discuss the design, not the designer.",
+    "Stand-up: Done, Next, Blocked. 15 minutes or less. Name problems, solve them afterwards.",
+  ],
+};

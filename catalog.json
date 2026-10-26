@@ -309,5 +309,22 @@
     "language": "javascript",
     "description": "Swift refactoring practice: spot-the-technique drill, write-it-yourself workshop and a cheat sheet, each with copy-to-Claude feedback",
     "status": "local"
+  },
+  {
+    "date": "2026-10-26",
+    "name": "co6210-test-drill",
+    "path": "2026/10/26-co6210-test-drill",
+    "url": "",
+    "tags": [
+      "design-thinking",
+      "ux",
+      "learning",
+      "quiz",
+      "vanilla"
+    ],
+    "template": "vanilla",
+    "language": "javascript",
+    "description": "CO6210 Design Thinking test practice: multiple-choice drill with mock test and misses, plus study notes by topic, with copy-to-Claude feedback",
+    "status": "local"
   }
 ]

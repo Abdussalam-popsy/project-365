@@ -1,0 +1,14 @@
+{
+  "name": "co6210-test-drill",
+  "tags": [
+    "design-thinking",
+    "ux",
+    "learning",
+    "quiz",
+    "vanilla"
+  ],
+  "template": "vanilla",
+  "language": "javascript",
+  "description": "CO6210 Design Thinking test practice: multiple-choice drill with mock test and misses, plus study notes by topic, with copy-to-Claude feedback",
+  "status": "local"
+}
