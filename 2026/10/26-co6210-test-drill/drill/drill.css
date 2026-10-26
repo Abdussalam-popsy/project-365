@@ -1,0 +1,54 @@
+/* Drill only: mode picker, the question screen and the results screen. */
+.modes{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px}
+.mode{font:inherit;text-align:left;color:var(--ink);background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:16px;cursor:pointer;display:flex;flex-direction:column;gap:4px;min-width:0}
+.mode:hover:not([disabled]){border-color:var(--ink)}
+.mode b{font-family:var(--display);font-weight:600;font-size:19px}
+.mode span{color:var(--muted);font-size:14px}
+.mode .n{font-family:var(--mono);font-size:12px;color:var(--red);margin-top:6px}
+.mode[disabled]{opacity:.45;cursor:not-allowed}
+.mode.primary{border-color:var(--red);box-shadow:inset 4px 0 0 var(--red)}
+.topic-note{display:flex;flex-wrap:wrap;align-items:center;gap:10px;font-size:15px;background:var(--red-soft);color:var(--ink);padding:10px 14px;border-radius:8px}
+.topic-note button{font:inherit;font-size:14px;background:none;border:0;color:var(--red);text-decoration:underline;cursor:pointer;padding:0}
+
+/* question */
+.qbar{display:flex;align-items:center;gap:12px;padding-block:16px 4px;position:sticky;top:0;background:var(--bg);z-index:5}
+.track{flex:1;height:6px;background:var(--chip);border-radius:3px;overflow:hidden}
+.track i{display:block;height:100%;background:var(--red);transition:width .25s}
+.count{font-family:var(--mono);font-size:13px;color:var(--muted);font-variant-numeric:tabular-nums;white-space:nowrap}
+.quit{font:inherit;font-size:14px;background:none;border:0;color:var(--muted);cursor:pointer;text-decoration:underline;padding:4px}
+.qmeta{display:flex;flex-wrap:wrap;gap:6px;margin-top:16px}
+.qtext{font-family:var(--display);font-weight:600;font-size:clamp(21px,4.6vw,26px);line-height:1.25;margin:14px 0 18px;text-wrap:pretty}
+.opts{display:flex;flex-direction:column;gap:10px}
+.opt{font:inherit;text-align:left;color:var(--ink);background:var(--surface);border:1.5px solid var(--line);border-radius:8px;padding:14px 16px;cursor:pointer;display:grid;grid-template-columns:28px 1fr;gap:10px;align-items:start}
+.opt:hover:not([disabled]){border-color:var(--ink)}
+.opt .k{font-family:var(--mono);font-size:13px;color:var(--muted);padding-top:3px}
+.opt.picked{border-color:var(--ink);background:var(--chip)}
+.opt.right{border-color:var(--good);background:var(--good-soft)}
+.opt.wrong{border-color:var(--bad);background:var(--bad-soft)}
+.opt[disabled]{cursor:default}
+.why{margin-top:16px;padding:14px 16px;border-left:4px solid var(--good);background:var(--surface);border-radius:0 8px 8px 0}
+.why.no{border-left-color:var(--bad)}
+.why b{font-family:var(--display);font-weight:600}
+.why p{margin:4px 0 0}
+.hint{font-size:13px;color:var(--muted);margin-top:10px}
+kbd{font-family:var(--mono);font-size:12px;border:1px solid var(--line);border-bottom-width:2px;border-radius:3px;padding:0 4px;background:var(--surface)}
+
+/* results */
+.score{display:flex;align-items:baseline;gap:14px;flex-wrap:wrap;margin-top:8px}
+.score .big{font-family:var(--display);font-weight:800;font-size:clamp(56px,16vw,96px);line-height:.9;letter-spacing:-.03em;font-variant-numeric:tabular-nums}
+.score .of{font-family:var(--mono);color:var(--muted)}
+.verdict{font-size:18px;margin:6px 0 0;max-width:60ch}
+.topics{display:flex;flex-direction:column;gap:8px}
+.trow{display:grid;grid-template-columns:minmax(0,1fr) 120px 52px;gap:12px;align-items:center;font-size:15px}
+.trow .tb{height:8px;background:var(--chip);border-radius:4px;overflow:hidden}
+.trow .tb i{display:block;height:100%}
+.trow .pc{font-family:var(--mono);font-size:13px;text-align:right;font-variant-numeric:tabular-nums}
+.miss{background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:14px 16px;display:flex;flex-direction:column;gap:6px;min-width:0}
+.miss .tag{align-self:flex-start}
+.miss .q{font-weight:700}
+.miss .you{color:var(--bad)}
+.miss .ans{color:var(--good)}
+.miss .ex{color:var(--muted);font-size:15px}
+textarea.copybox{width:100%;min-height:140px;font-family:var(--mono);font-size:12px;background:var(--surface);color:var(--ink);border:1px solid var(--line);border-radius:6px;padding:10px;margin-top:12px}
+@media (max-width:480px){.trow{grid-template-columns:minmax(0,1fr) 70px 46px}}
+@media (prefers-reduced-motion:reduce){.track i{transition:none}}
