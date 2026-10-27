@@ -1,6 +1,6 @@
 // The question bank. One row per question:
 // [week, topic, source, question, options (4), correct option index (0-3), why]
-// source: "L" = one of Richard's own slide questions (with his answer key), "X" = extra, testing facts he flagged.
+// source: "L" = from Richard himself (his slide questions with his answer key, or what he said in a review session), "X" = extra, testing facts he flagged.
 // To add a question, add a row in the right week. Topics must match TOPIC_ORDER at the bottom.
 
 const BANK = [
@@ -129,7 +129,19 @@ const BANK = [
 [3,"Sprints & crits","X","How long should a crit usually be?",["5 minutes","15 to 30 minutes","2 hours","A full day"],1,"Six steps: set the aim, share limits, show, discuss, collect, share back."],
 [3,"Sprints & crits","X","The three stand-up questions are:",["Done, Next, Blocked","Like, Wish, What if","Watch, Ask, Try","Map, Sketch, Decide"],0,"15 minutes or less. Name problems, don't solve them."],
 [3,"Sprints & crits","X","Someone raises a tricky bug at stand-up. What should happen?",["Solve it there with everyone","Name it, then fix it afterwards with only the people who need to be there","Ignore it","Extend the stand-up"],1,"Stand-ups name problems. They don't solve them."],
-[3,"Design thinking","X","\"Brief, Build, Launch, Hope.\" What is missing from this way of working?",["A budget","People: nobody checked user needs or tested the idea","Developers","A launch date"],1,"Users only appear at the very end, if at all."]
+[3,"Design thinking","X","\"Brief, Build, Launch, Hope.\" What is missing from this way of working?",["A budget","People: nobody checked user needs or tested the idea","Developers","A launch date"],1,"Users only appear at the very end, if at all."],
+
+// ---------- FROM THE TUESDAY 27 OCT REVIEW (source "L": Richard said it in class) ----------
+[2,"POUR & WCAG","L","A website looks fine, but a screen reader cannot read it. In the review, which POUR principle did Richard say this fails?",["Perceivable","Operable","Understandable","Robust"],3,"Robust: it must work with assistive technology. He was explicit: Robust, not Perceivable. (Colour-only status is still Perceivable.)"],
+[2,"POUR & WCAG","L","A drop-down menu cannot be opened with the keyboard. Which POUR principle does it fail?",["Perceivable","Operable","Understandable","Robust"],1,"Operable: every control must work however a person uses the device."],
+[3,"Testing","L","You have no real users available to test with. Which method can you still use?",["Guerrilla testing","Heuristic evaluation with Nielsen's 10 heuristics","A System Usability Scale survey","Think-aloud testing"],1,"Experts judge the design against the heuristics. Personas also stand in when users are missing."],
+[1,"Usability","L","Which part of the experience does usability cover?",["Before use only","During use","After use only","Before, during and after"],1,"Usability is the during. User experience is before, during and after."],
+[3,"Design thinking","L","Red route or user journey map: which one shows how the user FEELS at each step?",["Red route","User journey map","Both","Neither"],1,"Red route = the steps they must take. Journey map = how they feel, as a line rising and falling. Richard said once this clicks, everything else gets easier."],
+[1,"Red routes","L","Testing shows it takes Ron 9 taps to complete a red route. What is the first priority?",["Add a help page","Make that journey faster and smoother","Change the colour scheme","Add more features around it"],1,"Red routes must be quick, smooth and free of frustration. Fix them first."],
+[3,"Testing","L","Why are three rounds of five users better than one block of fifteen?",["It is cheaper per user","Returns drop after the first five, and fixing between rounds finds new problems","SUS only works with five users","Fifteen users is against WCAG"],1,"Test five, change, test five again. Covers nearly everything."],
+[1,"Usability","L","\"Designing for everyone means capturing no one.\" Which part of the ISO 9241-11 definition does this point to?",["Satisfaction","Specified users and specified context of use","Efficiency","Effectiveness"],1,"A product can be usable for one group in one place, and not for another."],
+[3,"Design thinking","L","Which design thinking stage is most often skipped or left until the very end?",["Empathise","Define","Ideate","Test"],3,"Humans at the start, testing at the end. That shape is non-negotiable."],
+[2,"Heuristics","L","Which of Nielsen's ten heuristics did Richard single out as the most important?",["Error prevention","Visibility of system status","Help and documentation","Consistency and standards"],1,"Heuristic #1. Always show people what the system is doing."]
 ];
 
 // Order topics appear in on the results screen and in the study notes.

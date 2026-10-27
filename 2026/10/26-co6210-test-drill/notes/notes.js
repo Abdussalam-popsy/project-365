@@ -7,7 +7,7 @@ const slug = t => t.toLowerCase().replace(/[^a-z0-9]+/g, "-");
 
 function questionHTML(q){
   return '<details class="qa"><summary><span class="qmeta"><span class="tag">W' + q.wk + '</span>'
-    + (q.lec ? '<span class="tag lec">From the slides</span>' : "") + '</span>'
+    + (q.lec ? '<span class="tag lec">From Richard</span>' : "") + '</span>'
     + '<span class="qq">' + esc(q.q) + '</span></summary>'
     + '<ol class="qopts" type="A">' + q.opts.map((o, i) => '<li' + (i === q.a ? ' class="right"' : "") + '>' + esc(o) + '</li>').join("") + '</ol>'
     + '<p class="qwhy"><b>Answer: ' + esc(q.opts[q.a]) + '.</b> ' + esc(q.why) + '</p></details>';
