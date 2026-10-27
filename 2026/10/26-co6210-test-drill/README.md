@@ -4,7 +4,7 @@
 
 | Page | What it is |
 | --- | --- |
-| [drill/](./drill/) | Multiple choice: Richard's slide questions, practise all, a timed 30-question mock test, Quick 10, or your misses |
+| [drill/](./drill/) | Multiple choice: Richard's slide questions, practise all, a timed 30-question mock test with Friday's negative marking (−⅓ per wrong, skip and return), Quick 10, or your misses |
 | [notes/](./notes/) | Key facts per topic, then every question with the answer hidden until you tap |
 
 Open `index.html` directly in a browser. No build step. Your selected weeks, missed questions and light/dark choice are remembered in this browser.

@@ -37,7 +37,7 @@ function home(){
     <div class="modes">
       ${mode("lec", "Richard's questions", "The questions from his slides, with his answer key. Most likely to reappear.", lec.length && lec.length + " questions · instant feedback", "primary")}
       ${mode("all", "Practice all", "Everything in the selected weeks, shuffled. Explanation after each answer.", p.length && p.length + " questions · instant feedback")}
-      ${mode("exam", "Mock test", "30 random questions, no feedback until the end. Like the real hour.", p.length && Math.min(EXAM_SIZE, p.length) + " questions · timed")}
+      ${mode("exam", "Mock test", "30 random questions, marked like Friday: +1 right, −⅓ wrong, 0 blank. Skip and come back.", p.length && Math.min(EXAM_SIZE, p.length) + " questions · timed · negative marking")}
       ${mode("q10", "Quick 10", "Ten random questions. Good for a last check before you walk in.", p.length && Math.min(QUICK_SIZE, p.length) + " questions")}
       ${mode("miss", "My misses", "Only questions you got wrong before. Right answers drop off the list.", miss.length && miss.length + " saved")}
     </div>
@@ -92,20 +92,42 @@ function render(){
     <div class="track"><i style="width:${(S.i / S.qs.length) * 100}%"></i></div>
     <div class="count">${S.i + 1} / ${S.qs.length}${S.exam ? ' · <span id="clock">' + clock() + '</span>' : ""}</div>
   </div>
-  <div class="qmeta"><span class="tag">Week ${q.wk}</span><span class="tag">${esc(q.topic)}</span>${q.lec ? '<span class="tag lec">From the slides</span>' : ""}</div>
+  <div class="qmeta"><span class="tag">Week ${q.wk}</span><span class="tag">${esc(q.topic)}</span>${q.lec ? '<span class="tag lec">From Richard</span>' : ""}</div>
   <div class="qtext" id="qtext">${esc(q.q)}</div>
   <div class="opts" role="group" aria-labelledby="qtext">${q.order.map((oi, k) => optionHTML(q, ans, showFb, oi, k)).join("")}</div>
   ${showFb ? `<div class="why ${ans === q.a ? "" : "no"}" role="status"><b>${ans === q.a ? "Correct." : "Answer: " + esc(q.opts[q.a])}</b><p>${esc(q.why)}</p></div>` : ""}
   <div class="actions">
     ${S.exam && S.i > 0 ? '<button class="btn ghost" id="prev">Back</button>' : ""}
-    <button class="btn" id="next" ${done ? "" : "disabled"}>${last ? "See results" : "Next"}</button>
+    ${S.exam ? examButtons(done) : `<button class="btn" id="next" ${done ? "" : "disabled"}>${last ? "See results" : "Next"}</button>`}
   </div>
-  <p class="hint">Keys: <kbd>A</kbd>–<kbd>D</kbd> or <kbd>1</kbd>–<kbd>4</kbd> to answer, <kbd>Enter</kbd> for next.</p>`;
+  ${S.exam ? examNav() : ""}
+  <p class="hint">Keys: <kbd>A</kbd>–<kbd>D</kbd> or <kbd>1</kbd>–<kbd>4</kbd> to answer, <kbd>Enter</kbd> for ${S.exam ? "next or skip" : "next"}.</p>`;
   app.querySelectorAll(".opt").forEach(b => b.onclick = () => pick(+b.dataset.o));
   $("#next").onclick = next;
   $("#quit").onclick = () => { if(S.answers.some(a => a !== undefined)) results(); else home(); };
   const prev = $("#prev");
   if(prev) prev.onclick = () => { S = { ...S, i: S.i - 1 }; render(); };
+  if(S.exam){
+    app.querySelectorAll(".nq").forEach(b => b.onclick = () => { S = { ...S, i: +b.dataset.j }; render(); });
+    $("#finish").onclick = results;
+    const clear = $("#clear");
+    if(clear) clear.onclick = () => { const answers = S.answers.slice(); answers[S.i] = undefined; S = { ...S, answers }; render(); };
+  }
+}
+
+// Mock test only. Like Friday: a blank scores 0, a wrong answer scores −⅓, so skipping is allowed.
+function examButtons(done){
+  return (done ? '<button class="btn ghost" id="clear">Clear answer</button>' : "")
+    + '<button class="btn" id="next">' + (done ? "Next" : "Skip") + '</button>'
+    + '<button class="btn ghost" id="finish">Finish test</button>';
+}
+function examNav(){
+  const answered = S.answers.filter(a => a !== undefined).length;
+  return '<div class="nav" aria-label="Jump to question">' + S.qs.map((x, j) => {
+    const a = S.answers[j] !== undefined;
+    return '<button class="nq' + (a ? " a" : "") + (j === S.i ? " cur" : "") + '" data-j="' + j + '" aria-label="Question ' + (j + 1) + (a ? ", answered" : ", blank") + '">' + (j + 1) + '</button>';
+  }).join("") + '</div>'
+    + '<p class="hint">' + answered + ' answered · ' + (S.qs.length - answered) + ' blank. Blank scores 0, wrong scores −⅓.</p>';
 }
 
 function pick(o){
@@ -123,9 +145,16 @@ function pick(o){
 }
 
 function next(){
-  if(S.answers[S.i] === undefined) return;
-  if(S.i < S.qs.length - 1){ S = { ...S, i: S.i + 1 }; render(); window.scrollTo(0, 0); }
-  else results();
+  if(S.answers[S.i] === undefined && !S.exam) return;
+  if(S.i < S.qs.length - 1){ S = { ...S, i: S.i + 1 }; render(); window.scrollTo(0, 0); return; }
+  // End of a mock test: send them back to the first blank once, the way you'd check before handing in.
+  const firstBlank = S.qs.findIndex((x, j) => S.answers[j] === undefined);
+  if(S.exam && firstBlank >= 0 && !S.wrapped){
+    S = { ...S, i: firstBlank, wrapped: true }; render(); window.scrollTo(0, 0);
+    toast("Back to your first blank: question " + (firstBlank + 1));
+    return;
+  }
+  results();
 }
 
 // Score per topic, weakest first.
@@ -160,8 +189,16 @@ function results(){
   const weak = topics.filter(t => by[t].r / by[t].n < 0.7);
   const mins = Math.round((Date.now() - S.t0) / 60000);
   const modeName = MODE_NAMES[S.mode] + (topic ? " (" + topic + ")" : "");
+  // Friday's marking: +1 right, −⅓ wrong, 0 blank.
+  const wrongN = n - right, blank = qs.length - n, net = right - wrongN / 3;
+  const markLine = "Negative-marked: " + net.toFixed(1) + " / " + qs.length + " (" + Math.max(0, Math.round(net / qs.length * 100)) + "%) · "
+    + right + " right, " + wrongN + " wrong (−" + (wrongN / 3).toFixed(1) + "), " + blank + " blank";
+  const verdict = S.exam && wrongN / 3 >= 2
+    ? "Wrong answers cost you " + (wrongN / 3).toFixed(1) + " marks. On Friday, only answer when you can rule out at least one option."
+    : verdictFor(pc, weak);
   const copyText = [
     "CO6210 drill results: " + right + "/" + n + " (" + pc + "%) · " + modeName + " · weeks " + weeks.join(", ") + " · " + mins + " min",
+    markLine,
     "By topic: " + topics.map(t => t + " " + by[t].r + "/" + by[t].n).join(" · "),
     wrong.length ? "Missed:" : "No misses.",
     ...wrong.map(x => "- [W" + x.q.wk + " " + x.q.topic + "] " + x.q.q + " | I picked: " + x.q.opts[x.a] + " | Correct: " + x.q.opts[x.q.a])
@@ -171,7 +208,8 @@ function results(){
   <header>
     <div class="eyebrow">${esc(modeName)} · Weeks ${weeks.join(", ")}</div>
     <div class="score"><span class="big">${pc}%</span><span class="of">${right} of ${n} correct${n < qs.length ? " · stopped at " + n : ""}</span></div>
-    <p class="verdict">${esc(verdictFor(pc, weak))}</p>
+    <p class="netline">${esc(markLine)}</p>
+    <p class="verdict">${esc(verdict)}</p>
   </header>
   <div class="actions">
     ${wrong.length ? `<button class="btn" id="retry">Retry ${wrong.length} missed</button>` : ""}
@@ -213,7 +251,9 @@ document.addEventListener("keydown", e => {
   if(k.length === 1 && idx >= 0){
     const b = $("#opt" + idx);
     if(b && !b.disabled){ e.preventDefault(); pick(+b.dataset.o); }
-  } else if(e.key === "Enter" && S.answers[S.i] !== undefined && document.activeElement?.id !== "quit"){
+  } else if(e.key === "Enter" && (S.answers[S.i] !== undefined || S.exam)
+      && !["quit", "finish", "clear", "prev"].includes(document.activeElement?.id)
+      && !document.activeElement?.classList.contains("nq")){
     e.preventDefault(); next();
   }
 });

@@ -8,6 +8,8 @@ const CHEATS = [
   { title: "People", text: "1 in 6 (WHO). Cognitive is largest (13.9%). 0 of 4,063 pilots were average." },
   { title: "Testing", text: "5 users ≈ 85%. 15 users = three rounds of five. SUS out of 100, ~68 average." },
   { title: "Sprints", text: "GV: 5 days, Map Sketch Decide Prototype Test. AJ&Smart 2.0: 4 days, whole team for 2." },
+  { title: "Negative marking", text: "−⅓ per wrong answer. A blind guess scores 0 on average. Rule out one option and guessing pays; rule out none and skip." },
+  { title: "Red route vs journey", text: "Red route = the steps they take. Journey map = how they feel at each step." },
 ];
 
 const FACTS = {
@@ -16,7 +18,7 @@ const FACTS = {
     "Not in the definition: number of errors, accessibility, learnability. These are the decoys.",
     "Effectiveness = did they complete the task correctly. Efficiency = time and effort. Satisfaction = how it felt.",
     "You cannot say which design is most usable without knowing the users, goals and context.",
-    "UX starts before anyone opens the product (expectation, reputation) and continues after. Usability sits inside it.",
+    "UX starts before anyone opens the product (expectation, reputation) and continues after. Usability is the during.",
     "Spool's $300 Million Button: the form worked; a wrong assumption about users (that they had accounts) was the problem.",
     "Users who have no choice (staff) still deserve a usable system. They just cannot escape a bad one.",
   ],
@@ -36,6 +38,7 @@ const FACTS = {
   "Red routes": [
     "Red routes are the few critical journeys that must always be fast and easy.",
     "Use them to choose what to build well when you cannot build everything.",
+    "If testing shows a red route takes 9 taps, making it faster and smoother is the first priority.",
     "The red route picks the task; a journey map zooms into each step of it.",
   ],
   "Stakeholders": [
@@ -59,9 +62,9 @@ const FACTS = {
   ],
   "POUR & WCAG": [
     "Perceivable: alt text, captions, contrast; never colour alone.",
-    "Operable: keyboard support, enough time, big targets.",
+    "Operable: keyboard support, enough time, big targets. A menu you cannot open with the keyboard fails Operable.",
     "Understandable: plain words, consistent behaviour, errors that say how to fix them.",
-    "Robust: keeps working across browsers, devices, zoom and assistive tech.",
+    "Robust: keeps working across browsers, devices, zoom and assistive tech. Looks fine but a screen reader cannot read it = Robust (Richard, review).",
     "WCAG is written by the W3C. Levels A, AA (what laws ask for), AAA.",
     "AA contrast: 4.5 : 1 normal text, 3 : 1 large text. Latest version: 2.2 (2023). 2.0 became ISO/IEC 40500 in 2012.",
   ],
@@ -75,7 +78,7 @@ const FACTS = {
   ],
   "Heuristics": [
     "Nielsen's ten usability heuristics (1994): rules of thumb used by experts, no users needed.",
-    "#1 Visibility of system status: show it is working (spinner, \"Paying...\").",
+    "#1 Visibility of system status: show it is working (spinner, \"Paying...\"). Richard called this the most important one.",
     "#3 User control and freedom: back, undo, an emergency exit.",
     "#6 Recognition rather than recall.",
   ],
@@ -98,7 +101,8 @@ const FACTS = {
     "Problem statement: user (specific) needs (a verb) because (a surprising insight from research). User story: As a ... I want to ... so that ...",
     "Ideas: quantity first, no judging yet, draw don't talk. Crazy 8s = eight ideas in eight minutes, alone. Dot vote: explain, don't defend.",
     "Tim Brown (IDEO): desirability (do people want it), feasibility (can we build it), viability (does it work as a business).",
-    "A journey map shows the steps of a scenario and how the user feels at each one.",
+    "A journey map shows the steps of a scenario and how the user feels at each one. The red route is the steps; the journey map is the feelings.",
+    "Test is the stage most often skipped. Humans at the start, testing at the end.",
   ],
   "Prototyping": [
     "Paper: cheap to change and people criticise it honestly.",
@@ -111,6 +115,7 @@ const FACTS = {
     "Qualitative = what people say and do and why. Quantitative = numbers (completion, time), needs more people.",
     "Guerrilla testing is quick and cheap, but the people may not be like your users.",
     "When the team disagrees, test both prototypes with users and compare on clear measures.",
+    "No users available? Use a heuristic evaluation (Nielsen's 10) or personas.",
   ],
   "Sprints & crits": [
     "Google Ventures sprint (Knapp et al., 2016): Map, Sketch, Decide (Wednesday), Prototype, Test with five users on Friday.",
