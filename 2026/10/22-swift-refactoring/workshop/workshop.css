@@ -13,6 +13,7 @@ pre .ln{min-height:1.75em}
 .blank:focus{outline:none;border-style:solid;box-shadow:0 0 0 3px var(--accent-soft)}
 .blank.ok{border:1.5px solid var(--good);background:var(--good-soft)}
 .blank.no{border:1.5px solid var(--bad);background:var(--bad-soft)}
+.blank.shown{border:1.5px solid var(--str);background:var(--warn-soft)}   /* filled in by Show answer */
 
 /* Free editor + checklist (level 3) */
 textarea.editor{flex:1;width:100%;min-height:260px;border:0;resize:vertical;background:var(--code);color:var(--fg);font:400 .84rem/1.75 var(--mono);padding:12px 14px;tab-size:4;white-space:pre;overflow:auto}

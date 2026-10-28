@@ -234,12 +234,12 @@ const EX = [
     "technique": "Add parameter",
     "task": "From the zip: add priority: AlertPriority to sendAlert, print it, and update the internal caller.",
     "recipe": "1. Add the input. 2. Use it in the body. 3. Update every caller.",
-    "before": "func sendAlert(message: String) {\n    print(\"[ALERT]: \\(message)\")\n}\n\nfunc notifyUser() {\n    sendAlert(message: \"Disk space is low\")\n}",
-    "after": "func sendAlert(message: String, «priority: AlertPriority») {\n    «print(\"[ALERT - \\(priority)]: \\(message)\")»\n}\n\nfunc notifyUser() {\n    «sendAlert(message: \"Disk space is low\", priority: .high)|sendAlert(message: \"Disk space is low\", priority: .low)|sendAlert(message: \"Disk space is low\", priority: .medium)»\n}",
+    "before": "enum AlertPriority {\n    case low, medium, high\n}\n\nfunc sendAlert(message: String) {\n    print(\"[ALERT]: \\(message)\")\n}\n\nfunc notifyUser() {\n    sendAlert(message: \"Disk space is low\")\n}",
+    "after": "enum AlertPriority {\n    case low, medium, high\n}\n\nfunc sendAlert(message: String, «priority: AlertPriority») {\n    «print(\"[ALERT - \\(priority)]: \\(message)\")»\n}\n\nfunc notifyUser() {\n    «sendAlert(message: \"Disk space is low\", priority: .high)|sendAlert(message: \"Disk space is low\", priority: .low)|sendAlert(message: \"Disk space is low\", priority: .medium)»\n}",
     "hints": [
       "Name and type are in the task.",
       "Format: [ALERT - <priority>]: <message>",
-      "The caller must now pass a priority. Enum cases start with a dot, like .high"
+      "The caller must now pass a priority. Pick any case from the enum at the top. Enum cases start with a dot: .low, .medium or .high"
     ],
     "note": ""
   },

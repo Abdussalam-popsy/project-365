@@ -137,12 +137,12 @@ function reveal(){
   if(e.level < 3){
     document.querySelectorAll(".blank").forEach(b => {
       const alts = JSON.parse(b.dataset.alts);
-      if(!alts.some(a => norm(a) === norm(b.value))){ b.value = alts[0]; b.classList.remove("ok"); b.classList.add("no"); }
+      if(!alts.some(a => norm(a) === norm(b.value))){ b.value = alts[0]; b.classList.remove("ok", "no"); b.classList.add("shown"); }   // yellow = filled in for you, not "wrong"
     });
   }
   if(!state.lastWrong) state.lastWrong = "revealed before checking";
   state.lastCode = e.level === 3 ? $("editor").value : "";
-  feedback(false, "Here's the answer. Read it, then redo this one later from the results screen.");
+  feedback(false, "Here's the answer. The yellow blanks were filled in for you. Read them, then redo this one later from the results screen.");
   finish("revealed");
 }
 
