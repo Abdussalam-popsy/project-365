@@ -9,6 +9,6 @@
   ],
   "template": "vanilla",
   "language": "javascript",
-  "description": "Swift refactoring practice: spot-the-technique drill, write-it-yourself workshop and a cheat sheet, each with copy-to-Claude feedback",
-  "status": "local"
+  "description": "Swift refactoring practice: spot-the-technique drill, write-it-yourself workshop, Watch It Run (code that runs line by line), a Swift vocabulary map and a cheat sheet, each with copy-to-Claude feedback",
+  "status": "live"
 }

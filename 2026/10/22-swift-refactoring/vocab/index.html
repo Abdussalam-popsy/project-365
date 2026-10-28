@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>Swift Vocabulary · Swift Refactoring</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap">
+  <script src="../theme.js"></script>
+  <link rel="stylesheet" href="../styles.css">
+  <link rel="stylesheet" href="vocab.css">
+  <link rel="stylesheet" href="../cheatsheet/cheatsheet.css">
+  <link rel="stylesheet" href="../panel.css">
+</head>
+<body>
+<div class="wrap">
+  <a class="crumb" href="../">← Swift Refactoring</a>
+  <header>
+    <div>
+      <h1>Swift Vocabulary</h1>
+      <p class="sub" id="total"></p>
+    </div>
+    <div class="seg" role="group" aria-label="Mode">
+      <button id="mode-browse" data-mode="browse" aria-pressed="true">Browse</button>
+      <button id="mode-quiz" data-mode="quiz" aria-pressed="false">Quiz me</button>
+    </div>
+  </header>
+
+  <!-- BROWSE -->
+  <section id="browse">
+    <div class="filters">
+      <input class="search" id="q" type="search" placeholder="Search, e.g. guard, dictionary, ===" aria-label="Search words" autocomplete="off" spellcheck="false">
+      <div class="chips" id="groupChips" role="group" aria-label="Filter by group"></div>
+      <label class="toggle"><input type="checkbox" id="hideMeaning"> Hide meanings (test yourself, click a card to reveal)</label>
+    </div>
+    <div id="groups"></div>
+    <p class="empty" id="empty" hidden>No word matches that.</p>
+  </section>
+
+  <!-- QUIZ -->
+  <section id="quiz" hidden>
+    <div class="row">
+      <div class="seg" role="group" aria-label="Quiz direction">
+        <button id="dir-word" data-dir="word" aria-pressed="true">Word → meaning</button>
+        <button id="dir-meaning" data-dir="meaning" aria-pressed="false">Meaning → word</button>
+      </div>
+      <span class="spacer"></span>
+      <label class="toggle">Group <select id="quizGroup"></select></label>
+    </div>
+    <div class="progress"><span id="qCount"></span><div class="bar"><i id="qBar"></i></div><span id="qScore"></span></div>
+
+    <div class="card" id="qCard">
+      <span class="tag" id="qGroup"></span>
+      <div class="prompt" id="qPrompt"></div>
+      <pre class="example" id="qExample" hidden></pre>
+      <div class="opts" id="qOpts"></div>
+      <div class="feedback" id="qFeedback" hidden></div>
+      <div class="row"><span class="spacer"></span><button class="btn primary" id="qNext" hidden>Next</button></div>
+    </div>
+
+    <div class="card results" id="qResults" hidden>
+      <h2>Round finished</h2>
+      <div class="big" id="qFinal"></div>
+      <ul class="missed" id="qMissed"></ul>
+      <div class="row">
+        <button class="btn primary" id="qRetry">Retry the ones I missed</button>
+        <button class="btn" id="qRestart">New round</button>
+        <button class="btn" id="qCopy">Copy results for Claude</button>
+        <span class="copystatus" id="qCopyStatus" hidden></span>
+      </div>
+      <textarea class="copybox" id="qCopyBox" readonly hidden aria-label="Results to paste into Claude"></textarea>
+    </div>
+  </section>
+</div>
+<script src="../shared.js"></script>
+<script src="../cheatsheet/techniques.js"></script>
+<script src="../cheatsheet/render.js"></script>
+<script src="../panel.js"></script>
+<script src="words.js"></script>
+<script src="vocab.js"></script>
+</body>
+</html>

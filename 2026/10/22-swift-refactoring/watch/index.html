@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>Watch It Run · Swift Refactoring</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap">
+  <script src="../theme.js"></script>
+  <link rel="stylesheet" href="../styles.css">
+  <link rel="stylesheet" href="watch.css">
+  <link rel="stylesheet" href="../cheatsheet/cheatsheet.css">
+  <link rel="stylesheet" href="../panel.css">
+</head>
+<body>
+<div class="wrap">
+  <a class="crumb" href="../">← Swift Refactoring</a>
+  <header>
+    <div>
+      <h1>Watch It Run</h1>
+      <p class="sub">Press a button and watch each line of Swift light up as it runs. The values change live on the right. Try the red "cheat" buttons to see what <code>private(set)</code> stops.</p>
+    </div>
+  </header>
+
+  <div class="tabs" role="group" aria-label="Scene">
+    <button id="tab-wallet" data-scene="wallet" aria-pressed="true"><small>Encapsulate field</small>Player wallet</button>
+    <button id="tab-cart" data-scene="cart" aria-pressed="false"><small>Encapsulate collection</small>Shopping cart</button>
+    <button id="tab-team" data-scene="team" aria-pressed="false"><small>Dictionary</small>Team roles</button>
+    <button id="tab-weather" data-scene="weather" aria-pressed="false"><small>Extract interface</small>Weather widget</button>
+  </div>
+
+  <!-- WALLET -->
+  <section class="scene" id="scene-wallet">
+    <div class="panel"><h3>The code</h3><pre id="code-wallet"></pre>
+      <details class="twin"><summary>Same thing in React</summary><pre id="js-wallet"></pre></details>
+    </div>
+    <div class="panel"><h3>Live</h3><div class="body">
+      <p class="intro">A player has money. The only way to spend it is <code>pay()</code>, and it has a bouncer.</p>
+      <div class="state"><span class="label">player.balance</span><span class="big" id="w-bal">1500</span></div>
+      <div class="controls">
+        <label>amount <input class="field" id="w-amt" type="number" value="200"></label>
+        <button class="btn primary" id="w-pay">player.pay(amount)</button>
+      </div>
+      <div class="controls">
+        <button class="btn" id="w-read">print(player.balance)</button>
+        <button class="btn cheat" id="w-cheat">player.balance = 99999</button>
+        <button class="btn" id="w-reset">Reset</button>
+      </div>
+      <p class="hintline">Try: 200, then 0, then -100, then 5000, then exactly what's left.</p>
+      <h4 class="loghead">What just happened</h4>
+      <ol class="log" id="log-wallet"></ol>
+    </div></div>
+  </section>
+
+  <!-- CART -->
+  <section class="scene" id="scene-cart" hidden>
+    <div class="panel"><h3>The code</h3><pre id="code-cart"></pre>
+      <details class="twin"><summary>Same thing in React</summary><pre id="js-cart"></pre></details>
+    </div>
+    <div class="panel"><h3>Live</h3><div class="body">
+      <p class="intro">A cart holds a list of items. Each item has its own id. You can only change the list through the three funcs.</p>
+      <div class="state"><span class="label">cart.items</span><div class="chips" id="c-chips"></div><div class="literal" id="c-lit"></div></div>
+      <div class="controls" id="c-add"></div>
+      <div class="controls" id="c-rm"></div>
+      <div class="controls">
+        <button class="btn" id="c-clear">cart.clear()</button>
+        <button class="btn cheat" id="c-cheat">cart.items.append(milk)</button>
+        <button class="btn" id="c-reset">Reset</button>
+      </div>
+      <p class="hintline">Press removeItem on the middle one (eggs) and watch removeAll check every item, one by one. Then add milk again: it gets a new id, so you can remove one milk without touching the other.</p>
+      <h4 class="loghead">What just happened</h4>
+      <ol class="log" id="log-cart"></ol>
+    </div></div>
+  </section>
+
+  <!-- TEAM -->
+  <section class="scene" id="scene-team" hidden>
+    <div class="panel"><h3>The code</h3><pre id="code-team"></pre>
+      <details class="twin"><summary>Same thing in React</summary><pre id="js-team"></pre></details>
+    </div>
+    <div class="panel"><h3>Live</h3><div class="body">
+      <p class="intro">A lookup table: each person's <b>name</b> points to their <b>role</b>. Like a contacts list.</p>
+      <div class="state"><span class="label">team.memberRoles</span>
+        <table class="dict"><thead><tr><th>key (member)</th><th>value (role)</th></tr></thead><tbody id="t-rows"></tbody></table>
+        <div class="literal" id="t-lit"></div>
+      </div>
+      <div class="controls">
+        <label>role <input class="field" id="t-role" value="Lead"></label>
+        <label>member <input class="field" id="t-member" value="Aisha"></label>
+      </div>
+      <div class="controls">
+        <button class="btn primary" id="t-assign">assignRole(role, to: member)</button>
+        <button class="btn" id="t-remove">removeMember(member)</button>
+      </div>
+      <div class="controls">
+        <button class="btn cheat" id="t-cheat">team.memberRoles["Zed"] = "Boss"</button>
+        <button class="btn" id="t-reset">Reset</button>
+      </div>
+      <p class="hintline">Try giving Aisha a new role (it replaces the old one), then add someone new, then remove Ben.</p>
+      <h4 class="loghead">What just happened</h4>
+      <ol class="log" id="log-team"></ol>
+    </div></div>
+  </section>
+
+  <!-- WEATHER -->
+  <section class="scene" id="scene-weather" hidden>
+    <div class="panel"><h3>The code <span class="seg" role="group" aria-label="Version"><button id="v-before" aria-pressed="false">Before</button><button id="v-after" aria-pressed="true">After</button></span></h3><pre id="code-weather"></pre>
+      <details class="twin"><summary>Same idea in TypeScript</summary><pre id="js-weather"></pre></details>
+    </div>
+    <div class="panel"><h3>Live</h3><div class="body">
+      <p class="intro">The widget shows a temperature. Plug different weather services into it. Then switch the code to <b>Before</b> and try again.</p>
+      <div class="widget"><div><div class="label">WeatherDisplayWidget</div><div class="src" id="wx-src">api = (nothing plugged in)</div></div><div class="big" id="wx-temp">--</div></div>
+      <div class="controls">
+        <button class="btn primary" data-svc="LiveWeatherService">plug in LiveWeatherService()</button>
+        <button class="btn" data-svc="FakeWeatherService">plug in FakeWeatherService()</button>
+        <button class="btn" data-svc="BackupWeatherService">plug in BackupWeatherService()</button>
+      </div>
+      <p class="hintline">Live and Backup are real services. Fake returns made-up data for testing, so you never hit a real API while building.</p>
+      <h4 class="loghead">What just happened</h4>
+      <ol class="log" id="log-weather"></ol>
+    </div></div>
+  </section>
+</div>
+<script src="../shared.js"></script>
+<script src="../cheatsheet/techniques.js"></script>
+<script src="../cheatsheet/render.js"></script>
+<script src="../panel.js"></script>
+<script src="scenes.js"></script>
+<script src="watch.js"></script>
+</body>
+</html>
