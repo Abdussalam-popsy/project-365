@@ -16,18 +16,29 @@
   <a class="crumb" href="../">← Swift Refactoring</a>
   <header>
     <div>
-      <h1>What changed → technique name</h1>
+      <h1 id="title">What changed → technique name</h1>
       <p class="sub" id="total"></p>
     </div>
-    <input class="search" id="q" type="search" placeholder="Filter, e.g. private(set)" aria-label="Filter techniques" autocomplete="off" spellcheck="false">
+    <input class="search" id="q" type="search" placeholder="Filter, e.g. private(set)" aria-label="Filter" autocomplete="off" spellcheck="false">
   </header>
-  <p class="how">Compare Before and After, find the row that describes the difference, take the name.</p>
-  <div class="cs-box" id="groups"></div>
-  <p class="empty" id="empty" hidden>No technique matches that.</p>
+  <div class="seg view-switch" role="group" aria-label="Cheat sheet">
+    <button id="view-tech" data-view="tech" aria-pressed="true">Techniques</button>
+    <button id="view-basics" data-view="basics" aria-pressed="false">Swift basics</button>
+  </div>
+  <section id="techView">
+    <p class="how">Compare Before and After, find the row that describes the difference, take the name.</p>
+    <div class="cs-box" id="groups"></div>
+  </section>
+  <section id="basicsView" hidden>
+    <p class="how">The Swift words that look alike, side by side.</p>
+    <div id="basics"></div>
+  </section>
+  <p class="empty" id="empty" hidden>Nothing matches that.</p>
 </div>
 
 <script src="../shared.js"></script>
 <script src="techniques.js"></script>
+<script src="basics.js"></script>
 <script src="render.js"></script>
 <script src="cheatsheet.js"></script>
 </body>

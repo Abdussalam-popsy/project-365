@@ -1,5 +1,6 @@
 // Swift Vocabulary: Browse mode (search, group filter, hide-meanings self test) and Quiz mode
-// (one word or meaning, pick from four). The words themselves live in words.js.
+// (one word or meaning, pick from four, or skip). The words themselves live in words.js.
+// JS / Python twins use the shared "Show JavaScript / Python" switch from cheatsheet/render.js.
 
 const VOCAB_TYPES = new Set("String Int Double Bool UUID Date CartItem Player Property Rentable Jail Location GamePiece".split(" "));
 const groupById = Object.fromEntries(VOCAB_GROUPS.map(g => [g.id, g]));
@@ -35,7 +36,16 @@ $("hideMeaning").addEventListener("change", e => { view.hide = e.target.checked;
 function matches(w){
   if(view.group !== "all" && w.group !== view.group) return false;
   if(!view.q) return true;
-  return [w.word, w.meaning, w.js, w.example, groupById[w.group].title].join(" ").toLowerCase().includes(view.q);
+  return [w.word, w.meaning, w.js, w.py, w.example, groupById[w.group].title].join(" ").toLowerCase().includes(view.q);
+}
+
+// The JS / Python lines. Always in the page, but hidden by CSS until twins are switched on.
+function twinsHTML(w){
+  if(!w.js && !w.py) return "";
+  return '<div class="twin twins">'
+    + (w.js ? '<span><b>JS</b> <code>'+esc(w.js)+'</code></span>' : "")
+    + (w.py ? '<span><b>Python</b> <code>'+esc(w.py)+'</code></span>' : "")
+    + '</div>';
 }
 
 function cardHTML(w, i){
@@ -44,7 +54,7 @@ function cardHTML(w, i){
   return '<'+tag+' class="word" data-i="'+i+'"'+(view.hide ? ' type="button" aria-label="Reveal '+esc(w.word)+'"' : "")+'>'
     + '<span class="w">'+esc(w.word)+'</span>'
     + '<p class="m'+(hidden ? " hidden" : "")+'">'+esc(w.meaning)+'</p>'
-    + (w.js && !hidden ? '<span class="js">JS: <code>'+esc(w.js)+'</code></span>' : "")
+    + (hidden ? "" : twinsHTML(w))
     + '<pre>'+codeBlockHTML(w.example, VOCAB_TYPES)+'</pre>'
     + '</'+tag+'>';
 }
@@ -128,27 +138,44 @@ function showQuestion(){
 
   $("qFeedback").hidden = true;
   $("qNext").hidden = true;
+  $("qSkip").hidden = false;
 }
+
+// Marks the right option, shows the explanation and the Next button. Shared by choose() and skip().
+function reveal(w, title, good){
+  document.querySelectorAll(".opt").forEach(b => {
+    b.disabled = true;
+    if(b.dataset.right === "true") b.classList.add("right");
+  });
+  const fb = $("qFeedback");
+  fb.className = "feedback " + (good ? "good" : "bad");
+  fb.innerHTML = "<b>" + title + " <code>" + esc(w.word) + "</code></b>" + esc(w.meaning) + twinsHTML(w)
+    + '<pre class="example">' + codeBlockHTML(w.example, VOCAB_TYPES) + "</pre>";
+  fb.hidden = false;
+  $("qScore").textContent = score + " correct";
+  $("qSkip").hidden = true;
+  $("qNext").textContent = qi === round.length - 1 ? "See results" : "Next";
+  $("qNext").hidden = false;
+  $("qNext").focus();
+}
+
+// "I don't know": counts as a miss (labelled skipped), and shows the answer straight away.
+function skip(){
+  if(answered) return;
+  answered = true;
+  const w = round[qi];
+  missed.push({ w, picked: "(skipped)", skipped: true });
+  reveal(w, "Skipped. Here it is:", false);
+}
+$("qSkip").onclick = skip;
 
 function choose(btn, w){
   if(answered) return;
   answered = true;
   const ok = btn.dataset.right === "true";
   if(ok) score++; else missed.push({ w, picked: btn.textContent });
-  document.querySelectorAll(".opt").forEach(b => {
-    b.disabled = true;
-    if(b.dataset.right === "true") b.classList.add("right");
-    else if(b === btn) b.classList.add("wrong");
-  });
-  const fb = $("qFeedback");
-  fb.className = "feedback " + (ok ? "good" : "bad");
-  fb.innerHTML = "<b>" + (ok ? "Correct." : "Not quite.") + " <code>" + esc(w.word) + "</code></b>"
-    + esc(w.meaning) + (w.js ? " JS twin: " + esc(w.js) + "." : "");
-  fb.hidden = false;
-  $("qScore").textContent = score + " correct";
-  $("qNext").textContent = qi === round.length - 1 ? "See results" : "Next";
-  $("qNext").hidden = false;
-  $("qNext").focus();
+  if(!ok) btn.classList.add("wrong");
+  reveal(w, ok ? "Correct." : "Not quite.", ok);
 }
 
 $("qNext").onclick = () => {
@@ -156,7 +183,7 @@ $("qNext").onclick = () => {
   $("qBar").style.width = "100%";
   $("qCard").hidden = true; $("qResults").hidden = false;
   $("qFinal").textContent = score + " / " + round.length;
-  $("qMissed").innerHTML = missed.map(m => '<li><code>'+esc(m.w.word)+'</code>: '+esc(m.w.meaning)+'</li>').join("");
+  $("qMissed").innerHTML = missed.map(m => '<li><code>'+esc(m.w.word)+'</code>'+(m.skipped ? ' <span class="skipped">skipped</span>' : "")+': '+esc(m.w.meaning)+'</li>').join("");
   $("qRetry").hidden = missed.length === 0;
 };
 $("qRetry").onclick = () => startRound(missed.map(m => m.w));
@@ -167,12 +194,26 @@ function report(){
   t += "Direction: " + (dir === "word" ? "word → meaning" : "meaning → word") + "\n";
   t += "Group: " + (quizGroup === "all" ? "all" : groupById[quizGroup].title) + "\n";
   t += "Score: " + score + " / " + round.length + "\n\n";
-  if(missed.length){
-    t += "=== MISSED (" + missed.length + ") ===\n";
-    missed.forEach(m => { t += "- " + m.w.word + " | right answer: " + (dir === "word" ? m.w.meaning : m.w.word) + " | I picked: " + m.picked + "\n"; });
+  const skipped = missed.filter(m => m.skipped), wrong = missed.filter(m => !m.skipped);
+  if(wrong.length){
+    t += "=== WRONG (" + wrong.length + ") ===\n";
+    wrong.forEach(m => { t += "- " + m.w.word + " | right answer: " + (dir === "word" ? m.w.meaning : m.w.word) + " | I picked: " + m.picked + "\n"; });
+    t += "\n";
+  }
+  if(skipped.length){
+    t += "=== SKIPPED, DIDN'T KNOW (" + skipped.length + ") ===\n";
+    skipped.forEach(m => { t += "- " + m.w.word + " | " + m.w.meaning + "\n"; });
   }
   return t;
 }
 $("qCopy").onclick = () => copyForClaude(report(), $("qCopyBox"), $("qCopyStatus"));
+
+// Keys in the quiz: 1-4 pick an option, s skips, Enter goes to the next question.
+document.addEventListener("keydown", e => {
+  if($("quiz").hidden || $("qCard").hidden || e.metaKey || e.ctrlKey || e.altKey) return;
+  if(e.target.closest("input, textarea, select")) return;
+  if(!answered && /^[1-4]$/.test(e.key)){ const b = $("opt-" + (Number(e.key) - 1)); if(b){ e.preventDefault(); b.click(); } }
+  else if(!answered && e.key === "s"){ e.preventDefault(); skip(); }
+});
 
 mountReferencePanel();

@@ -32,7 +32,10 @@
     <div class="filters">
       <input class="search" id="q" type="search" placeholder="Search, e.g. guard, dictionary, ===" aria-label="Search words" autocomplete="off" spellcheck="false">
       <div class="chips" id="groupChips" role="group" aria-label="Filter by group"></div>
-      <label class="toggle"><input type="checkbox" id="hideMeaning"> Hide meanings (test yourself, click a card to reveal)</label>
+      <div class="row">
+        <label class="toggle"><input type="checkbox" id="hideMeaning"> Hide meanings (test yourself, click a card to reveal)</label>
+        <label class="twins-toggle"><input type="checkbox" class="twins-cb"> Show JavaScript / Python</label>
+      </div>
     </div>
     <div id="groups"></div>
     <p class="empty" id="empty" hidden>No word matches that.</p>
@@ -46,6 +49,7 @@
         <button id="dir-meaning" data-dir="meaning" aria-pressed="false">Meaning → word</button>
       </div>
       <span class="spacer"></span>
+      <label class="twins-toggle"><input type="checkbox" class="twins-cb"> Show JavaScript / Python</label>
       <label class="toggle">Group <select id="quizGroup"></select></label>
     </div>
     <div class="progress"><span id="qCount"></span><div class="bar"><i id="qBar"></i></div><span id="qScore"></span></div>
@@ -56,7 +60,12 @@
       <pre class="example" id="qExample" hidden></pre>
       <div class="opts" id="qOpts"></div>
       <div class="feedback" id="qFeedback" hidden></div>
-      <div class="row"><span class="spacer"></span><button class="btn primary" id="qNext" hidden>Next</button></div>
+      <div class="row">
+        <button class="btn" id="qSkip">I don't know (skip)</button>
+        <span class="keys">Keys: 1–4 pick · s skip · Enter next · b Swift basics</span>
+        <span class="spacer"></span>
+        <button class="btn primary" id="qNext" hidden>Next</button>
+      </div>
     </div>
 
     <div class="card results" id="qResults" hidden>
@@ -75,6 +84,7 @@
 </div>
 <script src="../shared.js"></script>
 <script src="../cheatsheet/techniques.js"></script>
+<script src="../cheatsheet/basics.js"></script>
 <script src="../cheatsheet/render.js"></script>
 <script src="../panel.js"></script>
 <script src="words.js"></script>

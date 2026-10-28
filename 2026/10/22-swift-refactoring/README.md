@@ -8,11 +8,11 @@
 | [workshop/](./workshop/) | Write the After yourself, in 3 levels |
 | [watch/](./watch/) | Watch It Run: press buttons and watch Swift run line by line |
 | [vocab/](./vocab/) | Every Swift word from the zip and Monopoly, grouped by job, with a quiz |
-| [cheatsheet/](./cheatsheet/) | What changed → technique name |
+| [cheatsheet/](./cheatsheet/) | Techniques (what changed → technique name) and Swift basics (side-by-side tables: Array vs Set vs Dictionary, let vs var vs private(set), and more) |
 
 Open `index.html` directly in a browser. No build step.
 
-Every page has a top bar with a light/dark toggle (your choice is remembered). The **Cheat sheet** button there (or the `?` key) opens a side panel with the cheat sheet. On the Drill and Workshop it also has a **Your answers** tab showing what you've answered this round.
+Every page has a top bar with a light/dark toggle (your choice is remembered). Two buttons there open a side panel: **Cheat sheet** (`?` key) for the techniques, and **Swift basics** (`b` key) for the comparison tables. JavaScript and Python equivalents stay hidden until you tick **Show JavaScript / Python**; that choice is remembered too. The **Cheat sheet** button there (or the `?` key) opens a side panel with the cheat sheet. On the Drill and Workshop it also has a **Your answers** tab showing what you've answered this round.
 
 ## Adding a new exercise
 
@@ -20,7 +20,7 @@ Every page has a top bar with a light/dark toggle (your choice is remembered). T
    At the end of the page's script, call `mountReferencePanel()`, or `mountReferencePanel({ history: fn })` to add a Your answers tab.
 2. Add one entry to [`pages.js`](./pages.js) so it shows on the home page.
 
-To add questions to an existing page, edit its data file: [`drill/questions.js`](./drill/questions.js), [`workshop/exercises.js`](./workshop/exercises.js), [`cheatsheet/techniques.js`](./cheatsheet/techniques.js), [`watch/scenes.js`](./watch/scenes.js), [`vocab/words.js`](./vocab/words.js). The comment at the top of each file says what each field means.
+To add questions to an existing page, edit its data file: [`drill/questions.js`](./drill/questions.js), [`workshop/exercises.js`](./workshop/exercises.js), [`cheatsheet/techniques.js`](./cheatsheet/techniques.js), [`cheatsheet/basics.js`](./cheatsheet/basics.js), [`watch/scenes.js`](./watch/scenes.js), [`vocab/words.js`](./vocab/words.js). The comment at the top of each file says what each field means.
 
 ## Where it came from
 
