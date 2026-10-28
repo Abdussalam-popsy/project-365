@@ -132,6 +132,17 @@ Trace one value: in the Drill you pick *Inline temp* for a *Remove parameter* qu
 </details>
 
 <details>
+<summary>@file: cheatsheet/basics.js + the basics part of render.js — explained</summary>
+
+[Open the data](./cheatsheet/basics.js) and [the renderer](./cheatsheet/render.js).
+
+**One table, two layouts.** `basicsTableHTML()` writes each comparison twice: a real `<table>` and a stack of cards (one per column). `@container (max-width:640px)` in `cheatsheet.css` shows the cards when the box is narrow, like the side panel, so you never scroll sideways. A container query looks at the width of the box, not the window, which is why the same table works on the full page and in the panel.
+
+**The JS / Python switch.** Twin rows get `class="twin"`. One CSS rule, `html:not(.show-twins) .twin{display:none}`, hides them all. `setTwins()` adds or removes `show-twins` on `<html>` and saves the choice in `localStorage`, so every page and every toggle stays in sync.
+
+</details>
+
+<details>
 <summary>@file: watch/watch.js — explained</summary>
 
 [Open the file](./watch/watch.js). Scene code in [watch/scenes.js](./watch/scenes.js).
@@ -150,6 +161,8 @@ Trace one value: in the Drill you pick *Inline temp* for a *Remove parameter* qu
 [Open the file](./vocab/vocab.js). Words in [vocab/words.js](./vocab/words.js).
 
 **Why `VOCAB_GROUPS`, not `GROUPS`.** Every page shares one global scope, and `cheatsheet/techniques.js` (loaded for the cheat sheet popup) already declares `const GROUPS`. Declaring it twice is an error that stops the whole script. Prefixing the name avoids the clash.
+
+**Skip.** "I don't know" calls `skip()`, which counts it as a miss with `skipped: true` and calls the same `reveal()` as a wrong answer. The copy-for-Claude report lists skipped words separately from wrong ones, because "didn't know it" and "mixed it up" need different fixes.
 
 **Distractors.** `distractors(w)` picks three wrong answers from the same group first, because similar words make a harder question, then fills up from other groups. The `seen` Set skips any option text that's already on screen.
 
@@ -175,5 +188,6 @@ Open `index.html` in a browser (double-click it, or `npx serve .` from this fold
 - in the Workshop, fill a blank wrongly and see it turn red;
 - in the Cheat Sheet, type `private(set)` in the filter box and only three rows stay.
 - in Watch It Run, pay 200 and see the guard line light up, then press the red cheat button;
-- in Swift Vocabulary, tick Hide meanings and click a card to reveal it;
+- in Swift Vocabulary, tick Hide meanings and click a card to reveal it, then press Quiz me and skip one with `s`;
+- press `b` on any page: the Swift basics panel opens; tick Show JavaScript / Python and the extra rows appear on every page;
 - on the Drill or Workshop, answer two questions, press `?`, open **Your answers**: the newest is at the top and expanded.
