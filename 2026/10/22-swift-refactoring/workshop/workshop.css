@@ -9,7 +9,10 @@ pre{line-height:1.75}
 pre .ln{min-height:1.75em}
 
 /* Fill-in blanks (levels 1-2) */
-.blank{font:500 .84rem var(--mono);color:var(--fg);background:var(--surface);border:1.5px dashed var(--accent);border-radius:5px;padding:1px 5px;margin:0 1px;min-width:3ch}
+.blank{font:500 .84rem var(--mono);color:var(--fg);background:var(--surface);border:1.5px dashed var(--accent);border-radius:5px;padding:1px 5px;margin:0 1px;min-width:3ch;max-width:100%;text-indent:0}
+/* A whole-line blank (level 2): full width of the pane from its indent, grows taller as you type instead of scrolling */
+.ln.line-blank{text-indent:0;padding-left:14px}
+textarea.blank.line{display:block;resize:none;overflow:hidden;white-space:pre-wrap;line-height:1.6;padding:3px 6px;field-sizing:content;min-height:1.9em}
 .blank:focus{outline:none;border-style:solid;box-shadow:0 0 0 3px var(--accent-soft)}
 .blank.ok{border:1.5px solid var(--good);background:var(--good-soft)}
 .blank.no{border:1.5px solid var(--bad);background:var(--bad-soft)}

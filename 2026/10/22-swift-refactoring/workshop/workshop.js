@@ -43,10 +43,24 @@ function show(){
   }
 }
 
+// Sets a whole-line box's height to fit its text, for browsers without CSS field-sizing.
+function growBlank(b){
+  if(b.tagName !== "TEXTAREA") return;
+  b.style.height = "auto";
+  b.style.height = b.scrollHeight + "px";
+}
+
 function renderBlanks(e){
   let n = 0;
   $("after").innerHTML = e.after.split("\n").map(line => {
     const parts = line.split(/«([^»]*)»/);
+    // A line that is only indentation + one blank (level 2): draw a full-width box that wraps, not a one-line input.
+    if(parts.length === 3 && parts[0].trim() === "" && parts[2].trim() === ""){
+      const alts = parts[1].split("|");
+      const indent = parts[0].length;
+      return '<span class="ln line-blank"><textarea class="blank line" rows="1" id="b'+n+'" data-idx="'+(n++)+'" data-alts="'+esc(JSON.stringify(alts)).replace(/"/g,"&quot;")+'"'
+        + ' style="margin-left:'+indent+'ch;width:calc(100% - '+indent+'ch)" autocomplete="off" autocapitalize="off" spellcheck="false" aria-label="Blank line"></textarea></span>';
+    }
     let html = "";
     parts.forEach((p, idx) => {
       if(idx % 2 === 0){ html += highlightSwift(p, TYPES); return; }
@@ -56,7 +70,10 @@ function renderBlanks(e){
     });
     return '<span class="ln">'+(html||" ")+'</span>';
   }).join("");
-  document.querySelectorAll(".blank").forEach(b => b.addEventListener("keydown", ev => { if(ev.key === "Enter"){ ev.preventDefault(); check(); } }));
+  document.querySelectorAll(".blank").forEach(b => {
+    b.addEventListener("keydown", ev => { if(ev.key === "Enter"){ ev.preventDefault(); check(); } });   // Enter checks, even in a whole-line box
+    b.addEventListener("input", () => growBlank(b));
+  });
 }
 
 function check(){
@@ -137,7 +154,7 @@ function reveal(){
   if(e.level < 3){
     document.querySelectorAll(".blank").forEach(b => {
       const alts = JSON.parse(b.dataset.alts);
-      if(!alts.some(a => norm(a) === norm(b.value))){ b.value = alts[0]; b.classList.remove("ok", "no"); b.classList.add("shown"); }   // yellow = filled in for you, not "wrong"
+      if(!alts.some(a => norm(a) === norm(b.value))){ b.value = alts[0]; b.classList.remove("ok", "no"); b.classList.add("shown"); growBlank(b); }   // yellow = filled in for you, not "wrong"
     });
   }
   if(!state.lastWrong) state.lastWrong = "revealed before checking";

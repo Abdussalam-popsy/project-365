@@ -59,8 +59,10 @@ h1{font-size:1.5rem;margin:0;font-weight:700;letter-spacing:-.01em}
 .pane{min-width:0;border:1px solid var(--line);border-radius:10px;overflow:hidden;background:var(--code)}
 .pane h3{margin:0;padding:7px 12px;font:600 .72rem var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--muted);border-bottom:1px solid var(--line);background:var(--surface)}
 .pane.after h3{color:var(--accent)}
-pre{margin:0;padding:12px 0;overflow-x:auto;font:400 .84rem/1.6 var(--mono);tab-size:4}
-pre .ln{display:block;padding:0 14px;white-space:pre;min-height:1.6em}
+/* Code wraps instead of scrolling sideways. padding-left + negative text-indent = a hanging indent:
+   the first row of a line starts at the normal edge, any wrapped rows sit 4ch further in. */
+pre{margin:0;padding:12px 0;font:400 .84rem/1.6 var(--mono);tab-size:4}
+pre .ln{display:block;padding:0 14px 0 calc(14px + 4ch);text-indent:-4ch;white-space:pre-wrap;overflow-wrap:anywhere;min-height:1.6em}
 .k{color:var(--kw);font-weight:500}.s{color:var(--str)}.c{color:var(--com);font-style:italic}.n{color:var(--num)}.t{color:var(--ty)}
 
 .row{display:flex;flex-wrap:wrap;gap:8px;align-items:center}

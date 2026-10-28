@@ -23,7 +23,7 @@
 
 /* Code pane: a line gets .run while it executes, .err when Swift refuses it, .ok when it's allowed */
 .scene pre{padding:10px 0;font:400 .84rem/1.8 var(--mono);background:var(--code)}
-.scene pre .ln{padding:0 14px 0 11px;border-left:3px solid transparent;min-height:1.8em;transition:background .15s}
+.scene pre .ln{padding:0 14px 0 calc(11px + 4ch);border-left:3px solid transparent;min-height:1.8em;transition:background .15s}
 .scene pre .ln.run{background:var(--run);border-left-color:var(--run-edge)}
 .scene pre .ln.err{background:var(--bad-soft);border-left-color:var(--bad)}
 .scene pre .ln.ok{background:var(--good-soft);border-left-color:var(--good)}
