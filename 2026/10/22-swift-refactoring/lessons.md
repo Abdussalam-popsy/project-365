@@ -132,6 +132,30 @@ Trace one value: in the Drill you pick *Inline temp* for a *Remove parameter* qu
 </details>
 
 <details>
+<summary>@file: watch/watch.js — explained</summary>
+
+[Open the file](./watch/watch.js). Scene code in [watch/scenes.js](./watch/scenes.js).
+
+**A button plays a script.** Each handler is an `async` function that does a few steps: `mark()` lights a line in the code pane, `log()` adds a sentence to "What just happened", then `await wait(STEP)` pauses so you can follow along. `await` only works inside an `async` function; it means "stop here until this promise finishes".
+
+**Line numbers live in the data.** `SCENES.wallet.lines = { guard: 4, subtract: 5 }` names the lines to light up, counting from 0. If you change the Swift in `scenes.js`, recount these or the wrong line glows.
+
+**`play()` blocks double clicks.** It sets `busy = true` and disables every button in the scene until the script ends. The `finally` block runs even if the script returns early, so the buttons always come back.
+
+</details>
+
+<details>
+<summary>@file: vocab/vocab.js — explained</summary>
+
+[Open the file](./vocab/vocab.js). Words in [vocab/words.js](./vocab/words.js).
+
+**Why `VOCAB_GROUPS`, not `GROUPS`.** Every page shares one global scope, and `cheatsheet/techniques.js` (loaded for the cheat sheet popup) already declares `const GROUPS`. Declaring it twice is an error that stops the whole script. Prefixing the name avoids the clash.
+
+**Distractors.** `distractors(w)` picks three wrong answers from the same group first, because similar words make a harder question, then fills up from other groups. The `seen` Set skips any option text that's already on screen.
+
+</details>
+
+<details>
 <summary>Try one small change</summary>
 
 In [pages.js](./pages.js), change the Drill's `kind: "Practice"` to `kind: "Quiz"` and reload the home page.
@@ -146,8 +170,10 @@ In [pages.js](./pages.js), change the Drill's `kind: "Practice"` to `kind: "Quiz
 
 Open `index.html` in a browser (double-click it, or `npx serve .` from this folder). Check:
 
-- the home page shows three cards and each one opens;
+- the home page shows five cards and each one opens;
 - in the Drill, pick an answer, Check, then finish a round and press **Copy results for Claude**;
 - in the Workshop, fill a blank wrongly and see it turn red;
 - in the Cheat Sheet, type `private(set)` in the filter box and only three rows stay.
+- in Watch It Run, pay 200 and see the guard line light up, then press the red cheat button;
+- in Swift Vocabulary, tick Hide meanings and click a card to reveal it;
 - on the Drill or Workshop, answer two questions, press `?`, open **Your answers**: the newest is at the top and expanded.
