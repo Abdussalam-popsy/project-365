@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>Mock Test · Swift Refactoring</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap">
+  <script src="../theme.js"></script>
+  <link rel="stylesheet" href="../styles.css">
+  <link rel="stylesheet" href="mock.css">
+</head>
+<body>
+<div class="wrap">
+  <a class="crumb" href="../">← Swift Refactoring</a>
+  <header>
+    <div>
+      <h1>Mock Test</h1>
+      <p class="sub">Like the real thing, shorter. No cheat sheet. Part 1 is quiz questions, Part 2 is editing the Monopoly code by hand.</p>
+    </div>
+  </header>
+
+  <section class="card" id="intro">
+    <h2>Before you start</h2>
+    <ul class="rules">
+      <li><b>Part 1:</b> 6 multiple-choice questions on Monopoly code. You see right or wrong straight away.</li>
+      <li><b>Part 2:</b> the full MonopolyGame class in a plain text box, plus 3 tasks. No autocomplete, no refactor menu, like Safe Exam Browser.</li>
+      <li>The timer keeps running when it hits zero, so you can see how far over you went.</li>
+    </ul>
+    <div class="row">
+      <span>Time:</span>
+      <div class="seg" role="group" aria-label="Time limit">
+        <button data-min="10" aria-pressed="false">10 min</button>
+        <button data-min="15" aria-pressed="true">15 min</button>
+      </div>
+      <span class="spacer"></span>
+      <button class="btn primary" id="startBtn">Start</button>
+    </div>
+  </section>
+
+  <div class="timer" id="timer" hidden><span id="clock">15:00</span><span id="part">Part 1</span></div>
+
+  <section id="p1" hidden>
+    <h2 class="parthead">Part 1 · Quiz questions</h2>
+    <div id="qs"></div>
+    <div class="row"><span class="spacer"></span><button class="btn primary" id="toP2" disabled>Go to Part 2</button></div>
+  </section>
+
+  <section id="p2" hidden>
+    <h2 class="parthead">Part 2 · Apply refactorings</h2>
+    <p class="sub">Do the three tasks in the code below. Press Check on a task any time to see its checks. Finish when you're done or out of time.</p>
+    <div id="tasks"></div>
+    <div class="pane editorpane">
+      <h3>MonopolyGame.swift <button class="linkbtn" id="resetBtn">Reset code</button></h3>
+      <textarea class="editor" id="editor" spellcheck="false" autocapitalize="off" autocomplete="off" aria-label="MonopolyGame code"></textarea>
+    </div>
+    <div class="row"><span class="spacer"></span><button class="btn primary" id="finishBtn">Finish test</button></div>
+  </section>
+
+  <section class="card" id="results" hidden>
+    <h2>Results</h2>
+    <div class="big" id="final"></div>
+    <p class="sub" id="verdict"></p>
+    <ul class="list" id="summary"></ul>
+    <div class="model diff"><h3>Your code vs a model answer <span>− yours only · + missing</span></h3><pre id="diffCode"></pre></div>
+    <div class="row">
+      <button class="btn primary" id="againBtn">Take it again</button>
+      <button class="btn" id="copyBtn">Copy results for Claude</button>
+      <span class="copystatus" id="copyStatus" hidden></span>
+    </div>
+    <textarea class="copybox" id="copyBox" readonly hidden aria-label="Results to paste into Claude"></textarea>
+  </section>
+</div>
+<script src="../shared.js"></script>
+<script src="mock.js"></script>
+</body>
+</html>

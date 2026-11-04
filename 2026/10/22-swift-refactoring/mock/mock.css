@@ -1,0 +1,38 @@
+/* Mock test only: timer bar, quiz question cards, task checklist, one big editor for the full class. */
+.card h2,.parthead{font-size:1.1rem;margin:0 0 6px}
+.parthead{margin-top:8px}
+.rules{margin:0 0 12px;padding-left:18px;display:flex;flex-direction:column;gap:6px;font-size:.94rem}
+.timer{position:sticky;top:8px;z-index:5;display:flex;justify-content:space-between;align-items:center;background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:8px 14px;font:600 1rem var(--mono)}
+.timer.low{border-color:var(--bad);color:var(--bad)}
+.timer #part{font:500 .85rem var(--sans);color:var(--muted)}
+#p1,#p2{display:flex;flex-direction:column;gap:12px}
+.q{display:flex;flex-direction:column;gap:10px}
+.q p{margin:0}
+.q .num{font:600 .72rem var(--mono);letter-spacing:.06em;text-transform:uppercase;color:var(--accent)}
+.opts{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:8px}
+.opt{display:flex;align-items:center;gap:10px;text-align:left;width:100%;border:1px solid var(--line);background:var(--surface);color:var(--fg);border-radius:9px;padding:10px 12px;font:500 .92rem var(--sans);cursor:pointer;min-width:0}
+.opt:hover:not(:disabled){border-color:var(--accent)}
+.opt:disabled{cursor:default}
+.opt .dot{flex:none;width:16px;height:16px;border-radius:50%;border:2px solid var(--line)}
+.opt.right{border-color:var(--good);background:var(--good-soft)} .opt.right .dot{border-color:var(--good);background:var(--good)}
+.opt.wrong{border-color:var(--bad);background:var(--bad-soft)} .opt.wrong .dot{border-color:var(--bad);background:var(--bad)}
+.task{display:flex;flex-direction:column;gap:6px}
+.task .thead{display:flex;gap:10px;align-items:center;justify-content:space-between}
+.task .thead b{font-size:.98rem}
+.task p{margin:0;font-size:.94rem}
+.checks{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:3px;font-size:.88rem}
+.checks li{display:flex;gap:8px} .checks li i{font-style:normal;font:600 .8rem var(--mono);width:1.2em}
+.checks li.pass i{color:var(--good)} .checks li.fail i{color:var(--bad)}
+.editorpane h3{display:flex;justify-content:space-between;align-items:center}
+.linkbtn{border:0;background:none;color:var(--accent);font:600 .72rem var(--mono);letter-spacing:.06em;text-transform:uppercase;cursor:pointer;padding:0}
+textarea.editor{display:block;width:100%;min-height:70vh;border:0;resize:vertical;background:var(--code);color:var(--fg);font:400 .84rem/1.7 var(--mono);padding:12px 14px;tab-size:4;white-space:pre;overflow:auto;box-sizing:border-box}
+textarea.editor:focus{outline:2px solid var(--accent);outline-offset:-2px}
+.list{display:flex;flex-direction:column;gap:6px;margin:0;padding:0;list-style:none}
+.list li{border:1px solid var(--line);border-radius:9px;padding:8px 12px;font-size:.9rem;display:flex;gap:10px;justify-content:space-between;flex-wrap:wrap}
+.list li span{color:var(--muted)}
+.model{border:1px solid var(--line);border-radius:10px;overflow:hidden;background:var(--code)}
+.model h3{margin:0;padding:7px 12px;font:600 .72rem var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--good);border-bottom:1px solid var(--line);background:var(--surface)}
+.diff h3 span{float:right;color:var(--muted);letter-spacing:0;text-transform:none;font-weight:500}
+.diff .ln i{display:inline-block;width:1.4em;font-style:normal;color:var(--muted)}
+.diff .ln.dadd{background:var(--good-soft)} .diff .ln.dadd i{color:var(--good)}
+.diff .ln.ddel{background:var(--bad-soft)} .diff .ln.ddel i{color:var(--bad)}

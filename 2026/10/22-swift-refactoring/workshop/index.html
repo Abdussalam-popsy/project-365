@@ -24,7 +24,7 @@
     <div class="seg" role="group" aria-label="Level">
       <button id="lv-1" data-level="1" aria-pressed="true">Level 1: fill words</button>
       <button id="lv-2" data-level="2" aria-pressed="false">Level 2: fill lines</button>
-      <button id="lv-3" data-level="3" aria-pressed="false">Level 3: write it (Monopoly)</button>
+      <button id="lv-3" data-level="3" aria-pressed="false">Level 3: spot it, then write it (Monopoly)</button>
     </div>
   </header>
 
@@ -35,17 +35,21 @@
     <p class="task" id="task"></p>
     <div class="recipe" id="recipe"><b>Recipe</b><span id="recipeText"></span></div>
     <p class="note" id="note" hidden></p>
+    <div class="opts" id="idopts" hidden></div>
+    <div class="feedback" id="idfb" hidden></div>
     <div class="panes">
       <div class="pane"><h3>Before</h3><pre id="before"></pre></div>
-      <div class="pane after"><h3 id="afterTitle">After: fill the blanks</h3><pre id="after"></pre><textarea class="editor" id="editor" spellcheck="false" autocapitalize="off" autocomplete="off" hidden aria-label="Write the After code"></textarea></div>
+      <div class="pane after" id="afterPane"><h3 id="afterTitle">After: fill the blanks</h3><pre id="after"></pre><textarea class="editor" id="editor" spellcheck="false" autocapitalize="off" autocomplete="off" hidden aria-label="Write the After code"></textarea></div>
     </div>
     <ul class="checks" id="checks" hidden></ul>
     <div class="hint" id="hint" hidden></div>
     <div class="feedback" id="feedback" hidden></div>
+    <div class="model diff" id="diff" hidden><h3>Your code vs the model <span>− yours only · + missing</span></h3><pre id="diffCode"></pre></div>
     <div class="model" id="model" hidden><h3>Model answer</h3><pre id="modelCode"></pre></div>
     <div class="row">
       <button class="btn" id="hintBtn">Show a hint</button>
       <button class="btn" id="revealBtn">Show answer</button>
+      <button class="btn" id="resetBtn" hidden>Reset code</button>
       <button class="btn" id="mineBtn" hidden>Mine is equivalent, count it</button>
       <span class="spacer"></span>
       <button class="btn primary" id="checkBtn">Check</button>
