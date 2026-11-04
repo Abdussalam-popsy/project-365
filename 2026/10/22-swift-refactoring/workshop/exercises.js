@@ -1,6 +1,7 @@
 // Workshop exercises. To add one, copy an object with the same level and edit it.
 // Levels 1-2: `after` marks blanks with «answer» and accepts alternatives as «a|b».
-// Level 3: `model` is the answer; `checks` are regexes run on your code with all whitespace removed
+// Level 3: `smell` is the neutral problem shown before you name the technique, `why` explains the tell.
+// `model` is the answer; `checks` are regexes run on your code with all whitespace removed
 // (mode "not" = must not match, mode "count" = must match exactly n times).
 
 const EX = [
@@ -232,7 +233,7 @@ const EX = [
   {
     "level": 2,
     "technique": "Add parameter",
-    "task": "From the zip: add priority: AlertPriority to sendAlert, print it, and update the internal caller.",
+    "task": "From the zip: add priority: AlertPriority to sendAlert, print it as \"[ALERT - <priority>]: <message>\", and update the internal caller.",
     "recipe": "1. Add the input. 2. Use it in the body. 3. Update every caller.",
     "before": "func sendAlert(message: String) {\n    print(\"[ALERT]: \\(message)\")\n}\n\nfunc notifyUser() {\n    sendAlert(message: \"Disk space is low\")\n}",
     "after": "func sendAlert(message: String, «priority: AlertPriority») {\n    «print(\"[ALERT - \\(priority)]: \\(message)\")»\n}\n\nfunc notifyUser() {\n    «sendAlert(message: \"Disk space is low\", priority: .high)|sendAlert(message: \"Disk space is low\", priority: .low)|sendAlert(message: \"Disk space is low\", priority: .medium)»\n}",
@@ -355,7 +356,9 @@ const EX = [
     "hints": [
       "Five of the nine get private.",
       "The four named in the task stay as they are."
-    ]
+    ],
+    "smell": "All nine funcs are public. Only roll(), pass(), status() and ownsCompleteSet() are ever called from outside MonopolyGame.",
+    "why": "Funcs that are only used inside the class, and make no sense from outside, get private. Lecturer's rule: if it isn't called inside the class, assume outsiders use it and leave it public."
   },
   {
     "level": 3,
@@ -388,7 +391,9 @@ const EX = [
     "hints": [
       "Two places change: the func line, and the call inside roll().",
       "Don't touch diceRollIsDouble(). It's a different func."
-    ]
+    ],
+    "smell": "roll() and diceRoll() sit next to each other and are easy to mix up. diceRoll() is the one that actually generates the numbers.",
+    "why": "Nothing moves and no behaviour changes. The only problem is the name, so it's Rename method. Remember to update every caller."
   },
   {
     "level": 3,
@@ -415,7 +420,9 @@ const EX = [
     "hints": [
       "Replace the call with what the func returns.",
       "Then delete the whole func, including its last }."
-    ]
+    ],
+    "smell": "diceRollIsDouble() is a one-line func, and its body (die1 == die2) is just as clear as its name.",
+    "why": "When a method's body is as clear as its name, put the body back where it's called and delete the method. Inline temp is the same idea for a variable, not a func."
   },
   {
     "level": 3,
@@ -450,7 +457,9 @@ const EX = [
     "hints": [
       "Three places change: the func line, the body, and the caller.",
       "Leave handler.passedGo(player: player) alone. That's a different object's func."
-    ]
+    ],
+    "smell": "passedGo always pays a hardcoded 200. House rules can change the Go salary, so the caller should decide the amount.",
+    "why": "The method needs information it doesn't have, so it gets a new input. Every caller then has to pass it."
   },
   {
     "level": 3,
@@ -476,7 +485,9 @@ const EX = [
     "hints": [
       "Same pattern as the ShoppingCart addItem.",
       "In init, swap players.append(...) for a call to your new func."
-    ]
+    ],
+    "smell": "Any code outside MonopolyGame can append to or remove from the players array directly.",
+    "why": "It's an array, and outsiders need a controlled way to change it. Lock the collection with private(set) and add methods like addPlayer."
   },
   {
     "level": 3,
@@ -501,7 +512,9 @@ const EX = [
     ],
     "hints": [
       "Readable outside, changeable only inside: which two words?"
-    ]
+    ],
+    "smell": "Code outside MonopolyGame can overwrite die1, die2 or whose turn it is. Outsiders only need to read them.",
+    "why": "The values still change inside the class (every roll, every turn), they just shouldn't change from outside. That's Encapsulate field. Remove setting method is for values that never change after creation."
   },
   {
     "level": 3,
@@ -522,7 +535,9 @@ const EX = [
     ],
     "hints": [
       "Two lines: make the box, then use it."
-    ]
+    ],
+    "smell": "currentPlayer.boardIndex += die1 + die2 makes the reader work out what die1 + die2 means.",
+    "why": "An expression gets a name with a new let. Split temporary variable is different: that's one var reused for two jobs."
   },
   {
     "level": 3,
@@ -556,6 +571,139 @@ const EX = [
       "Write the new func at the bottom first.",
       "Inside the new func, use its own names: payer, payee, amount.",
       "Then replace the two balance lines in each if with one call."
-    ]
+    ],
+    "smell": "The same two balance lines appear in both the Property branch and the Utility branch.",
+    "why": "Duplicated lines move into one new, well-named func, and both places call it. The new func being private doesn't make this Hide method: Hide method only applies to a func that already existed."
+  },
+  {
+    "level": 3,
+    "technique": "Extract class",
+    "task": "Extract a Dice class that holds die1 and die2 and has roll() and isDouble(). MonopolyGame keeps let dice = Dice() and uses it. Delete diceRoll() and diceRollIsDouble() from MonopolyGame.",
+    "recipe": "1. Create the new class. 2. Move the fields across. 3. Move the methods across (rename to fit). 4. Give the old class a property holding the new one. 5. Update the calls.",
+    "before": "class MonopolyGame {\n    var die1: Int = 0\n    var die2: Int = 0\n    var doubleDiceRollsForCurrentTurn = 0\n\n    func roll() {\n        diceRoll()\n\n        if diceRollIsDouble() {\n            doubleDiceRollsForCurrentTurn += 1\n        }\n\n        currentPlayer.boardIndex += die1 + die2\n    }\n\n    func diceRoll() {\n        die1 = Int.random(in: 1...6)\n        die2 = Int.random(in: 1...6)\n    }\n\n    func diceRollIsDouble() -> Bool {\n        return die1 == die2\n    }\n}",
+    "model": "class Dice {\n    private(set) var die1: Int = 0\n    private(set) var die2: Int = 0\n\n    func roll() {\n        die1 = Int.random(in: 1...6)\n        die2 = Int.random(in: 1...6)\n    }\n\n    func isDouble() -> Bool {\n        return die1 == die2\n    }\n}\n\nclass MonopolyGame {\n    let dice = Dice()\n    var doubleDiceRollsForCurrentTurn = 0\n\n    func roll() {\n        dice.roll()\n\n        if dice.isDouble() {\n            doubleDiceRollsForCurrentTurn += 1\n        }\n\n        currentPlayer.boardIndex += dice.die1 + dice.die2\n    }\n}",
+    "checks": [
+      {
+        "label": "a Dice class exists",
+        "re": "classDice\\{"
+      },
+      {
+        "label": "Dice has isDouble() -> Bool",
+        "re": "funcisDouble\\(\\)->Bool"
+      },
+      {
+        "label": "die1 and die2 are declared once (in Dice)",
+        "re": "vardie1:Int",
+        "mode": "count",
+        "n": 1
+      },
+      {
+        "label": "MonopolyGame holds let dice = Dice()",
+        "re": "(let|var)dice=Dice\\(\\)"
+      },
+      {
+        "label": "roll() calls dice.roll()",
+        "re": "dice\\.roll\\(\\)"
+      },
+      {
+        "label": "the if uses dice.isDouble()",
+        "re": "ifdice\\.isDouble\\(\\)"
+      },
+      {
+        "label": "movement uses dice.die1 + dice.die2",
+        "re": "boardIndex\\+=(dice\\.die1\\+dice\\.die2|dice\\.die2\\+dice\\.die1)"
+      },
+      {
+        "label": "diceRoll() and diceRollIsDouble() are gone",
+        "re": "diceRoll",
+        "mode": "not"
+      }
+    ],
+    "hints": [
+      "Write class Dice { } first, above MonopolyGame.",
+      "Cut die1 and die2 into Dice. Move diceRoll() in and call it roll(), move diceRollIsDouble() in and call it isDouble().",
+      "MonopolyGame needs let dice = Dice(), then every die1/die2/diceRoll use goes through dice."
+    ],
+    "smell": "MonopolyGame stores the dice values and owns all the dice logic, on top of running the game.",
+    "why": "Several fields and methods that belong together move out into a brand new class. Extract method only creates a func, and Move method moves one func into a class that already exists."
+  },
+  {
+    "level": 3,
+    "technique": "Move method",
+    "task": "Move ownsCompleteSet into Player as func ownsCompleteSet(_ group: Group) -> Bool, using the player's own properties. Delete it from MonopolyGame and update the caller.",
+    "recipe": "1. Copy the func into the class whose data it uses. 2. Drop the input that is now self. 3. Delete the old func. 4. Update callers.",
+    "before": "class Player {\n    var properties = [Property]()\n}\n\nclass MonopolyGame {\n    func ownsCompleteSet(_ player: Player, _ group: Group) -> Bool {\n        var count = 0\n        for property in player.properties {\n            if property.group == group {\n                count += 1\n                if count == group.quantity {\n                    return true\n                }\n            }\n        }\n        return false\n    }\n}\n\n// somewhere outside:\nif game.ownsCompleteSet(player, blueGroup) { ... }",
+    "model": "class Player {\n    var properties = [Property]()\n\n    func ownsCompleteSet(_ group: Group) -> Bool {\n        var count = 0\n        for property in properties {\n            if property.group == group {\n                count += 1\n                if count == group.quantity {\n                    return true\n                }\n            }\n        }\n        return false\n    }\n}\n\nclass MonopolyGame {\n}\n\n// somewhere outside:\nif player.ownsCompleteSet(blueGroup) { ... }",
+    "checks": [
+      {
+        "label": "Player has ownsCompleteSet(_ group: Group) -> Bool",
+        "re": "classPlayer\\{.*funcownsCompleteSet\\(_\\w+:Group\\)->Bool"
+      },
+      {
+        "label": "the old (player, group) version is gone",
+        "re": "ownsCompleteSet\\(_player:Player",
+        "mode": "not"
+      },
+      {
+        "label": "loops over its own properties, not player.properties",
+        "re": "player\\.properties",
+        "mode": "not"
+      },
+      {
+        "label": "caller is now player.ownsCompleteSet(blueGroup)",
+        "re": "player\\.ownsCompleteSet\\(blueGroup\\)"
+      },
+      {
+        "label": "game.ownsCompleteSet is gone",
+        "re": "game\\.ownsCompleteSet",
+        "mode": "not"
+      }
+    ],
+    "hints": [
+      "Inside Player, the player IS self, so the player input disappears.",
+      "player.properties becomes just properties.",
+      "Delete the func from MonopolyGame, then fix the caller at the bottom."
+    ],
+    "smell": "ownsCompleteSet only looks at the player's own properties. It never uses anything from MonopolyGame.",
+    "why": "The func uses another class's data more than its own, so it moves to that class (Player). The class already exists, so it's Move method, not Extract class."
+  },
+  {
+    "level": 3,
+    "technique": "Remove setting method",
+    "task": "A station's name never changes after the board is built. Remove setName(_:) and make name impossible to change. mortgaged must still be changeable.",
+    "recipe": "1. Delete the set... func. 2. Make the property let, or private(set) as the lecturer showed. 3. Leave other properties alone.",
+    "before": "class Station {\n    var name: String\n    var mortgaged = false\n\n    init(_ name: String) {\n        self.name = name\n    }\n\n    func setName(_ newName: String) {\n        name = newName\n    }\n}",
+    "model": "class Station {\n    let name: String\n    var mortgaged = false\n\n    init(_ name: String) {\n        self.name = name\n    }\n}",
+    "checks": [
+      {
+        "label": "setName is gone",
+        "re": "setName",
+        "mode": "not"
+      },
+      {
+        "label": "name is let or private(set)",
+        "re": "(letname:String|private\\(set\\)varname:String)"
+      },
+      {
+        "label": "mortgaged is still a plain var",
+        "re": "varmortgaged=false"
+      },
+      {
+        "label": "mortgaged wasn't locked",
+        "re": "private\\(set\\)varmortgaged",
+        "mode": "not"
+      },
+      {
+        "label": "init still sets name",
+        "re": "name=name"
+      }
+    ],
+    "hints": [
+      "Delete the whole setName func, including its closing }.",
+      "init can still set a let, because init runs once when the object is created.",
+      "Only name changes. mortgaged flips during the game, so leave it."
+    ],
+    "smell": "A station's name is set when the board is built and should never change after that, but setName(_:) lets anyone change it.",
+    "why": "The value should never change after creation, so the setter goes and the property becomes let (or private(set)). If the value still changes inside the class, it's Encapsulate field instead."
   }
 ];
