@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>Spot the Change · Swift Refactoring</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap">
+  <script src="../theme.js"></script>
+  <link rel="stylesheet" href="../styles.css">
+  <link rel="stylesheet" href="cards.css">
+</head>
+<body>
+<div class="wrap">
+  <a class="crumb" href="../">← Swift Refactoring</a>
+  <header>
+    <div>
+      <h1>Spot the Change</h1>
+      <p class="sub">See what changed, say the name out loud, then check. A cheat sheet you test yourself on.</p>
+    </div>
+  </header>
+
+  <div class="seg modes" role="group" aria-label="Mode">
+    <button data-mode="cards" aria-pressed="true">Flashcards</button>
+    <button data-mode="quiz" aria-pressed="false">Quiz</button>
+    <button data-mode="sheet" aria-pressed="false">The list</button>
+  </div>
+
+  <div class="seg decks" role="group" aria-label="Deck" id="decks">
+    <button data-deck="all" aria-pressed="true">All <span id="nAll"></span></button>
+    <button data-deck="weak" aria-pressed="false">My misses <span id="nWeak"></span></button>
+  </div>
+
+  <div class="progress" id="prog"><span id="count"></span><div class="bar"><i id="bar"></i></div><span id="score"></span></div>
+
+  <section class="card fc" id="card">
+    <span class="tag" id="cat"></span>
+    <p class="change" id="change"></p>
+    <div class="snips" id="snips"></div>
+
+    <div id="cardsUI">
+      <div class="back" id="back" hidden>
+        <div class="name" id="name"></div>
+        <p class="tell" id="tell"></p>
+      </div>
+      <div class="row actions">
+        <button class="btn primary wide" id="flipBtn">Show answer</button>
+        <button class="btn wide bad" id="missBtn" hidden>Missed it</button>
+        <button class="btn wide primary" id="gotBtn" hidden>Got it</button>
+      </div>
+    </div>
+
+    <div id="quizUI" hidden>
+      <div class="opts" id="opts"></div>
+      <div class="feedback" id="qfb" hidden></div>
+      <div class="row actions"><button class="btn primary wide" id="nextBtn" hidden>Next</button></div>
+    </div>
+  </section>
+
+  <section class="card" id="done" hidden>
+    <h2>Deck done</h2>
+    <div class="big" id="final"></div>
+    <p class="sub" id="verdict"></p>
+    <div class="row">
+      <button class="btn primary" id="againMiss">Go again on my misses</button>
+      <button class="btn" id="againAll">Shuffle the whole deck</button>
+    </div>
+  </section>
+
+  <section id="sheet" hidden>
+    <div class="card qs4">
+      <b>4 questions that sort out nearly every card</b>
+      <ol>
+        <li>Is the thing that changed a <b>func</b> or a <b>var</b>?</li>
+        <li>Is it <b>new</b>, <b>gone</b>, <b>locked</b> or <b>moved</b>?</li>
+        <li>If a var got locked: does it <b>still change</b> inside the class?</li>
+        <li>If something moved: did the class it went into <b>already exist</b>?</li>
+      </ol>
+    </div>
+    <div id="sheetList"></div>
+  </section>
+</div>
+<script src="../shared.js"></script>
+<script src="cards.js"></script>
+</body>
+</html>

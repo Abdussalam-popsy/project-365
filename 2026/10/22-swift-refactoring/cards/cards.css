@@ -1,0 +1,32 @@
+/* Spot the Change: one card at a time, thumb-sized buttons for phones. */
+.modes,.decks{width:100%;display:flex}
+.modes button,.decks button{flex:1}
+.decks span{color:var(--muted);font-weight:500}
+.fc{display:flex;flex-direction:column;gap:12px}
+.fc .tag{align-self:flex-start}
+.change{margin:0;font-size:1.05rem;line-height:1.5}
+.snips{display:flex;flex-direction:column;gap:8px}
+.snip{border:1px solid var(--line);border-radius:10px;overflow:hidden;background:var(--code)}
+.snip h3{margin:0;padding:6px 12px;font:600 .7rem var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--muted);border-bottom:1px solid var(--line);background:var(--surface)}
+.snip.after h3{color:var(--accent)}
+.snip pre{padding:10px 0;font-size:.82rem}
+.back{border-top:1px dashed var(--line);padding-top:12px;display:flex;flex-direction:column;gap:6px}
+.back .name{font:700 1.35rem var(--sans);color:var(--accent)}
+.tell{margin:0;font-size:.95rem;line-height:1.5}
+.actions{gap:8px}
+.btn.wide{flex:1;padding:14px;font-size:1rem}
+.btn.bad{border-color:var(--bad);color:var(--bad)}
+.opts{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+@media (max-width:480px){.opts{grid-template-columns:1fr}}
+.opt{display:flex;align-items:center;gap:10px;text-align:left;width:100%;border:1px solid var(--line);background:var(--surface);color:var(--fg);border-radius:9px;padding:13px 12px;font:500 .95rem var(--sans);cursor:pointer;min-width:0}
+.opt:disabled{cursor:default}
+.opt .dot{flex:none;width:16px;height:16px;border-radius:50%;border:2px solid var(--line)}
+.opt.right{border-color:var(--good);background:var(--good-soft)} .opt.right .dot{border-color:var(--good);background:var(--good)}
+.opt.wrong{border-color:var(--bad);background:var(--bad-soft)} .opt.wrong .dot{border-color:var(--bad);background:var(--bad)}
+#sheet{display:flex;flex-direction:column;gap:12px}
+.qs4 ol{margin:6px 0 0;padding-left:20px;display:flex;flex-direction:column;gap:4px}
+.group h2{font-size:1rem;margin:0 0 8px}
+.group ul{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px}
+.group li{display:flex;flex-direction:column;gap:2px;border-left:3px solid var(--accent-soft);padding-left:10px}
+.group li b{color:var(--accent)}
+.group li span{font-size:.92rem}
