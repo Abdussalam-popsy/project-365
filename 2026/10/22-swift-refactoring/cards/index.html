@@ -62,10 +62,15 @@
     <h2>Deck done</h2>
     <div class="big" id="final"></div>
     <p class="sub" id="verdict"></p>
+    <div id="review"></div>
+    <div id="mixups"></div>
     <div class="row">
       <button class="btn primary" id="againMiss">Go again on my misses</button>
       <button class="btn" id="againAll">Shuffle the whole deck</button>
+      <button class="btn" id="copyBtn">Copy results for Claude</button>
+      <span class="copystatus" id="copyStatus" hidden></span>
     </div>
+    <textarea class="copybox" id="copyBox" readonly hidden aria-label="Results to paste into Claude"></textarea>
   </section>
 
   <section id="sheet" hidden>
