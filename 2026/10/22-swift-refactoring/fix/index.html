@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>Fix It · Swift Refactoring</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap">
+  <script src="../theme.js"></script>
+  <link rel="stylesheet" href="../styles.css">
+  <link rel="stylesheet" href="fix.css">
+</head>
+<body>
+<div class="wrap">
+  <a class="crumb" href="../">← Swift Refactoring</a>
+  <header>
+    <div>
+      <h1>Fix It</h1>
+      <p class="sub">Real Monopoly code, one small piece at a time. Find what's wrong, pick the fix, see it fixed.</p>
+    </div>
+  </header>
+
+  <div class="seg order" role="group" aria-label="Order">
+    <button data-order="file" aria-pressed="true">Walk the file</button>
+    <button data-order="shuffle" aria-pressed="false">Shuffle</button>
+  </div>
+
+  <div class="progress" id="prog"><span id="count"></span><div class="bar"><i id="bar"></i></div><span id="score"></span></div>
+
+  <section class="card fx" id="card">
+    <span class="tag" id="where"></span>
+    <div class="snip"><h3>The code</h3><pre id="code"></pre></div>
+
+    <div class="step" id="s1">
+      <p class="q"><span class="n">1</span>What's wrong here?</p>
+      <div class="opts" id="o1"></div>
+      <div class="feedback" id="f1" hidden></div>
+    </div>
+
+    <div class="step" id="s2" hidden>
+      <p class="q"><span class="n">2</span>So which refactoring fixes it?</p>
+      <div class="opts" id="o2"></div>
+      <div class="feedback" id="f2" hidden></div>
+    </div>
+
+    <div class="step" id="s3" hidden>
+      <p class="q"><span class="n">3</span>Picture the fix before you look. Then check.</p>
+      <button class="btn wide" id="showFix">Show the fixed code</button>
+      <div class="snip after" id="fixed" hidden><h3>After <span>+ added · − removed</span></h3><pre id="fixCode"></pre></div>
+    </div>
+
+    <div class="row"><button class="btn primary wide" id="nextBtn" hidden>Next</button></div>
+  </section>
+
+  <section class="card" id="done" hidden>
+    <h2>Walk done</h2>
+    <div class="big" id="final"></div>
+    <p class="sub" id="verdict"></p>
+    <div id="review"></div>
+    <div class="row">
+      <button class="btn primary" id="againMiss">Redo the ones I missed</button>
+      <button class="btn" id="againAll">Start again</button>
+      <button class="btn" id="copyBtn">Copy results for Claude</button>
+      <span class="copystatus" id="copyStatus" hidden></span>
+    </div>
+    <textarea class="copybox" id="copyBox" readonly hidden aria-label="Results to paste into Claude"></textarea>
+  </section>
+
+  <details class="card guide">
+    <summary>The 6 questions to ask when reading code</summary>
+    <ol>
+      <li><b>Who uses it?</b> Only used inside → Hide method. Outsiders can change what they should only read → Encapsulate field / collection. Never changes after setup → Remove setting method.</li>
+      <li><b>Repeats?</b> Same steps in two places → Extract method.</li>
+      <li><b>Too long?</b> One func doing several jobs → Extract method, one per job.</li>
+      <li><b>Names?</b> Unclear name → Rename method. Expression you have to decode → Introduce explaining variable. Hardcoded value → Add parameter.</li>
+      <li><b>Belongs elsewhere?</b> Uses another class's data → Move method. Vars and funcs that only talk to each other → Extract class. Stuck to one concrete class → Extract interface.</li>
+      <li><b>Pointless?</b> Func no clearer than its body → Inline method.</li>
+    </ol>
+  </details>
+</div>
+<script src="../shared.js"></script>
+<script src="fix.js"></script>
+</body>
+</html>

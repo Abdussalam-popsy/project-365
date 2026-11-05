@@ -1,0 +1,31 @@
+/* Fix It: one Monopoly chunk per card, three steps stacked below it. Phone first. */
+.order{width:100%;display:flex}.order button{flex:1}
+.fx{display:flex;flex-direction:column;gap:14px}
+.fx .tag{align-self:flex-start}
+.snip{border:1px solid var(--line);border-radius:10px;overflow:hidden;background:var(--code)}
+.snip h3{margin:0;padding:6px 12px;font:600 .7rem var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--muted);border-bottom:1px solid var(--line);background:var(--surface)}
+.snip.after h3{color:var(--accent)}
+.snip h3 span{float:right;letter-spacing:0;text-transform:none;font-weight:500}
+.snip pre{padding:10px 0;font-size:.8rem}
+.snip .ln.hl{background:var(--warn-soft);box-shadow:inset 3px 0 0 #d9a520}
+.snip .ln i{display:inline-block;width:1.3em;font-style:normal;color:var(--muted)}
+.snip .ln.dadd{background:var(--good-soft)} .snip .ln.dadd i{color:var(--good)}
+.snip .ln.ddel{background:var(--bad-soft)} .snip .ln.ddel i{color:var(--bad)}
+.step{display:flex;flex-direction:column;gap:8px}
+.q{margin:0;font-weight:600;display:flex;gap:8px;align-items:center}
+.q .n{flex:none;width:22px;height:22px;border-radius:50%;display:grid;place-items:center;font:700 .75rem var(--mono);background:var(--accent-soft);color:var(--accent)}
+.opts{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+@media (max-width:520px){.opts{grid-template-columns:1fr}}
+.opt{display:flex;align-items:center;gap:10px;text-align:left;width:100%;border:1px solid var(--line);background:var(--surface);color:var(--fg);border-radius:9px;padding:12px;font:500 .93rem var(--sans);cursor:pointer;min-width:0}
+.opt:disabled{cursor:default}
+.opt .dot{flex:none;width:16px;height:16px;border-radius:50%;border:2px solid var(--line)}
+.opt.right{border-color:var(--good);background:var(--good-soft)} .opt.right .dot{border-color:var(--good);background:var(--good)}
+.opt.wrong{border-color:var(--bad);background:var(--bad-soft)} .opt.wrong .dot{border-color:var(--bad);background:var(--bad)}
+.btn.wide{flex:1;width:100%;padding:13px;font-size:1rem}
+#done{display:flex;flex-direction:column;gap:12px}#done h2{margin:0}
+.rev{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px}
+.rev li{border:1px solid var(--line);border-left:3px solid var(--bad);border-radius:9px;padding:10px 12px;display:flex;flex-direction:column;gap:3px;font-size:.9rem}
+.rev li b{font-weight:600}.rev li span{color:var(--muted)}
+.rev s{color:var(--bad);text-decoration:none}.rev em{color:var(--good);font-style:normal}
+.guide summary{cursor:pointer;font-weight:600}
+.guide ol{margin:10px 0 0;padding-left:20px;display:flex;flex-direction:column;gap:8px;font-size:.92rem}
