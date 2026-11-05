@@ -18,11 +18,12 @@
   <header>
     <div>
       <h1>Swift Refactoring</h1>
-      <p class="sub">Practice the 14 refactoring techniques until you can name and write them without thinking.</p>
+      <p class="sub">Name and write every refactoring technique without thinking. Practise daily, test yourself, look things up when stuck.</p>
     </div>
+    <div class="countdown" id="countdown"></div>
   </header>
 
-  <ul class="pages" id="pages"></ul>
+  <div id="sections"></div>
 
   <p class="tip"><b>Getting feedback:</b> finish a round, press <b>Copy results for Claude</b>, and paste it into a chat. It includes what you missed and the code you wrote. On any page, press <b>?</b> (or <b>Cheat sheet</b>) for the techniques and your answers so far, or <b>b</b> (or <b>Swift basics</b>) for side-by-side tables like Array vs Set vs Dictionary.</p>
 </div>
@@ -34,13 +35,19 @@
 <script src="cheatsheet/render.js"></script>
 <script src="panel.js"></script>
 <script>
-  $("pages").innerHTML = PAGES.map(p =>
-    '<li><a class="card page" href="' + esc(p.href) + '">'
-    + '<span class="tag">' + esc(p.kind) + '</span>'
-    + '<h2>' + esc(p.title) + '</h2>'
+  const card = p => '<li><a class="card page ' + p.section + '" href="' + esc(p.href) + '">'
+    + (p.step ? '<span class="tag step">' + esc(p.step) + '</span>' : '')
+    + '<h3>' + esc(p.title) + '</h3>'
     + '<p>' + esc(p.blurb) + '</p>'
-    + '<span class="foot"><span class="tag">' + esc(p.meta) + '</span><span class="go">Open →</span></span>'
-    + '</a></li>').join("");
+    + '<span class="foot"><span class="tag">' + esc(p.meta) + '</span><span class="go">' + (p.section === "test" ? "Start test →" : "Open →") + '</span></span>'
+    + '</a></li>';
+  $("sections").innerHTML = SECTIONS.map((s, n) =>
+    '<section class="sec sec-' + s.id + '"><div class="sechead"><span class="num">' + (n + 1) + '</span><div><h2>' + esc(s.title) + '</h2><p>' + esc(s.use) + '</p></div></div>'
+    + '<ul class="pages">' + PAGES.filter(p => p.section === s.id).map(card).join("") + '</ul></section>').join("");
+  const days = Math.ceil((new Date(TEST_DATE + "T09:00:00") - new Date()) / 86400000);
+  $("countdown").innerHTML = days > 1 ? '<b>' + days + '</b> days to the class test'
+    : days === 1 ? '<b>Tomorrow</b> is the class test' : days === 0 ? '<b>Today</b>: good luck' : '';
+  $("countdown").hidden = days < 0;
   mountReferencePanel();
 </script>
 </body>
