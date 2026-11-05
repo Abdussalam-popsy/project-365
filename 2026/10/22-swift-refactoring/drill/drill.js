@@ -13,7 +13,10 @@ function renderCode(el, code, compare, showDiff){
   }).join("");
 }
 
+let review = null;
 function start(questions){
+  if(!review) review = mountReview($("quiz"));
+  review.reset();
   deck = shuffle(questions); i = 0; score = 0; missed = []; log = [];
   roundBegin("drill/start");
   $("copyBox").hidden = true; $("copyStatus").hidden = true;
@@ -79,6 +82,7 @@ function toggleDiff(){
 }
 
 function next(){
+  review.snap();
   diffOn = false;
   if(i < deck.length - 1){ i++; show(); return; }
   $("bar").style.width = "100%";

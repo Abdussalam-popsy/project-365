@@ -306,8 +306,8 @@ function diffHTML(mine, model){
 function report(){
   const r = window.mockReport;
   let t = "Mock Test results\nTime: " + fmt(r.used) + " of " + minutes + " min\nPart 1: " + r.p1 + " / " + QS.length + "\nPart 2: " + r.p2 + " / " + r.p2max + " checks\n\n";
-  QS.forEach((q, n) => { if(!(answers[n] && answers[n].ok)) t += "Q" + (n+1) + " wrong: correct = " + q.answer + " | I picked = " + (answers[n] ? answers[n].picked : "nothing") + "\n"; });
-  TASKS.forEach((tk, n) => { const miss = r.taskRes[n].filter(x => !x.pass); t += "\n" + tk.title + ": " + (r.taskRes[n].length - miss.length) + " / " + r.taskRes[n].length + (miss.length ? "\nMissed: " + miss.map(x => x.label).join("; ") : "") + "\n"; });
+  QS.forEach((q, n) => { t += "Q" + (n+1) + (answers[n] && answers[n].ok ? " right: " + q.answer : " wrong: correct = " + q.answer + " | I picked = " + (answers[n] ? answers[n].picked : "nothing")) + "\n"; });
+  TASKS.forEach((tk, n) => { const miss = r.taskRes[n].filter(x => !x.pass), got = r.taskRes[n].filter(x => x.pass); t += "\n" + tk.title + ": " + got.length + " / " + r.taskRes[n].length + (got.length ? "\nGot: " + got.map(x => x.label).join("; ") : "") + (miss.length ? "\nMissed: " + miss.map(x => x.label).join("; ") : "") + "\n"; });
   if(r.safety.some(s => !s.pass)) t += "\nChanged code outside the tasks: " + r.safety.filter(s => !s.pass).map(s => s.label).join("; ") + "\n";
   t += "\nMy final code:\n" + $("editor").value + "\n";
   return t;
