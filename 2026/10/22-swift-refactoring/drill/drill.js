@@ -15,6 +15,7 @@ function renderCode(el, code, compare, showDiff){
 
 function start(questions){
   deck = shuffle(questions); i = 0; score = 0; missed = []; log = [];
+  roundBegin("drill/start");
   $("copyBox").hidden = true; $("copyStatus").hidden = true;
   $("results").hidden = true; $("quiz").hidden = false; show();
 }
@@ -49,6 +50,7 @@ function show(){
 function check(){
   if(!picked) return;
   const q = deck[i]; answered = true;
+  roundTouched();
   const ok = picked === q.answer;
   if(ok) score++; else missed.push({q, picked});
   log.push({q, picked, ok, hint: !$("hint").hidden});
@@ -86,6 +88,7 @@ function next(){
   $("verdict").textContent = pct === 1 ? "Perfect round." : pct >= 0.8 ? "Strong. Retry the misses until they stick." : "Retry the misses, then run the full set again tomorrow.";
   $("missed").innerHTML = missed.map(m => "<li><b>" + esc(m.q.answer) + "</b> <span>(you picked " + esc(m.picked) + ")</span></li>").join("");
   $("retryMissed").hidden = missed.length === 0;
+  trackRound("drill", score, deck.length, missed.map(m => m.q.answer), missed.map(m => [m.q.answer, m.picked]));
 }
 
 // What the "Your answers" tab in the popup shows: newest first, the latest one opened.

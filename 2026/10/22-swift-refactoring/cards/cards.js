@@ -141,6 +141,7 @@ function counts(){
 
 function start(list){
   deck = shuffle(list); i = 0; right = 0; missedThisRound = []; roundLog = []; roundStart = new Date();
+  roundBegin("cards/start/" + mode);
   $("copyBox").hidden = true; $("copyStatus").hidden = true;
   $("done").hidden = true; $("card").hidden = false; $("prog").hidden = false;
   show();
@@ -167,6 +168,7 @@ function show(){
 }
 
 function flip(){
+  roundTouched();
   const c = deck[i];
   $("name").textContent = c.name; $("tell").textContent = c.tell;
   $("back").hidden = false; $("flipBtn").hidden = true; $("missBtn").hidden = false; $("gotBtn").hidden = false;
@@ -181,6 +183,7 @@ function mark(ok){
 }
 
 function pick(v){
+  roundTouched();
   const c = deck[i], ok = v === c.name;
   $("opts").querySelectorAll(".opt").forEach(b => { b.disabled = true; if(b.dataset.v === c.name) b.classList.add("right"); else if(b.dataset.v === v) b.classList.add("wrong"); });
   const fb = $("qfb");
@@ -202,6 +205,7 @@ function next(){
   $("verdict").textContent = missedThisRound.length ? "Missed: " + [...new Set(missedThisRound.map(c => c.name))].join(", ") + ". Say each one's tell out loud, then go again." : "Clean sweep. Try Quiz mode, or come back tomorrow.";
   $("againMiss").hidden = !missedThisRound.length;
   const wrong = roundLog.filter(x => !x.ok);
+  trackRound("cards-" + mode, right, deck.length, wrong.map(x => x.c.name), wrong.filter(x => x.picked).map(x => [x.c.name, x.picked]));
   $("review").innerHTML = wrong.length ? '<p class="rev-h">What you missed</p><ul class="rev">' + wrong.map(x =>
     '<li><span class="pair">' + (x.picked ? 'You picked <s>' + esc(x.picked) + '</s>, it\'s <em>' + esc(x.c.name) + '</em>' : '<em>' + esc(x.c.name) + '</em>') + '</span>'
     + '<span>' + esc(x.c.change) + '</span><span class="why">' + esc(x.c.tell) + '</span></li>').join("") + '</ul>' : "";

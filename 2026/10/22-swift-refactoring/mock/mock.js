@@ -248,6 +248,7 @@ function updateClock(){
 
 function start(){
   answers = []; taskTries = [0, 0, 0];
+  track("mock/start/" + minutes + "min");
   $("intro").hidden = true; $("results").hidden = true; $("copyBox").hidden = true; $("copyStatus").hidden = true;
   $("p1").hidden = false; $("p2").hidden = true; $("timer").hidden = false; $("part").textContent = "Part 1";
   $("toP2").disabled = true;
@@ -278,6 +279,9 @@ function finish(){
     + TASKS.map((t, n) => '<li><b>' + esc(t.title) + '</b><span>' + taskRes[n].filter(x => x.pass).length + ' / ' + taskRes[n].length + ' checks' + (taskRes[n].some(x => !x.pass) ? ' · missed: ' + esc(taskRes[n].filter(x => !x.pass).map(x => x.label).join("; ")) : '') + '</span></li>').join("");
   $("diffCode").innerHTML = diffHTML($("editor").value, MODEL);
   window.mockReport = { used, p1, p2, p2max, taskRes, safety };
+  trackRound("mock", p1 + p2, QS.length + p2max, QS.filter((q, n) => !(answers[n] && answers[n].ok)).map(q => q.answer), QS.map((q, n) => answers[n] && !answers[n].ok ? [q.answer, answers[n].picked] : null).filter(Boolean));
+  TASKS.forEach((t, n) => track("mock/" + slug(t.title.split("·")[1] || t.title) + "/" + (taskRes[n].every(x => x.pass) ? "pass" : "fail")));
+  track("mock/time/" + (used <= minutes * 60 ? "inside" : "over"));
   window.scrollTo(0, 0);
 }
 
