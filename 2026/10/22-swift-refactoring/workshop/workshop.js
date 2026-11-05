@@ -44,6 +44,7 @@ function diffHTML(mine, model){
 
 function start(list){
   deck = list.slice(); i = 0; log = [];
+  roundBegin("workshop/start/level-" + level);
   $("results").hidden = true; $("ex").hidden = false;
   $("copyBox").hidden = true; $("copyStatus").hidden = true;
   show();
@@ -96,6 +97,7 @@ function identifyPhase(e){
 }
 
 function pickTechnique(e, v){
+  roundTouched();
   state.identified = v === e.technique; state.picked = v;
   $("idopts").querySelectorAll(".opt").forEach(b => {
     b.disabled = true;
@@ -142,6 +144,7 @@ function renderBlanks(e){
 
 function check(){
   const e = deck[i]; if(state.done) return;
+  roundTouched();
   state.tries++;
   let ok;
   if(e.level < 3){
@@ -235,6 +238,7 @@ function next(){
   const first = log.filter(x => x.result === "first try").length;
   $("final").textContent = first + " / " + log.length;
   $("verdict").textContent = "First-try correct, no hints. " + (first === log.length ? "Ready for the next level." : first >= log.length * 0.75 ? "Nearly there. Redo the struggles, then move up a level." : "Redo the ones you struggled with before moving up.");
+  trackRound("workshop-l" + level, first, log.length, log.filter(x => x.result !== "first try").map(x => x.e.technique), log.filter(x => x.identified === false).map(x => [x.e.technique, x.picked]));
   const ids = log.filter(x => x.identified !== undefined);
   if(ids.length) $("verdict").textContent += " Named the technique correctly: " + ids.filter(x => x.identified).length + " / " + ids.length + ".";
   $("summary").innerHTML = log.map(x => "<li><b>" + esc(x.e.technique) + "</b><span>" + (x.identified === false ? "picked " + esc(x.picked) + ", " : x.identified ? "named it, " : "") + esc(x.result) + (x.hints ? ", " + x.hints + " hint" + (x.hints>1?"s":"") : "") + "</span></li>").join("");

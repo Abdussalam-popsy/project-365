@@ -145,6 +145,7 @@ function diffHTML(before, after){
 
 function start(list){
   deck = order === "shuffle" ? shuffle(list) : list.slice(); i = 0; log = []; startedAt = new Date();
+  roundBegin("fix/start/" + order);
   $("done").hidden = true; $("card").hidden = false; $("prog").hidden = false;
   $("copyBox").hidden = true; $("copyStatus").hidden = true;
   show();
@@ -174,6 +175,7 @@ function fb(id, ok, head, body){
 }
 
 function pickSmell(k){
+  roundTouched();
   const c = cur.c; cur.smellPick = k; cur.smellOk = k === c.smell;
   mark($("o1"), c.smell, k);
   $("code").innerHTML = codeHTML(c.before, c.hl);
@@ -211,6 +213,8 @@ function next(){
   $("final").textContent = both + " / " + log.length;
   $("verdict").textContent = "Problem spotted: " + sm + " / " + log.length + ". Fix picked: " + te + " / " + log.length + ".";
   const wrong = log.filter(x => !(x.smellOk && x.techOk));
+  trackRound("fix", both, log.length, log.filter(x => !x.techOk).map(x => x.c.tech), log.filter(x => !x.techOk).map(x => [x.c.tech, x.techPick]));
+  log.filter(x => !x.smellOk).forEach(x => track("fix/missed-problem/" + slug(x.c.smell) + "--picked--" + slug(x.smellPick)));
   $("review").innerHTML = wrong.length ? '<ul class="rev">' + wrong.map(x => '<li><b>' + esc(x.c.where) + '</b>'
     + (x.smellOk ? '' : '<span>Problem: you picked <s>' + esc(SMELLS[x.smellPick].text) + '</s>, it\'s <em>' + esc(SMELLS[x.c.smell].text) + '</em></span>')
     + (x.techOk ? '' : '<span>Fix: you picked <s>' + esc(x.techPick) + '</s>, it\'s <em>' + esc(x.c.tech) + '</em></span>')

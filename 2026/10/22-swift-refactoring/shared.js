@@ -28,6 +28,7 @@ function codeBlockHTML(code, types){
 
 // Copies the report to the clipboard; if the browser refuses, shows it selected in the box instead.
 function copyForClaude(text, box, status){
+  track((location.pathname.split("/").filter(Boolean).pop() || "home") + "/copy-for-claude");
   box.value = text; box.hidden = false;
   const done = msg => { status.textContent = msg; status.hidden = false; };
   const fallback = () => { box.focus(); box.select(); done("Selected below. Press Cmd+C to copy."); };
@@ -78,3 +79,29 @@ function mountTopbar(){
 }
 
 mountTopbar();
+
+// Anonymous stats: GoatCounter, no cookies, no personal data. Only counts on the live site, not localhost.
+// track("fix/start") records one event. trackRound() records a finished round: score band, misses, mix-ups.
+(function(){
+  const s = document.createElement("script");
+  s.async = true; s.src = "https://gc.zgo.at/count.js";
+  s.setAttribute("data-goatcounter", "https://abdussalam.goatcounter.com/count");
+  s.onload = () => { const q = window.__gcq || []; window.__gcq = []; q.forEach(f => f()); };
+  document.head.appendChild(s);
+})();
+const slug = t => String(t).toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+function track(path){
+  const send = () => { try { window.goatcounter.count({ path: "swift-refactoring/" + path, title: path, event: true }); } catch(e){} };
+  if(window.goatcounter && window.goatcounter.count) send(); else (window.__gcq = window.__gcq || []).push(send);
+}
+// A round only counts as started once the first answer is given, not when the page loads.
+let pendingStart = null;
+function roundBegin(path){ pendingStart = path; }
+function roundTouched(){ if(pendingStart){ track(pendingStart); pendingStart = null; } }
+function trackRound(page, score, total, missed, mixups){
+  if(!total) return;
+  track(page + "/finish");
+  track(page + "/score/" + Math.floor(score / total * 10) * 10 + "pct");
+  [...new Set(missed || [])].forEach(m => track(page + "/missed/" + slug(m)));
+  (mixups || []).forEach(([right, picked]) => track(page + "/mixup/" + slug(right) + "--picked--" + slug(picked)));
+}
