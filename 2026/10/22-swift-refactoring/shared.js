@@ -105,3 +105,47 @@ function trackRound(page, score, total, missed, mixups){
   [...new Set(missed || [])].forEach(m => track(page + "/missed/" + slug(m)));
   (mixups || []).forEach(([right, picked]) => track(page + "/mixup/" + slug(right) + "--picked--" + slug(picked)));
 }
+
+// "← Previous": keeps a read-only copy of every card you've answered this round, so you can look back.
+//   const review = mountReview($("card"));  review.snap() before moving on, review.reset() on a new round.
+function mountReview(card){
+  const snaps = [];
+  let at = -1, cardWasHidden = false;
+  const bar = document.createElement("div");
+  bar.className = "revnav"; bar.hidden = true;
+  bar.innerHTML = '<button class="btn" type="button">← Previous</button>';
+  const view = document.createElement("section");
+  view.className = "card reviewview"; view.hidden = true;
+  view.innerHTML = '<div class="revbar"><button class="btn" type="button" data-a="older">← Earlier</button>'
+    + '<span class="revlabel"></span><button class="btn" type="button" data-a="newer">Later →</button>'
+    + '<button class="btn primary" type="button" data-a="close">Back to where I was</button></div><div class="revbody" inert></div>';
+  card.parentNode.insertBefore(bar, card);
+  card.parentNode.insertBefore(view, card);
+  const paint = () => {
+    view.querySelector(".revbody").replaceChildren(snaps[at].cloneNode(true));
+    view.querySelector(".revlabel").textContent = "Reviewing " + (at + 1) + " of " + snaps.length;
+    view.querySelector('[data-a="older"]').disabled = at === 0;
+    view.querySelector('[data-a="newer"]').disabled = at === snaps.length - 1;
+  };
+  const open = () => {
+    if(!snaps.length) return;
+    cardWasHidden = card.hidden; at = snaps.length - 1;
+    card.hidden = true; bar.hidden = true; view.hidden = false; paint();
+    window.scrollTo({ top: 0 });
+  };
+  const close = () => { view.hidden = true; card.hidden = cardWasHidden; bar.hidden = !snaps.length; };
+  bar.querySelector("button").onclick = open;
+  view.querySelector('[data-a="older"]').onclick = () => { if(at > 0){ at--; paint(); } };
+  view.querySelector('[data-a="newer"]').onclick = () => { if(at < snaps.length - 1){ at++; paint(); } };
+  view.querySelector('[data-a="close"]').onclick = close;
+  return {
+    snap(){
+      const c = card.cloneNode(true);
+      c.removeAttribute("id"); c.hidden = false;
+      c.querySelectorAll("[id]").forEach(el => el.removeAttribute("id"));
+      c.querySelectorAll("button, input, textarea").forEach(el => el.setAttribute("tabindex", "-1"));
+      snaps.push(c); bar.hidden = false;
+    },
+    reset(){ snaps.length = 0; view.hidden = true; bar.hidden = true; }
+  };
+}

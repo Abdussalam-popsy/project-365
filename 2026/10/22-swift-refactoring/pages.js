@@ -21,8 +21,8 @@ const PAGES = [
     meta: "10 or 15 min · 6 questions · 3 tasks" },
   // Learn: read and look things up, nothing is marked.
   { href: "cheatsheet/", section: "learn", title: "Cheat Sheet",
-    blurb: "What changed → technique name, grouped by what appeared, vanished, got locked or moved.",
-    meta: "14 techniques" },
+    blurb: "What changed → technique name, plus when to use each one. Grouped by appeared, vanished, locked, changed and moved.",
+    meta: "17 techniques" },
   { href: "watch/", section: "learn", title: "Watch It Run",
     blurb: "Press buttons and watch Swift run line by line. Red cheat buttons show what private(set) blocks.",
     meta: "4 scenes" },

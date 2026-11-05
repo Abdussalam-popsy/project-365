@@ -42,7 +42,10 @@ function diffHTML(mine, model){
   return lineDiff(mine, model).map(([t, l]) => '<span class="ln d' + (t === "+" ? "add" : t === "-" ? "del" : "") + '"><i>' + (t === " " ? "" : t) + '</i>' + (highlightSwift(l, TYPES) || " ") + '</span>').join("");
 }
 
+let review = null;
 function start(list){
+  if(!review) review = mountReview($("ex"));
+  review.reset();
   deck = list.slice(); i = 0; log = [];
   roundBegin("workshop/start/level-" + level);
   $("results").hidden = true; $("ex").hidden = false;
@@ -232,6 +235,7 @@ function reveal(){
 }
 
 function next(){
+  review.snap();
   if(i < deck.length - 1){ i++; show(); return; }
   $("bar").style.width = "100%";
   $("ex").hidden = true; $("results").hidden = false;

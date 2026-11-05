@@ -10,6 +10,8 @@
   <script src="../theme.js"></script>
   <link rel="stylesheet" href="../styles.css">
   <link rel="stylesheet" href="fix.css">
+  <link rel="stylesheet" href="../cheatsheet/cheatsheet.css">
+  <link rel="stylesheet" href="../panel.css">
 </head>
 <body>
 <div class="wrap">
@@ -67,19 +69,12 @@
     <textarea class="copybox" id="copyBox" readonly hidden aria-label="Results to paste into Claude"></textarea>
   </section>
 
-  <details class="card guide">
-    <summary>The 6 questions to ask when reading code</summary>
-    <ol>
-      <li><b>Who uses it?</b> Only used inside → Hide method. Outsiders can change what they should only read → Encapsulate field / collection. Never changes after setup → Remove setting method.</li>
-      <li><b>Repeats?</b> Same steps in two places → Extract method.</li>
-      <li><b>Too long?</b> One func doing several jobs → Extract method, one per job.</li>
-      <li><b>Names?</b> Unclear name → Rename method. Expression you have to decode → Introduce explaining variable. Hardcoded value → Add parameter.</li>
-      <li><b>Belongs elsewhere?</b> Uses another class's data → Move method. Vars and funcs that only talk to each other → Extract class. Stuck to one concrete class → Extract interface.</li>
-      <li><b>Pointless?</b> Func no clearer than its body → Inline method.</li>
-    </ol>
-  </details>
 </div>
 <script src="../shared.js"></script>
+<script src="../cheatsheet/techniques.js"></script>
+<script src="../cheatsheet/basics.js"></script>
+<script src="../cheatsheet/render.js"></script>
+<script src="../panel.js"></script>
 <script src="fix.js"></script>
 </body>
 </html>
