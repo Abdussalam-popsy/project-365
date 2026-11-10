@@ -8,6 +8,7 @@
 | [workshop/](./workshop/) | Write the After yourself, in 3 levels |
 | [watch/](./watch/) | Watch It Run: press buttons and watch Swift run line by line |
 | [vocab/](./vocab/) | Every Swift word from the zip and Monopoly, grouped by job, with a quiz |
+| [translate/](./translate/) | Textbook refactoring words in plain English, mapped to the course's technique names, with a quiz |
 | [cheatsheet/](./cheatsheet/) | Techniques (what changed → technique name) and Swift basics (side-by-side tables: Array vs Set vs Dictionary, let vs var vs private(set), and more) |
 
 Open `index.html` directly in a browser. No build step.

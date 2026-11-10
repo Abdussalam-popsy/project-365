@@ -20,6 +20,9 @@ const PAGES = [
     blurb: "Timed, no cheat sheet. Six quiz questions, then three hand edits on the full MonopolyGame class, like Part 1 and Part 2 of the real test.",
     meta: "10 or 15 min · 6 questions · 3 tasks" },
   // Learn: read and look things up, nothing is marked.
+  { href: "translate/", section: "learn", title: "Translate",
+    blurb: "Textbook words like feature envy or guard clause, in plain English, mapped to your course's technique names. With a quick quiz.",
+    meta: "32 words" },
   { href: "cheatsheet/", section: "learn", title: "Cheat Sheet",
     blurb: "What changed → technique name, grouped by what appeared, vanished, got locked or moved.",
     meta: "14 techniques" },

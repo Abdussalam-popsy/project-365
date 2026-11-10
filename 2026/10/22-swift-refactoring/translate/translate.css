@@ -1,0 +1,19 @@
+/* Translate: a phone-friendly list of words, then a quiz that reuses the Spot the Change card styles. */
+.kinds{width:100%;display:flex;margin-bottom:12px}
+.kinds button{flex:1}
+.tlist{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:10px}
+.titem{display:flex;flex-direction:column;gap:6px;border-left:3px solid var(--accent)}
+.titem.smell{border-left-color:var(--bad)}
+.titem.swift{border-left-color:var(--muted)}
+.titem h3{margin:0;font:700 1.1rem var(--sans)}
+.titem p{margin:0;line-height:1.5}
+.titem .plain{font-size:1rem}
+.titem .course{display:flex;flex-wrap:wrap;gap:8px;align-items:baseline}
+.titem .course span,.titem .where span{font:600 .68rem var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.titem .course b{color:var(--accent)}
+.titem .course.off b{color:var(--muted);font-weight:600}
+.titem .bonus{font-size:.9rem;color:var(--muted)}
+.titem .where{font:400 .82rem var(--mono);display:flex;flex-direction:column;gap:2px;background:var(--code);border-radius:8px;padding:8px 10px}
+.feedback b.inline{display:inline;margin:0}
+#done{display:flex;flex-direction:column;gap:12px}
+#done h2{margin:0}

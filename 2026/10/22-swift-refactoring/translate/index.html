@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>Translate · Swift Refactoring</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap">
+  <script src="../theme.js"></script>
+  <link rel="stylesheet" href="../styles.css">
+  <link rel="stylesheet" href="../cards/cards.css">
+  <link rel="stylesheet" href="../cheatsheet/cheatsheet.css">
+  <link rel="stylesheet" href="../panel.css">
+  <link rel="stylesheet" href="translate.css">
+</head>
+<body>
+<div class="wrap">
+  <a class="crumb" href="../">← Swift Refactoring</a>
+  <header>
+    <div>
+      <h1>Translate</h1>
+      <p class="sub">Textbook words like "feature envy" or "guard clause", in plain English, and the name your course uses for each. On the test, write the course name.</p>
+    </div>
+  </header>
+
+  <div class="seg modes" role="group" aria-label="Mode">
+    <button data-mode="list" aria-pressed="true">The list</button>
+    <button data-mode="quiz" aria-pressed="false">Quiz me</button>
+  </div>
+
+  <section id="listView">
+    <div class="seg kinds" role="group" aria-label="Filter">
+      <button data-kind="all" aria-pressed="true">All</button>
+      <button data-kind="smell" aria-pressed="false">What's wrong</button>
+      <button data-kind="fix" aria-pressed="false">Fixes</button>
+      <button data-kind="swift" aria-pressed="false">Swift words</button>
+    </div>
+    <ul class="tlist" id="tlist"></ul>
+  </section>
+
+  <section id="quizView" hidden>
+    <div class="progress"><span id="count"></span><div class="bar"><i id="bar"></i></div><span id="score"></span></div>
+    <section class="card fc" id="qcard">
+      <span class="tag" id="qtag"></span>
+      <p class="change" id="qtext"></p>
+      <div class="opts" id="opts"></div>
+      <div class="feedback" id="qfb" hidden></div>
+      <div class="row actions"><button class="btn primary wide" id="nextBtn" hidden>Next</button></div>
+    </section>
+
+    <section class="card" id="done" hidden>
+      <h2>Round done</h2>
+      <div class="big" id="final"></div>
+      <div id="review"></div>
+      <div class="row">
+        <button class="btn primary" id="againMiss">Go again on my misses</button>
+        <button class="btn" id="againAll">New round</button>
+        <button class="btn" id="copyBtn">Copy results for Claude</button>
+        <span class="copystatus" id="copyStatus" hidden></span>
+      </div>
+      <textarea class="copybox" id="copyBox" readonly hidden aria-label="Results to paste into Claude"></textarea>
+    </section>
+  </section>
+</div>
+<script src="../shared.js"></script>
+<script src="../cheatsheet/techniques.js"></script>
+<script src="../cheatsheet/basics.js"></script>
+<script src="../cheatsheet/render.js"></script>
+<script src="../panel.js"></script>
+<script src="words.js"></script>
+<script src="translate.js"></script>
+</body>
+</html>
