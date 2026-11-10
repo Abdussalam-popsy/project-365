@@ -1,6 +1,6 @@
 // What changed → technique name. From refactoring-spot-the-difference.xlsx.
 // group: which section it sits in (a GROUPS name) · idea: optional one-line principle · see: what you spot in the code
-// example: optional pointer back to the Week 2 quiz
+// when: the problem in the code that tells you to use it · example: optional pointer back to the Week 2 quiz
 
 // tone picks the row colour, matching the spreadsheet: red, green, blue, amber.
 const GROUPS = [
@@ -8,49 +8,80 @@ const GROUPS = [
   { name: "Something appeared", tone: "appeared" },
   { name: "Something got locked", tone: "locked" },
   { name: "Something changed", tone: "changed" },
+  { name: "Something moved", tone: "moved" },
 ];
 
 const TECHNIQUES = [
   { group: "Something vanished", technique: "Inline method",
+    when: "A func is no clearer than its own body, e.g. diceRollIsDouble() is just die1 == die2",
     see: ["A func disappeared, and its insides got pasted where it was used"],
     example: "Q2: hasNoLateDeliveries() gone" },
   { group: "Something vanished", technique: "Inline temp",
+    when: "A let adds nothing, it's only used once and its value is just as clear",
     see: ["A let/var box disappeared, and its value got pasted where it was used"] },
   { group: "Something vanished", technique: "Remove parameter",
+    when: "A func has an input it never uses",
     see: ["An input disappeared from the brackets ( )"] },
 
   { group: "Something appeared", technique: "Extract method",
+    when: "The same steps appear twice, or one func does several jobs (e.g. roll() rolls, jails, moves and charges rent)",
     see: ["A new func appeared, and a chunk of code moved into it"] },
   { group: "Something appeared", technique: "Introduce explaining variable",
+    when: "An expression you have to stop and decode, or one used twice (e.g. die1 + die2)",
     see: ["New let boxes appeared, breaking up one long line"],
     example: "Q1: basePrice, quantityDiscount, shipping" },
   { group: "Something appeared", technique: "Add parameter",
+    when: "A value is hardcoded but should be chosen by the caller (e.g. the 200 in passedGo)",
     see: ["A new input appeared in the brackets ( )"],
     example: "Q3: taxRate added" },
   { group: "Something appeared", technique: "Extract interface",
+    when: "A class is stuck to one specific class and can't swap it (e.g. MonopolyGame only works with ConsoleHandler)",
     see: ["The word protocol appeared"],
     example: "Q4: protocol Logger" },
   { group: "Something appeared", technique: "Replace type code with class",
+    when: "Numbers or strings stand for categories (0 = active, 1 = closed)",
     see: ["The word enum appeared, replacing numbers or text codes"],
     example: "Q6: enum OrderStatus" },
 
   { group: "Something got locked", technique: "Remove setting method",
+    when: "A value can be changed, but should never change after it's created",
     idea: "A value that should NEVER change after creation (an id, passport number) gets locked for good.",
     see: ["a set... func deleted", "var changed to let", "private(set) added, and NO new funcs"],
     seeLabel: "You will see one of",
     example: "Q11: private(set) var id (an ID never changes)" },
   { group: "Something got locked", technique: "Hide method",
+    when: "A func is only used inside the class and has no outside purpose. Not called inside? Assume outsiders use it, leave it public",
     see: ["private got added in front of a func"] },
   { group: "Something got locked", technique: "Encapsulate field",
+    when: "Outsiders can change one value they should only read, but it still changes inside the class",
     idea: "A value that still needs to change, but only safely.",
     see: ["private or private(set) on a single box (no [ ])", "PLUS new funcs that check changes (e.g. deposit, update)"],
     seeLabel: "You will see" },
   { group: "Something got locked", technique: "Encapsulate collection",
+    when: "Outsiders can add or remove from a list [ ] directly (e.g. players.append from anywhere)",
     see: ["private(set) got added in front of a list [ ], plus add/remove funcs"] },
 
   { group: "Something changed", technique: "Rename method",
+    when: "A name doesn't say what the func does, or is easy to mix up (roll vs diceRoll)",
     see: ["The func's name changed, and nothing else"] },
   { group: "Something changed", technique: "Split temporary variable",
+    when: "One var is reused for two different meanings",
     see: ["One var used twice became two separate lets"],
     example: "Q5: result became perimeter + area" },
+
+  { group: "Something moved", technique: "Move method",
+    when: "A func mostly uses another class's data (e.g. ownsCompleteSet only looks at the player)",
+    see: ["A func left this class and now lives in a class that already existed", "its input for that class usually disappears (it's now self)"],
+    seeLabel: "You will see",
+    example: "Monopoly: ownsCompleteSet into Player" },
+  { group: "Something moved", technique: "Move field",
+    when: "A var describes another class more than this one",
+    see: ["A var left this class and now lives in a class that already existed"],
+    example: "customerName from InvoicePrinter into Order" },
+  { group: "Something moved", technique: "Extract class",
+    idea: "Like Move method, but the destination is brand new.",
+    when: "Some vars and funcs only talk to each other, so the class is doing two jobs",
+    see: ["A NEW class appeared", "several vars and funcs moved into it", "the old class keeps a property holding the new one"],
+    seeLabel: "You will see",
+    example: "Monopoly: die1, die2, diceRoll into Dice" },
 ];

@@ -82,3 +82,13 @@ pre .ln{display:block;padding:0 14px;white-space:pre;min-height:1.6em}
 .copystatus{font-size:.85rem;color:var(--good)}
 
 @media (prefers-reduced-motion:reduce){.bar i{transition:none}}
+
+/* "← Previous" review of answered cards */
+.revnav{display:flex;justify-content:flex-start}
+.revnav .btn{padding:6px 12px;font-size:.85rem}
+.reviewview{display:flex;flex-direction:column;gap:12px;border-style:dashed}
+.revbar{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.revlabel{flex:1;text-align:center;font:600 .78rem var(--mono);letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+.revbody > *{border:0;padding:0;box-shadow:none;background:none}
+.revbody .btn.primary, .revbody .btn.wide, .revbody #nextBtn{display:none}
+@media (max-width:520px){.revbar .btn.primary{width:100%}}

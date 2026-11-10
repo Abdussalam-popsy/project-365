@@ -113,6 +113,7 @@ let mix = (() => { try { return JSON.parse(localStorage.getItem(MIXKEY) || "{}")
 const saveMix = () => { try { localStorage.setItem(MIXKEY, JSON.stringify(mix)); } catch(e){} };
 
 let order = "file", deck = [], i = 0, log = [], cur = null, startedAt = null;
+const review = mountReview($("card"));
 
 function smellOptions(c){
   const fam = SMELLS[c.smell].family;
@@ -144,7 +145,7 @@ function diffHTML(before, after){
 }
 
 function start(list){
-  deck = order === "shuffle" ? shuffle(list) : list.slice(); i = 0; log = []; startedAt = new Date();
+  deck = order === "shuffle" ? shuffle(list) : list.slice(); i = 0; log = []; startedAt = new Date(); review.reset();
   roundBegin("fix/start/" + order);
   $("done").hidden = true; $("card").hidden = false; $("prog").hidden = false;
   $("copyBox").hidden = true; $("copyStatus").hidden = true;
@@ -206,6 +207,7 @@ function showFix(){
 }
 
 function next(){
+  review.snap();
   if(i < deck.length - 1){ i++; show(); return; }
   $("card").hidden = true; $("prog").hidden = true; $("done").hidden = false;
   const both = log.filter(x => x.smellOk && x.techOk).length;
@@ -231,10 +233,13 @@ function report(){
   t += "Both right: " + log.filter(x => x.smellOk && x.techOk).length + " / " + log.length + " · Problem spotted: " + log.filter(x => x.smellOk).length + " · Fix picked: " + log.filter(x => x.techOk).length + "\n\n";
   log.forEach((x, n) => {
     if(x.smellOk && x.techOk) return;
+    if(n === log.findIndex(y => !(y.smellOk && y.techOk))) t += "=== MISSED ===\n";
     t += "- " + x.c.where + " (" + x.c.tech + ")\n";
     if(!x.smellOk) t += "  Problem: picked \"" + SMELLS[x.smellPick].text + "\", correct \"" + SMELLS[x.c.smell].text + "\"\n";
     if(!x.techOk) t += "  Fix: picked " + x.techPick + ", correct " + x.c.tech + "\n";
   });
+  const right = log.filter(x => x.smellOk && x.techOk);
+  if(right.length) t += "\n=== BOTH RIGHT (" + right.length + ") ===\n" + right.map(x => "- " + x.c.where + ": " + SMELLS[x.c.smell].text + " → " + x.c.tech).join("\n") + "\n";
   const top = Object.entries(mix).sort((a, b) => b[1] - a[1]).slice(0, 6);
   if(top.length) t += "\nUsual mix-ups (all rounds on this device):\n" + top.map(([k, v]) => "- " + k + " × " + v).join("\n") + "\n";
   return t;
@@ -251,3 +256,4 @@ $("againMiss").onclick = () => start(log.filter(x => !(x.smellOk && x.techOk)).m
 $("againAll").onclick = () => start(CHUNKS);
 $("copyBtn").onclick = () => copyForClaude(report(), $("copyBox"), $("copyStatus"));
 start(CHUNKS);
+mountReferencePanel();

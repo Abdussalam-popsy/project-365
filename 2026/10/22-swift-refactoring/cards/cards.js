@@ -96,7 +96,7 @@ const CARDS = [
     tell: "One var assigned twice for two meanings, split into two." }
 ];
 
-const GROUPS = { new: "Something new appears", gone: "Something disappears", locked: "Something gets locked", moved: "Something moves, renames or splits" };
+const CARD_GROUPS = { new: "Something new appears", gone: "Something disappears", locked: "Something gets locked", moved: "Something moves, renames or splits" };
 const NAMES = [...new Set(CARDS.map(c => c.name))];
 const CONFUSE = {
   "Extract method": ["Hide method", "Extract class", "Move method"],
@@ -126,6 +126,7 @@ const snip = (title, code, cls) => '<div class="snip ' + cls + '"><h3>' + title 
 
 let mode = "cards", deckName = "all", deck = [], i = 0, right = 0, missedThisRound = [], misses = loadMisses();
 let roundLog = [], roundStart = null;
+const review = mountReview($("card"));
 
 // Every wrong quiz pick is counted as "correct -> what you picked", kept on this device.
 const MIXKEY = "swift-refactoring-card-mixups";
@@ -140,7 +141,7 @@ function counts(){
 }
 
 function start(list){
-  deck = shuffle(list); i = 0; right = 0; missedThisRound = []; roundLog = []; roundStart = new Date();
+  deck = shuffle(list); i = 0; right = 0; missedThisRound = []; roundLog = []; roundStart = new Date(); review.reset();
   roundBegin("cards/start/" + mode);
   $("copyBox").hidden = true; $("copyStatus").hidden = true;
   $("done").hidden = true; $("card").hidden = false; $("prog").hidden = false;
@@ -152,7 +153,7 @@ function show(){
   $("count").textContent = (i + 1) + " / " + deck.length;
   $("bar").style.width = (i / deck.length * 100) + "%";
   $("score").textContent = right + " right";
-  $("cat").textContent = GROUPS[c.group];
+  $("cat").textContent = CARD_GROUPS[c.group];
   $("change").textContent = c.change;
   $("snips").innerHTML = snip("Before", c.before, "") + snip("After", c.after, "after");
   $("cardsUI").hidden = mode !== "cards"; $("quizUI").hidden = mode !== "quiz";
@@ -199,6 +200,7 @@ function pick(v){
 }
 
 function next(){
+  review.snap();
   if(i < deck.length - 1){ i++; show(); return; }
   $("card").hidden = true; $("prog").hidden = true; $("done").hidden = false;
   $("final").textContent = right + " / " + deck.length;
@@ -238,7 +240,7 @@ function report(){
 }
 
 function renderSheet(){
-  $("sheetList").innerHTML = Object.entries(GROUPS).map(([g, title]) =>
+  $("sheetList").innerHTML = Object.entries(CARD_GROUPS).map(([g, title]) =>
     '<div class="card group"><h2>' + esc(title) + '</h2><ul>' + CARDS.filter(c => c.group === g).map(c => '<li><b>' + esc(c.name) + '</b><span>' + esc(c.change) + '</span></li>').join("") + '</ul></div>').join("");
 }
 
@@ -272,3 +274,4 @@ document.addEventListener("keydown", ev => {
 });
 counts();
 setMode("cards");
+mountReferencePanel();

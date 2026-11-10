@@ -10,16 +10,24 @@ function techniqueRowHTML(t){
   const list = t.see.length > 1
     ? (t.seeLabel ? '<span class="see-label">' + esc(t.seeLabel) + ':</span>' : "") + "<ul>" + t.see.map(s => "<li>" + codeBits(s) + "</li>").join("") + "</ul>"
     : "<p>" + codeBits(t.see[0]) + "</p>";
-  return '<tr class="tech" data-search="' + esc((t.technique + " " + (t.idea || "") + " " + t.see.join(" ")).toLowerCase()) + '">'
+  return '<tr class="tech" data-search="' + esc((t.technique + " " + (t.idea || "") + " " + (t.when || "") + " " + t.see.join(" ")).toLowerCase()) + '">'
     + '<td class="what">' + (t.idea ? '<p class="idea">' + esc(t.idea) + "</p>" : "") + list + "</td>"
     + '<td class="name">' + esc(t.technique) + "</td>"
-    + '<td class="ex">' + esc(t.example || "") + "</td></tr>";
+    + '<td class="when">' + (t.when ? '<span class="when-label">Use it when</span>' + codeBits(t.when) : "") + (t.example ? '<span class="ex">' + esc(t.example) + "</span>" : "") + "</td></tr>";
 }
 
 // One <tbody> per group, in the order GROUPS lists them. Each starts with a full-width band naming the group.
 function cheatsheetHTML(){
-  return '<table class="cs">'
-    + '<thead><tr><th scope="col">What you see change</th><th scope="col">Technique name</th><th scope="col">Example from your Week 2 quiz</th></tr></thead>'
+  return '<details class="cs-qs"><summary>Reading code? Ask these 6 questions</summary><ol>'
+    + '<li><b>Who uses it?</b> Only inside → Hide method. Outsiders change what they should only read → Encapsulate field / collection. Never changes after setup → Remove setting method.</li>'
+    + '<li><b>Repeats?</b> Same steps twice → Extract method.</li>'
+    + '<li><b>Too long?</b> One func, several jobs → Extract method, one per job.</li>'
+    + '<li><b>Names?</b> Unclear → Rename method. Expression to decode → Introduce explaining variable. Hardcoded value → Add parameter.</li>'
+    + '<li><b>Belongs elsewhere?</b> Uses another class\'s data → Move method / field. Vars and funcs that only talk to each other → Extract class. Stuck to one concrete class → Extract interface.</li>'
+    + '<li><b>Pointless?</b> Func no clearer than its body → Inline method. Let that adds nothing → Inline temp. Unused input → Remove parameter.</li>'
+    + '</ol></details>'
+    + '<table class="cs">'
+    + '<thead><tr><th scope="col">What you see change</th><th scope="col">Technique name</th><th scope="col">When to use it (the problem)</th></tr></thead>'
     + GROUPS.map(g =>
         '<tbody class="group tone-' + g.tone + '"><tr class="band"><th colspan="3" scope="rowgroup">' + esc(g.name) + "</th></tr>"
         + TECHNIQUES.filter(t => t.group === g.name).map(techniqueRowHTML).join("") + "</tbody>").join("")
