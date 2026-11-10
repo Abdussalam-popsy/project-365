@@ -4,6 +4,7 @@
 
 | Page | What it is |
 | --- | --- |
+| [walkthrough/](./walkthrough/) | The full MonopolyGame class refactored step by step: press Next to see each change, its name and why |
 | [drill/](./drill/) | Before/After pairs: name the technique |
 | [workshop/](./workshop/) | Write the After yourself, in 3 levels |
 | [watch/](./watch/) | Watch It Run: press buttons and watch Swift run line by line |

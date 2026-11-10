@@ -1,0 +1,41 @@
+/* Walkthrough: explanation card, then the code, with Back / Next pinned to the bottom of the screen. Phone first. */
+.wrap{padding-bottom:96px}
+.stepbar{display:flex;flex-direction:column;gap:8px}
+.jump{display:flex;flex-direction:column;gap:6px;font:600 .8rem var(--mono);letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+.jump select{font:500 .95rem var(--sans);letter-spacing:0;text-transform:none;color:var(--fg);background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:9px 10px;width:100%}
+.stepbar .bar{flex:none}
+
+.explain{gap:12px;scroll-margin-top:12px}
+.explain .tag{align-self:flex-start}
+.explain h2{margin:0;font:700 1.25rem var(--sans)}
+.explain h2.tech{font-size:1.6rem;color:var(--accent)}
+.explain p{margin:0;line-height:1.55}
+.part{display:flex;flex-direction:column;gap:4px}
+.part h3{margin:0;font:600 .7rem var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.part.why{background:var(--accent-soft);border-radius:9px;padding:10px 12px}
+.part.why h3{color:var(--accent)}
+.did{margin:0;padding-left:20px;display:flex;flex-direction:column;gap:4px;line-height:1.5}
+.hint{color:var(--muted);font-size:.92rem}
+.recap{margin:0;padding-left:22px;display:flex;flex-direction:column;gap:2px}
+.linkbtn{background:none;border:0;padding:4px 0;text-align:left;font:inherit;color:var(--fg);cursor:pointer}
+.linkbtn b{color:var(--accent)} .linkbtn span{color:var(--muted);font-size:.9rem}
+
+.codehead{display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:space-between}
+.codehead[hidden]{display:none}
+.legend{font-size:.82rem;color:var(--muted);display:flex;align-items:center;gap:6px}
+.legend i{display:inline-block;width:12px;height:12px;border-radius:3px}
+.legend i.add{background:var(--good)} .legend i.del{background:var(--bad);margin-left:6px}
+
+.code{border:1px solid var(--line);border-radius:12px;background:var(--code);overflow:hidden}
+.code pre{font-size:.8rem}
+.code .ln{padding-left:6px}
+.code .ln i{display:inline-block;width:1.4em;font-style:normal;font-weight:700;color:var(--muted)}
+.code .ln.add{background:var(--good-soft);box-shadow:inset 3px 0 0 var(--good)} .code .ln.add i{color:var(--good)}
+.code .ln.del{background:var(--bad-soft);box-shadow:inset 3px 0 0 var(--bad);text-decoration:line-through;text-decoration-color:var(--bad)} .code .ln.del i{color:var(--bad)}
+.code .gap{display:block;padding:4px 14px;font:500 .75rem var(--sans);color:var(--muted);background:var(--surface);border-block:1px dashed var(--line)}
+
+.stepnav{position:fixed;left:0;right:0;bottom:0;display:flex;gap:8px;padding:10px max(16px,env(safe-area-inset-left,0px)) max(10px,env(safe-area-inset-bottom,0px));background:var(--surface);border-top:1px solid var(--line);z-index:5}
+.stepnav .btn.wide{flex:1;padding:14px;font-size:1rem;max-width:520px}
+.stepnav{justify-content:center}
+.code pre.wrapped .ln{white-space:pre-wrap;word-break:break-word;padding-left:calc(6px + 1.4em);text-indent:-1.4em}
+@media (max-width:520px){.code pre{font-size:.74rem}.explain h2.tech{font-size:1.4rem}}

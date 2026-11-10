@@ -3,6 +3,9 @@
 
 const PAGES = [
   // Practice: ordered easiest to hardest.
+  { href: "walkthrough/", section: "practice", step: "Start here · watch it", title: "Walkthrough",
+    blurb: "The whole Monopoly class, fixed one step at a time. Press Next: see what was wrong, what moved, and why it has that name.",
+    meta: "14 steps" },
   { href: "cards/", section: "practice", step: "Easy · name it", title: "Spot the Change",
     blurb: "Flashcards and a quick quiz on your phone. See what changed, say the name. Remembers your misses and mix-ups.",
     meta: "18 cards" },

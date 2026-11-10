@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>Walkthrough · Swift Refactoring</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap">
+  <script src="../theme.js"></script>
+  <link rel="stylesheet" href="../styles.css">
+  <link rel="stylesheet" href="../cheatsheet/cheatsheet.css">
+  <link rel="stylesheet" href="../panel.css">
+  <link rel="stylesheet" href="walkthrough.css">
+</head>
+<body>
+<div class="wrap">
+  <a class="crumb" href="../">← Swift Refactoring</a>
+  <header>
+    <div>
+      <h1>Walkthrough</h1>
+      <p class="sub">The real MonopolyGame code, fixed one step at a time. Press Next to see exactly what changed, what it's called and why.</p>
+    </div>
+  </header>
+
+  <div class="stepbar">
+    <label class="jump"><span id="count"></span>
+      <select id="jump" aria-label="Jump to a step"></select>
+    </label>
+    <div class="bar"><i id="bar"></i></div>
+  </div>
+
+  <section class="card explain" id="explain"></section>
+
+  <div class="codehead">
+    <div class="seg view" role="group" aria-label="How much code to show">
+      <button data-view="change" aria-pressed="true">Just the change</button>
+      <button data-view="full" aria-pressed="false">Whole file</button>
+    </div>
+    <span class="legend"><i class="add"></i>added <i class="del"></i>removed</span>
+  </div>
+  <section class="code" id="code"><pre id="pre"></pre></section>
+
+  <nav class="stepnav">
+    <button class="btn wide" id="backBtn">← Back</button>
+    <button class="btn primary wide" id="nextBtn">Next →</button>
+  </nav>
+</div>
+<script src="../shared.js"></script>
+<script src="../cheatsheet/techniques.js"></script>
+<script src="../cheatsheet/basics.js"></script>
+<script src="../cheatsheet/render.js"></script>
+<script src="../panel.js"></script>
+<script src="steps.js"></script>
+<script src="walkthrough.js"></script>
+</body>
+</html>
